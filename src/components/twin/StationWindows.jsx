@@ -1,5 +1,3 @@
-import React from 'react';
-
 function Window({ position, rotation = [0, 0, 0], size = [0.8, 0.95] }) {
   return (
     <group position={position} rotation={rotation}>

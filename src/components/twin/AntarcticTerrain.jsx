@@ -1,5 +1,10 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
+
+function seededValue(index, seed) {
+  const value = Math.sin(index * 12.9898 + seed * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
 
 // Builds a large, gently uneven snow plane. The area directly under the
 // station is flattened so the elevated supports sit on believable ground.
@@ -63,11 +68,11 @@ export default function AntarcticTerrain({ flattenRadius = 17 }) {
     const banks = [];
     const count = 16;
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-      const radius = flattenRadius + 4 + Math.random() * 30;
+      const angle = (i / count) * Math.PI * 2 + seededValue(i, flattenRadius) * 0.5;
+      const radius = flattenRadius + 4 + seededValue(i + count, flattenRadius) * 30;
       banks.push({
         position: [Math.cos(angle) * radius, -0.35, Math.sin(angle) * radius],
-        scale: 1.6 + Math.random() * 2.6,
+        scale: 1.6 + seededValue(i + count * 2, flattenRadius) * 2.6,
       });
     }
     return banks;
@@ -77,12 +82,12 @@ export default function AntarcticTerrain({ flattenRadius = 17 }) {
     const formations = [];
     const count = 12;
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.8;
-      const radius = flattenRadius + 6 + Math.random() * 26;
+      const angle = (i / count) * Math.PI * 2 + seededValue(i, flattenRadius + count) * 0.8;
+      const radius = flattenRadius + 6 + seededValue(i + count, flattenRadius + count) * 26;
       formations.push({
         position: [Math.cos(angle) * radius, 0.2, Math.sin(angle) * radius],
-        scale: 0.8 + Math.random() * 1.4,
-        rotation: Math.random() * Math.PI,
+        scale: 0.8 + seededValue(i + count * 2, flattenRadius + count) * 1.4,
+        rotation: seededValue(i + count * 3, flattenRadius + count) * Math.PI,
       });
     }
     return formations;

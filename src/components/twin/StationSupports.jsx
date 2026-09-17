@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
 
 export const LEG_HEIGHT = 2.2;
@@ -71,7 +71,6 @@ export default function StationSupports({ width = 26, depth = 7 }) {
       }
     }
     return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [halfW, halfD]);
 
   const braces = useMemo(() => {
@@ -87,7 +86,6 @@ export default function StationSupports({ width = 26, depth = 7 }) {
       arr.push({ from: [x1, LEG_HEIGHT - 0.15, zBack], to: [x2, 0.15, zBack] });
     }
     return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [halfW, halfD]);
 
   return (

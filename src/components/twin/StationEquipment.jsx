@@ -1,4 +1,3 @@
-import React from 'react';
 import * as THREE from 'three';
 
 function CommsMast({ position = [0, 0, 0], height = 3 }) {

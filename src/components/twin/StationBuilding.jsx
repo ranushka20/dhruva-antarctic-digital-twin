@@ -1,4 +1,3 @@
-import React from 'react';
 import StationWindows from './StationWindows';
 
 export const MAIN_W = 14;

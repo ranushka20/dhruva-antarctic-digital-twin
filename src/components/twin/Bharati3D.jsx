@@ -1,1 +1,1 @@
-export { default } from "../../twin/GroundFloor";
+export { default } from "../../twin/Bharati3D";

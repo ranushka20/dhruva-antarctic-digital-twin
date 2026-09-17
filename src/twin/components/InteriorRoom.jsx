@@ -1,6 +1,5 @@
 import Box from "./Box";
 import Door from "./Door";
-import { CeilingLight } from "./InteriorLighting";
 import RoomLabel from "./RoomLabel";
 import Wall from "./Wall";
 import {
@@ -10,17 +9,16 @@ import {
   floorSteelPlateMaterial,
   floorWoodMaterial,
   selectedMaterial,
-  trimMaterial,
   wallMaterial,
 } from "./materials";
 
-export default function Room({
+export default function InteriorRoom({
   room,
   selected = false,
   onSelect,
   children,
-  wallHeight = 2.4,
-  wallThickness = 0.16,
+  wallHeight = 2.2,
+  wallThickness = 0.18,
   doorConfig = { side: "front", offset: 0, width: 0.95, type: "lab" },
   hasExteriorWindows = true,
   windowConfig = { count: 1, side: "back" },
@@ -33,7 +31,7 @@ export default function Room({
   let floorMat = floorLabMaterial;
   if (floorType === "wood" || type === "living" || type === "berthing") floorMat = floorWoodMaterial;
   else if (floorType === "living" || type === "lounge" || type === "dining") floorMat = floorLivingMaterial;
-  else if (floorType === "steel" || type === "power" || type === "workshop" || type === "storage") floorMat = floorSteelPlateMaterial;
+  else if (floorType === "steel" || type === "power" || type === "workshop" || type === "storage" || type === "utility") floorMat = floorSteelPlateMaterial;
   else if (floorType === "corridor") floorMat = floorCorridorMaterial;
 
   const handlePointer = (e) => {
@@ -50,18 +48,16 @@ export default function Room({
         material={selected ? selectedMaterial : floorMat}
       />
 
-      {/* Ceiling Trim Border / Wall Top Beam */}
-      <Box
-        position={[0, wallHeight + 0.05, 0]}
-        size={[w + 0.04, 0.08, d + 0.04]}
-        material={trimMaterial}
-        castShadow={false}
+      {/* Localized Warm Interior Illumination (Open-Roof Cutaway Lighting) */}
+      <pointLight
+        position={[0, 1.7, 0]}
+        intensity={selected ? 1.4 : 0.85}
+        color="#fff8ed"
+        distance={Math.max(w, d) * 1.6}
+        decay={1.6}
       />
 
-      {/* Ceiling Light Troffer Fixture */}
-      <CeilingLight position={[0, wallHeight + 0.01, 0]} size={[Math.min(w * 0.45, 1.8), 0.04, 0.45]} />
-
-      {/* --- Walls --- */}
+      {/* --- Solid Architectural Boundary Walls with Cutouts --- */}
       {/* Back Wall (along X axis at -halfD) */}
       <Wall
         position={[0, 0, -halfD]}
@@ -69,9 +65,9 @@ export default function Room({
         orientation="x"
         material={wallMaterial}
         hasWindow={hasExteriorWindows && windowConfig.side === "back"}
-        windowWidth={1.4}
-        windowHeight={0.9}
-        windowElevation={1.3}
+        windowWidth={1.6}
+        windowHeight={0.85}
+        windowElevation={1.25}
         onClick={handlePointer}
       />
 
@@ -86,9 +82,9 @@ export default function Room({
         doorHeight={1.9}
         doorOffset={doorConfig.offset || 0}
         hasWindow={hasExteriorWindows && windowConfig.side === "front"}
-        windowWidth={1.4}
-        windowHeight={0.9}
-        windowElevation={1.3}
+        windowWidth={1.6}
+        windowHeight={0.85}
+        windowElevation={1.25}
         onClick={handlePointer}
       />
 
@@ -103,9 +99,9 @@ export default function Room({
         doorHeight={1.9}
         doorOffset={doorConfig.offset || 0}
         hasWindow={hasExteriorWindows && windowConfig.side === "left"}
-        windowWidth={1.2}
-        windowHeight={0.9}
-        windowElevation={1.3}
+        windowWidth={1.4}
+        windowHeight={0.85}
+        windowElevation={1.25}
         onClick={handlePointer}
       />
 
@@ -120,13 +116,13 @@ export default function Room({
         doorHeight={1.9}
         doorOffset={doorConfig.offset || 0}
         hasWindow={hasExteriorWindows && windowConfig.side === "right"}
-        windowWidth={1.2}
-        windowHeight={0.9}
-        windowElevation={1.3}
+        windowWidth={1.4}
+        windowHeight={0.85}
+        windowElevation={1.25}
         onClick={handlePointer}
       />
 
-      {/* Door Leaf & Hardware */}
+      {/* Architectural Door Leaf */}
       {doorConfig.side === "front" && (
         <Door
           position={[doorConfig.offset || 0, 0, halfD]}
@@ -159,23 +155,31 @@ export default function Room({
         />
       )}
 
-      {/* Interior Furniture & Equipment */}
+      {/* 3D Interior Furniture & Equipment (100% visible from elevated isometric angle) */}
       {children}
 
-      {/* Single 3D Label */}
+      {/* Single Clean Floating Room Label Badge */}
       <RoomLabel
         room={{ ...room, x: 0, z: 0, name }}
         selected={selected}
         onSelect={onSelect}
       />
 
-      {/* Selection Highlight Ring on Floor */}
+      {/* Selection Glowing Cyan Boundary Ring & Floor Perimeter Border */}
       {selected && (
-        <mesh position={[0, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[Math.min(w, d) * 0.35, Math.min(w, d) * 0.42, 32]} />
-          <meshBasicMaterial color="#56d9e8" transparent opacity={0.8} />
-        </mesh>
+        <group>
+          {/* Floor Glowing Cyan Perimeter Border */}
+          <mesh position={[0, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[w + 0.06, d + 0.06]} />
+            <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.8} />
+          </mesh>
+          <mesh position={[0, 0.155, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[Math.min(w, d) * 0.32, Math.min(w, d) * 0.38, 32]} />
+            <meshBasicMaterial color="#56d9e8" transparent opacity={0.85} />
+          </mesh>
+        </group>
       )}
     </group>
   );
 }
+

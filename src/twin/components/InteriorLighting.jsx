@@ -13,7 +13,7 @@ export function CeilingLight({ position = [0, 2.38, 0], size = [1.2, 0.04, 0.4] 
         <meshStandardMaterial
           color="#fdfcf7"
           emissive="#ffffff"
-          emissiveIntensity={1.2}
+          emissiveIntensity={0.7}
           roughness={0.1}
         />
       </mesh>
@@ -37,7 +37,7 @@ export default function InteriorLighting({ activeRoom, isInteriorMode }) {
   return (
     <group>
       {/* Dedicated eye-level interior soft ambient fill */}
-      <ambientLight intensity={0.45} color="#eef6fb" />
+      <ambientLight intensity={0.35} color="#eef6fb" />
 
       {/* Primary Room Ceiling Light (Warm neutral clean room lighting) */}
       <pointLight

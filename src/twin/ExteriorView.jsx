@@ -4,7 +4,7 @@ import {
   AntarcticTerrain,
   EntranceDeck,
   RooftopEquipment,
-  SolarPanelArray,
+  FuelFarm,
   StationStilts,
 } from "./components/Exterior";
 import Window from "./components/Window";
@@ -31,20 +31,23 @@ export default function ExteriorView({ selectedId, onSelect }) {
       {/* Antarctic Snow Terrain & Drifts */}
       <AntarcticTerrain />
 
-      {/* Photovoltaic Solar Array */}
+      {/* Fuel Farm.
+          The solar array that stood here had no source at all — the dossier
+          lists Bharati's installed renewables among the facts it could not
+          obtain, and the only renewables record it does hold is Maitri's
+          failed wind turbines. The fuel farm replaces it because it is one
+          of the best-documented objects on the station. */}
       <group
         onClick={(e) => {
           e.stopPropagation();
           handleSelect(EXTERIOR_ASSETS[1]);
         }}
       >
-        <SolarPanelArray position={[-14, 0, -5]} rotation={[0, 0.25, 0]} />
-        {isSelected(EXTERIOR_ASSETS[1].id) && (
-          <mesh position={[-14, 0.1, -5]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[4, 4.4, 32]} />
-            <primitive object={selectedMaterial} attach="material" />
-          </mesh>
-        )}
+        <FuelFarm
+          position={[-17, 0, 5.5]}
+          rotation={[0, 0.22, 0]}
+          selected={isSelected(EXTERIOR_ASSETS[1].id)}
+        />
       </group>
 
       {/* Auxiliary Backup Generator Container Pod */}
@@ -71,19 +74,6 @@ export default function ExteriorView({ selectedId, onSelect }) {
         {/* Louvers & Exhausts */}
         <Box position={[2.26, 0.9, 0]} size={[0.04, 1.4, 1.6]} material={darkMetalMaterial} />
         <Box position={[-1.2, 2.6, 0]} size={[0.25, 1.1, 0.25]} material={steelLightMaterial} />
-      </group>
-
-      {/* Fuel Storage Module Tanks */}
-      <group position={[15, 0, -4]}>
-        {[-1.6, 0, 1.6].map((x, idx) => (
-          <group key={idx} position={[x, 0.8, 0]}>
-            <Box position={[0, -0.6, 0]} size={[0.15, 1.2, 1.6]} material={galvanizedSteelMaterial} />
-            <mesh position={[0, 0.4, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-              <cylinderGeometry args={[0.7, 0.7, 2.2, 24]} />
-              <primitive object={darkMetalMaterial} attach="material" />
-            </mesh>
-          </group>
-        ))}
       </group>
 
       {/* --- MAIN ELEVATED STATION STRUCTURE --- */}

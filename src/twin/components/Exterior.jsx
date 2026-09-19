@@ -7,10 +7,12 @@ import {
   galvanizedSteelMaterial,
   indicatorRedMaterial,
   rockMaterial,
+  selectedMaterial,
   snowDriftMaterial,
   snowMaterial,
   solarMaterial,
   stationHullDarkMaterial,
+  stationHullMaterial,
   steelLightMaterial,
 } from "./materials";
 
@@ -92,14 +94,18 @@ export function EntranceDeck({
       <Railings position={[-width / 3, 0.1, depth / 2]} length={width / 2.8} orientation="x" posts={2} />
       <Railings position={[width / 3, 0.1, depth / 2]} length={width / 2.8} orientation="x" posts={2} />
 
-      {/* Main Industrial Stairs leading down to snow */}
+      {/* Main industrial stair down to the snow.
+          Stairs climb toward their local +Z, so the flight is placed at its
+          foot and turned to face the deck. Previously it was anchored at the
+          deck edge, which made it climb away from the building into mid-air. */}
       <Stairs
-        position={[0, -stairHeight, depth / 2]}
-        steps={9}
-        width={1.6}
-        totalHeight={stairHeight}
-        totalDepth={2.8}
         hasLanding={false}
+        position={[0, -stairHeight, depth / 2 + 2.8]}
+        rotation={[0, Math.PI, 0]}
+        steps={9}
+        totalDepth={2.8}
+        totalHeight={stairHeight}
+        width={1.6}
       />
 
       {/* Platform Stilt Supports to Ground */}
@@ -152,6 +158,57 @@ export function RooftopEquipment({ position = [0, 0, 0] }) {
   );
 }
 
+/* --- Fuel Farm ---
+   13 tanktainers x 24,000 L, double-hull stainless in a carbon-steel frame,
+   sited 20 m from the ship anchor point and feeding the power station's day
+   tank over a ~300 m line (OMRC tender NCAOR/LH(20)/2013 §2.3, §2.8).
+   The count and the arrangement into a bunded row are the documented part;
+   exact siting geometry is our interpretation. */
+export function FuelFarm({ position = [0, 0, 0], rotation = [0, 0, 0], selected = false }) {
+  const rows = [
+    { z: -1.4, count: 7 },
+    { z: 1.4, count: 6 },
+  ];
+  const pitch = 1.5;
+  const bodyMaterial = selected ? selectedMaterial : stationHullMaterial;
+
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Spill containment berm */}
+      <Box position={[0, -0.3, 0]} size={[11.6, 0.3, 4.8]} material={rockMaterial} />
+      {[-5.7, 5.7].map((x, i) => (
+        <Box key={`berm-x-${i}`} position={[x, -0.05, 0]} size={[0.2, 0.5, 4.8]} material={galvanizedSteelMaterial} />
+      ))}
+      {[-2.4, 2.4].map((z, i) => (
+        <Box key={`berm-z-${i}`} position={[0, -0.05, z]} size={[11.6, 0.5, 0.2]} material={galvanizedSteelMaterial} />
+      ))}
+
+      {rows.map((row, ri) =>
+        Array.from({ length: row.count }).map((_, i) => {
+          const x = (i - (row.count - 1) / 2) * pitch;
+          return (
+            <group key={`tank-${ri}-${i}`} position={[x, 0.55, row.z]}>
+              {/* ISO frame */}
+              <Box position={[0, 0, 0]} size={[1.3, 1.1, 2.5]} material={galvanizedSteelMaterial} />
+              {/* Tank barrel inside the frame */}
+              <mesh castShadow position={[0, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <cylinderGeometry args={[0.45, 0.45, 2.3, 16]} />
+                <primitive attach="material" object={bodyMaterial} />
+              </mesh>
+              {/* Manway */}
+              <Box position={[0, 0.55, 0]} size={[0.3, 0.12, 0.3]} material={steelLightMaterial} />
+            </group>
+          );
+        }),
+      )}
+
+      {/* Transfer manifold running to the day-tank line */}
+      <Box position={[0, 0.15, 2.15]} size={[11.0, 0.14, 0.14]} material={steelLightMaterial} />
+      <Box position={[5.4, 0.15, 3.4]} size={[0.14, 0.14, 2.6]} material={steelLightMaterial} />
+    </group>
+  );
+}
+
 /* --- Photovoltaic Solar Array --- */
 export function SolarPanelArray({ position = [-10, 0, -6], rotation = [0, 0.2, 0] }) {
   return (
@@ -192,9 +249,13 @@ export function AntarcticTerrain() {
 
   return (
     <group position={[0, -2.5, 0]}>
-      {/* Main Ground Plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
-        <planeGeometry args={[70, 60, 32, 32]} />
+      {/* Main Ground Plane.
+          A circle, not a rectangle: a 70x60 plane showed a hard straight
+          edge floating against the viewport background from almost every
+          orbit angle. A disc reads as open ice from all sides, and scene
+          fog dissolves its rim. One segment ring is enough — it is flat. */}
+      <mesh position={[0, -0.05, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[58, 64]} />
         <primitive object={snowMaterial} attach="material" />
       </mesh>
 

@@ -1,11 +1,8 @@
 import Box from "./components/Box";
 import { EntranceDeck, StationStilts } from "./components/Exterior";
 import {
-  ChemicalLabInterior,
   EarthSciencesLabInterior,
-  ElectronicsLabInterior,
   EntryAirlockInterior,
-  LifeSciencesLabInterior,
   PowerPlantInterior,
   WaterPlantInterior,
   WorkshopInterior,
@@ -34,7 +31,7 @@ export default function GroundFloor({ selectedId, onSelect }) {
       {/* Cantilevered Main Entrance Deck Platform & Steps */}
       <EntranceDeck position={[-1.8, 0, 6.2]} width={5.2} depth={2.4} stairHeight={2.4} />
 
-      {/* --- ROOM 1: Earth Sciences Lab --- */}
+      {/* --- ROOM 1: Science Laboratory --- */}
       <InteriorRoom
         room={GROUND_ROOMS[0]}
         selected={selectedId === GROUND_ROOMS[0].id}
@@ -45,7 +42,7 @@ export default function GroundFloor({ selectedId, onSelect }) {
         <EarthSciencesLabInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 2: Life Sciences & Marine Lab --- */}
+      {/* --- ROOM 2: Waste Store --- */}
       <InteriorRoom
         room={GROUND_ROOMS[1]}
         selected={selectedId === GROUND_ROOMS[1].id}
@@ -53,10 +50,10 @@ export default function GroundFloor({ selectedId, onSelect }) {
         doorConfig={{ side: "front", offset: -0.8, type: "lab" }}
         windowConfig={{ side: "back" }}
       >
-        <LifeSciencesLabInterior />
+        <WaterPlantInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 3: Chemical & Atmospheric Lab --- */}
+      {/* --- ROOM 3: Wastewater & MBR Plant --- */}
       <InteriorRoom
         room={GROUND_ROOMS[2]}
         selected={selectedId === GROUND_ROOMS[2].id}
@@ -64,10 +61,10 @@ export default function GroundFloor({ selectedId, onSelect }) {
         doorConfig={{ side: "front", offset: 0.8, type: "lab" }}
         windowConfig={{ side: "back" }}
       >
-        <ChemicalLabInterior />
+        <WaterPlantInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 4: Electronics & Sensor Lab --- */}
+      {/* --- ROOM 4: Fuel Storage Room --- */}
       <InteriorRoom
         room={GROUND_ROOMS[3]}
         selected={selectedId === GROUND_ROOMS[3].id}
@@ -75,7 +72,7 @@ export default function GroundFloor({ selectedId, onSelect }) {
         doorConfig={{ side: "front", offset: -0.8, type: "lab" }}
         windowConfig={{ side: "back" }}
       >
-        <ElectronicsLabInterior />
+        <WaterPlantInterior />
       </InteriorRoom>
 
       {/* --- ROOM 5: Heavy Workshop & Maintenance --- */}
@@ -100,7 +97,7 @@ export default function GroundFloor({ selectedId, onSelect }) {
         <EntryAirlockInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 7: Water Treatment & Snow Melter --- */}
+      {/* --- ROOM 7: Seawater RO Plant --- */}
       <InteriorRoom
         room={GROUND_ROOMS[6]}
         selected={selectedId === GROUND_ROOMS[6].id}
@@ -111,7 +108,7 @@ export default function GroundFloor({ selectedId, onSelect }) {
         <WaterPlantInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 8: Power Generation & CHP Core --- */}
+      {/* --- ROOM 8: CHP Power Station --- */}
       <InteriorRoom
         room={GROUND_ROOMS[7]}
         selected={selectedId === GROUND_ROOMS[7].id}

@@ -18,4 +18,16 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Ported shadcn primitives co-locate their cva variant maps and contexts
+    // with the component, by design. Fast refresh still works for the
+    // components themselves.
+    files: ['src/components/ui/**/*.jsx'],
+    rules: {
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowExportNames: ['buttonVariants', 'badgeVariants', 'toggleVariants', 'ToggleGroupContext'] },
+      ],
+    },
+  },
 ])

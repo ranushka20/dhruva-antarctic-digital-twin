@@ -3,7 +3,6 @@ import Door from "./components/Door";
 import { CeilingLight } from "./components/InteriorLighting";
 import {
   AtmosphericLidarInterior,
-  ChemicalLabInterior,
   ConferenceRoomInterior,
   ControlRoomInterior,
   CrewCabinsBunkInterior,
@@ -11,10 +10,8 @@ import {
   CupolaLoungeInterior,
   DiningLoungeInterior,
   EarthSciencesLabInterior,
-  ElectronicsLabInterior,
   EntryAirlockInterior,
   GalleyKitchenInterior,
-  LifeSciencesLabInterior,
   MedicalBayInterior,
   MetObservatoryInterior,
   PowerPlantInterior,
@@ -42,14 +39,14 @@ function RoomFurnitureContent({ roomId }) {
       return <ControlRoomInterior />;
     case "comms-room":
       return <SatComInterior />;
-    case "earth-lab":
+    case "science-lab":
       return <EarthSciencesLabInterior />;
-    case "life-lab":
-      return <LifeSciencesLabInterior />;
-    case "chem-lab":
-      return <ChemicalLabInterior />;
-    case "elec-lab":
-      return <ElectronicsLabInterior />;
+    case "waste-store":
+      return <WaterPlantInterior />;
+    case "wastewater-plant":
+      return <WaterPlantInterior />;
+    case "fuel-store":
+      return <WaterPlantInterior />;
     case "medical-bay":
       return <MedicalBayInterior />;
     case "galley-kitchen":
@@ -64,17 +61,17 @@ function RoomFurnitureContent({ roomId }) {
       return <ConferenceRoomInterior />;
     case "workshop":
       return <WorkshopInterior />;
-    case "power-plant":
+    case "chp-station":
       return <PowerPlantInterior />;
-    case "water-plant":
+    case "ro-plant":
       return <WaterPlantInterior />;
     case "entrance-airlock":
       return <EntryAirlockInterior />;
     case "met-observatory":
       return <MetObservatoryInterior />;
-    case "lidar-lab":
+    case "geophysics-bay":
       return <AtmosphericLidarInterior />;
-    case "sat-processing":
+    case "earth-station":
       return <SatProcessingInterior />;
     case "cupola-lounge":
       return <CupolaLoungeInterior />;
@@ -108,7 +105,7 @@ export default function DedicatedInteriorScene({ room }) {
           INTERIOR LIGHTING RIG
       ========================================================= */}
       {/* Soft warm clean-room ambient */}
-      <ambientLight intensity={0.9} color="#f0f6fa" />
+      <ambientLight intensity={0.55} color="#f0f6fa" />
 
       {/* Primary Central Ceiling Troffer Light */}
       <pointLight

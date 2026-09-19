@@ -1,310 +1,301 @@
 import * as THREE from "three";
 
 /* =========================================================
-   BHARATI STATION DIGITAL TWIN — PBR MATERIAL SYSTEM
-   Optimized shared materials for maximum performance
+   BHARATI STATION DIGITAL TWIN — MATERIAL SYSTEM
+
+   One palette, shared with the UI shell: cool neutrals carry the
+   architecture, and saturation is reserved for things that mean
+   something (station livery, status indicators, selection).
+
+   Emissive values are deliberately low. The previous set ran at 1.4–2.2,
+   which blew out under tone mapping and made every indicator read as a
+   light source rather than a lamp.
 ========================================================= */
 
-// --- Station Structural Envelope & Exterior ---
-export const stationHullMaterial = new THREE.MeshStandardMaterial({
-  color: "#dce4ea",
-  roughness: 0.42,
-  metalness: 0.22,
+const PALETTE = {
+  // Structure
+  hull: "#d7dfe6",
+  hullDark: "#2b343d",
+  livery: "#d4682f", // Bharati's container livery orange
+  trimOuter: "#4a5660",
+
+  // Metal
+  steelDark: "#39434c",
+  steelMid: "#5a6570",
+  steelLight: "#7c8792",
+  steelChrome: "#a6b1bb",
+  metalBlack: "#1d242b",
+
+  // Interior surfaces
+  wall: "#eef1f4",
+  wallAccent: "#3c5468",
+  trim: "#bcc4cc",
+  ceiling: "#e3e8ec",
+
+  // Floors
+  floorLab: "#b2bcc4",
+  floorCorridor: "#a1aab2",
+  floorWood: "#8a6a4a",
+  floorLiving: "#bfb5a8",
+  floorSteel: "#49525b",
+
+  // Environment
+  snow: "#eef4f8",
+  snowShade: "#dce7ef",
+  rock: "#3e474e",
+
+  // Meaning
+  accent: "#6fb0d4", // matches the UI primary
+  statusGreen: "#5cc98a",
+  statusAmber: "#e8a53f",
+  statusRed: "#e3685f",
+};
+
+const standard = (color, props = {}) =>
+  new THREE.MeshStandardMaterial({ color, ...props });
+
+/* --- Station envelope & exterior --- */
+export const stationHullMaterial = standard(PALETTE.hull, {
+  roughness: 0.46,
+  metalness: 0.18,
 });
 
-export const stationHullDarkMaterial = new THREE.MeshStandardMaterial({
-  color: "#27333d",
-  roughness: 0.55,
-  metalness: 0.38,
+export const stationHullDarkMaterial = standard(PALETTE.hullDark, {
+  roughness: 0.58,
+  metalness: 0.32,
 });
 
-export const stationAccentOrangeMaterial = new THREE.MeshStandardMaterial({
-  color: "#e66a28",
-  roughness: 0.48,
-  metalness: 0.15,
-});
-
-export const exteriorTrimMaterial = new THREE.MeshStandardMaterial({
-  color: "#4d5b66",
-  roughness: 0.5,
-  metalness: 0.5,
-});
-
-// --- Structural Steel & Stilts ---
-export const galvanizedSteelMaterial = new THREE.MeshStandardMaterial({
-  color: "#3a4750",
-  roughness: 0.45,
-  metalness: 0.78,
-});
-
-export const steelLightMaterial = new THREE.MeshStandardMaterial({
-  color: "#7a8a94",
-  roughness: 0.38,
-  metalness: 0.85,
-});
-
-export const darkMetalMaterial = new THREE.MeshStandardMaterial({
-  color: "#1c242b",
-  roughness: 0.6,
-  metalness: 0.4,
-});
-
-export const metalMaterial = new THREE.MeshStandardMaterial({
-  color: "#5b6873",
-  roughness: 0.42,
-  metalness: 0.72,
-});
-
-export const chromeMaterial = new THREE.MeshStandardMaterial({
-  color: "#a4b3be",
-  roughness: 0.25,
-  metalness: 0.92,
-});
-
-// --- Interior Walls & Ceilings ---
-export const wallMaterial = new THREE.MeshStandardMaterial({
-  color: "#f0f3f5",
-  roughness: 0.78,
-  metalness: 0.05,
-});
-
-export const wallAccentMaterial = new THREE.MeshStandardMaterial({
-  color: "#3d5a73",
-  roughness: 0.7,
+export const stationAccentOrangeMaterial = standard(PALETTE.livery, {
+  roughness: 0.52,
   metalness: 0.1,
 });
 
-export const trimMaterial = new THREE.MeshStandardMaterial({
-  color: "#bcc6ce",
-  roughness: 0.6,
-  metalness: 0.2,
+export const exteriorTrimMaterial = standard(PALETTE.trimOuter, {
+  roughness: 0.54,
+  metalness: 0.42,
 });
 
-export const ceilingMaterial = new THREE.MeshStandardMaterial({
-  color: "#e2e8ec",
-  roughness: 0.85,
+/* --- Structural steel & stilts --- */
+export const galvanizedSteelMaterial = standard(PALETTE.steelDark, {
+  roughness: 0.5,
+  metalness: 0.7,
 });
 
-// --- Floor Materials ---
-export const floorLabMaterial = new THREE.MeshStandardMaterial({
-  color: "#b0bcc4",
-  roughness: 0.65,
-  metalness: 0.08,
+export const steelLightMaterial = standard(PALETTE.steelLight, {
+  roughness: 0.44,
+  metalness: 0.72,
 });
 
-export const floorCorridorMaterial = new THREE.MeshStandardMaterial({
-  color: "#9eaab3",
-  roughness: 0.72,
+export const darkMetalMaterial = standard(PALETTE.metalBlack, {
+  roughness: 0.62,
+  metalness: 0.38,
+});
+
+export const metalMaterial = standard(PALETTE.steelMid, {
+  roughness: 0.46,
+  metalness: 0.64,
+});
+
+export const chromeMaterial = standard(PALETTE.steelChrome, {
+  roughness: 0.3,
+  metalness: 0.86,
+});
+
+/* --- Interior walls & ceilings --- */
+export const wallMaterial = standard(PALETTE.wall, {
+  roughness: 0.82,
+  metalness: 0.02,
+});
+
+export const wallAccentMaterial = standard(PALETTE.wallAccent, {
+  roughness: 0.74,
+  metalness: 0.06,
+});
+
+export const trimMaterial = standard(PALETTE.trim, {
+  roughness: 0.64,
+  metalness: 0.14,
+});
+
+export const ceilingMaterial = standard(PALETTE.ceiling, { roughness: 0.88 });
+
+/* --- Floors --- */
+export const floorLabMaterial = standard(PALETTE.floorLab, {
+  roughness: 0.7,
   metalness: 0.05,
 });
 
-export const floorWoodMaterial = new THREE.MeshStandardMaterial({
-  color: "#8c6239",
-  roughness: 0.58,
+export const floorCorridorMaterial = standard(PALETTE.floorCorridor, {
+  roughness: 0.76,
+  metalness: 0.04,
+});
+
+export const floorWoodMaterial = standard(PALETTE.floorWood, {
+  roughness: 0.64,
   metalness: 0.02,
 });
 
-export const floorLivingMaterial = new THREE.MeshStandardMaterial({
-  color: "#c2b4a3",
-  roughness: 0.75,
+export const floorLivingMaterial = standard(PALETTE.floorLiving, {
+  roughness: 0.78,
   metalness: 0.02,
 });
 
-export const floorSteelPlateMaterial = new THREE.MeshStandardMaterial({
-  color: "#47525a",
-  roughness: 0.52,
-  metalness: 0.65,
+export const floorSteelPlateMaterial = standard(PALETTE.floorSteel, {
+  roughness: 0.56,
+  metalness: 0.58,
 });
 
-// Backward compatibility
+// Backward compatibility with older imports.
 export const floorMaterial = floorLabMaterial;
 export const corridorMaterial = floorCorridorMaterial;
 export const woodMaterial = floorWoodMaterial;
 
-// --- Doors & Windows ---
-export const doorFrameMaterial = new THREE.MeshStandardMaterial({
-  color: "#2c3842",
-  roughness: 0.45,
-  metalness: 0.6,
-});
-
-export const doorWoodMaterial = new THREE.MeshStandardMaterial({
-  color: "#784b28",
-  roughness: 0.62,
-});
-
-export const doorLabMaterial = new THREE.MeshStandardMaterial({
-  color: "#2a5d7c",
+/* --- Doors & glazing --- */
+export const doorFrameMaterial = standard("#2f3943", {
   roughness: 0.5,
-  metalness: 0.2,
+  metalness: 0.52,
 });
 
-export const doorEmergencyMaterial = new THREE.MeshStandardMaterial({
-  color: "#d94326",
-  roughness: 0.48,
-  metalness: 0.15,
+export const doorWoodMaterial = standard("#7c5738", { roughness: 0.66 });
+
+export const doorLabMaterial = standard("#31607d", {
+  roughness: 0.54,
+  metalness: 0.16,
+});
+
+export const doorEmergencyMaterial = standard("#c9503a", {
+  roughness: 0.52,
+  metalness: 0.1,
 });
 
 export const doorMaterial = doorLabMaterial;
 
-export const glassMaterial = new THREE.MeshStandardMaterial({
-  color: "#5fa0bc",
-  roughness: 0.1,
-  metalness: 0.25,
-  transparent: true,
-  opacity: 0.45,
-});
-
-export const glassTintedMaterial = new THREE.MeshStandardMaterial({
-  color: "#18455b",
+export const glassMaterial = standard("#8fb9cd", {
   roughness: 0.12,
-  metalness: 0.4,
+  metalness: 0.2,
   transparent: true,
-  opacity: 0.78,
+  opacity: 0.38,
 });
 
-export const glassClearMaterial = new THREE.MeshStandardMaterial({
-  color: "#9ec9db",
-  roughness: 0.08,
-  metalness: 0.15,
+export const glassTintedMaterial = standard("#24475b", {
+  roughness: 0.14,
+  metalness: 0.35,
   transparent: true,
-  opacity: 0.35,
+  opacity: 0.7,
 });
 
-// --- Furniture & Upholstery ---
-export const tableTopMaterial = new THREE.MeshStandardMaterial({
-  color: "#eceef0",
-  roughness: 0.55,
-  metalness: 0.05,
+export const glassClearMaterial = standard("#b3d3e1", {
+  roughness: 0.1,
+  metalness: 0.12,
+  transparent: true,
+  opacity: 0.28,
 });
 
-export const tableWoodMaterial = new THREE.MeshStandardMaterial({
-  color: "#996b42",
-  roughness: 0.65,
+/* --- Furniture & upholstery --- */
+export const tableTopMaterial = standard("#e9ecef", {
+  roughness: 0.6,
+  metalness: 0.04,
 });
 
-export const fabricBlueMaterial = new THREE.MeshStandardMaterial({
-  color: "#234e70",
-  roughness: 0.88,
+export const tableWoodMaterial = standard("#8f6b47", { roughness: 0.7 });
+
+export const fabricBlueMaterial = standard("#2b4f6b", { roughness: 0.9 });
+export const fabricOrangeMaterial = standard("#c06736", { roughness: 0.9 });
+export const fabricGreyMaterial = standard("#464f58", { roughness: 0.88 });
+export const bedSheetMaterial = standard("#d6dee4", { roughness: 0.92 });
+
+export const sanitaryMaterial = standard("#e9eef1", {
+  roughness: 0.34,
+  metalness: 0.06,
 });
 
-export const fabricOrangeMaterial = new THREE.MeshStandardMaterial({
-  color: "#d16828",
-  roughness: 0.88,
+/* --- Displays & indicators ---
+   Screens read as lit panels, not lamps: low emissive, dark base colour. */
+export const screenGlowMaterial = standard("#15323f", {
+  emissive: PALETTE.accent,
+  emissiveIntensity: 0.5,
+  roughness: 0.24,
 });
 
-export const fabricGreyMaterial = new THREE.MeshStandardMaterial({
-  color: "#434f59",
-  roughness: 0.85,
+export const screenAmberMaterial = standard("#3c2e14", {
+  emissive: PALETTE.statusAmber,
+  emissiveIntensity: 0.45,
+  roughness: 0.24,
 });
 
-export const bedSheetMaterial = new THREE.MeshStandardMaterial({
-  color: "#d4dde3",
-  roughness: 0.9,
+export const indicatorGreenMaterial = standard("#1e3f2c", {
+  emissive: PALETTE.statusGreen,
+  emissiveIntensity: 0.85,
+  roughness: 0.25,
 });
 
-export const sanitaryMaterial = new THREE.MeshStandardMaterial({
-  color: "#e8eff2",
-  roughness: 0.3,
+export const indicatorOrangeMaterial = standard("#40300f", {
+  emissive: PALETTE.statusAmber,
+  emissiveIntensity: 0.85,
+  roughness: 0.25,
+});
+
+export const indicatorRedMaterial = standard("#401c19", {
+  emissive: PALETTE.statusRed,
+  emissiveIntensity: 0.85,
+  roughness: 0.25,
+});
+
+export const solarMaterial = standard("#101e29", {
+  emissive: "#16303f",
+  emissiveIntensity: 0.1,
+  roughness: 0.22,
+  metalness: 0.74,
+});
+
+export const laserGlowMaterial = standard("#177a56", {
+  emissive: "#3ec78f",
+  emissiveIntensity: 1,
+  roughness: 0.15,
+});
+
+/* --- Environment --- */
+export const snowMaterial = standard(PALETTE.snow, {
+  roughness: 0.96,
+  metalness: 0,
+});
+
+export const snowDriftMaterial = standard(PALETTE.snowShade, {
+  roughness: 0.98,
+  metalness: 0,
+});
+
+export const rockMaterial = standard(PALETTE.rock, {
+  roughness: 0.92,
   metalness: 0.1,
 });
 
-// --- Technical & Displays ---
-export const screenGlowMaterial = new THREE.MeshStandardMaterial({
-  color: "#103d52",
-  emissive: "#34b3cf",
-  emissiveIntensity: 0.85,
-  roughness: 0.2,
-});
-
-export const screenAmberMaterial = new THREE.MeshStandardMaterial({
-  color: "#4a3212",
-  emissive: "#f0a83a",
-  emissiveIntensity: 0.9,
-  roughness: 0.2,
-});
-
-export const indicatorGreenMaterial = new THREE.MeshStandardMaterial({
-  color: "#1b4d2e",
-  emissive: "#50e386",
-  emissiveIntensity: 1.4,
-  roughness: 0.2,
-});
-
-export const indicatorOrangeMaterial = new THREE.MeshStandardMaterial({
-  color: "#523311",
-  emissive: "#f09828",
-  emissiveIntensity: 1.4,
-  roughness: 0.2,
-});
-
-export const indicatorRedMaterial = new THREE.MeshStandardMaterial({
-  color: "#521616",
-  emissive: "#ff4d4d",
-  emissiveIntensity: 1.4,
-  roughness: 0.2,
-});
-
-export const solarMaterial = new THREE.MeshStandardMaterial({
-  color: "#0a1f2e",
-  emissive: "#0e344d",
-  emissiveIntensity: 0.15,
-  roughness: 0.18,
-  metalness: 0.8,
-});
-
-// --- Environment: Snow & Rock ---
-export const snowMaterial = new THREE.MeshStandardMaterial({
-  color: "#ebf3f7",
-  roughness: 0.95,
-  metalness: 0.02,
-});
-
-export const snowDriftMaterial = new THREE.MeshStandardMaterial({
-  color: "#dbe8ef",
-  roughness: 0.98,
-  metalness: 0.01,
-});
-
-export const rockMaterial = new THREE.MeshStandardMaterial({
-  color: "#3b454a",
-  roughness: 0.9,
-  metalness: 0.15,
-});
-
-// --- Selection Highlight ---
-export const selectedMaterial = new THREE.MeshStandardMaterial({
-  color: "#19768f",
-  emissive: "#19768f",
-  emissiveIntensity: 0.45,
-  roughness: 0.4,
+/* --- Selection ---
+   Tinted, not glowing: the selected room should read as highlighted
+   without becoming the brightest thing on screen. */
+export const selectedMaterial = standard("#5b93b4", {
+  emissive: PALETTE.accent,
+  emissiveIntensity: 0.22,
+  roughness: 0.48,
+  metalness: 0.08,
 });
 
 export const blueMaterial = fabricBlueMaterial;
 
-// --- Specialized Cutaway & Industrial Materials ---
-export const hazardYellowMaterial = new THREE.MeshStandardMaterial({
-  color: "#eab308",
-  roughness: 0.45,
-  metalness: 0.2,
-});
-
-export const wallCapMaterial = new THREE.MeshStandardMaterial({
-  color: "#37474f",
+/* --- Industrial / cutaway --- */
+export const hazardYellowMaterial = standard("#d9a521", {
   roughness: 0.5,
-  metalness: 0.4,
+  metalness: 0.16,
 });
 
-export const laserGlowMaterial = new THREE.MeshStandardMaterial({
-  color: "#059669",
-  emissive: "#10b981",
-  emissiveIntensity: 2.2,
-  roughness: 0.1,
+export const wallCapMaterial = standard("#3b4851", {
+  roughness: 0.54,
+  metalness: 0.34,
 });
 
-export const sampleTrayMaterial = new THREE.MeshStandardMaterial({
-  color: "#475569",
-  roughness: 0.8,
-  metalness: 0.1,
+export const sampleTrayMaterial = standard("#4b5663", {
+  roughness: 0.82,
+  metalness: 0.08,
 });
 
+export { PALETTE };

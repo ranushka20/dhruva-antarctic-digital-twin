@@ -1,6 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./styles/tokens.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -43,6 +45,40 @@
   --color-surface-raised: var(--surface-raised);
   --color-viewport: var(--viewport);
 
+  /* ---- Antarasetu design tokens (FRONTEND.md §2–5) ---- */
+  --color-as-bg: var(--bg);
+  --color-as-panel: var(--panel);
+  --color-as-panel-raised: var(--panel-raised);
+  --color-as-panel-deep: var(--panel-deep);
+  --color-as-panel-alt: var(--panel-alt);
+  --color-as-track: var(--track);
+  --color-as-line: var(--line);
+  --color-as-line-strong: var(--line-strong);
+  --color-as-text: var(--text);
+  --color-as-text-2: var(--text-2);
+  --color-as-text-3: var(--text-3);
+  --color-as-text-4: var(--text-4);
+  --color-as-act: var(--act);
+  --color-as-act-soft: var(--act-soft);
+  --color-as-ok: var(--ok);
+  --color-as-ok-soft: var(--ok-soft);
+  --color-as-watch: var(--watch);
+  --color-as-watch-soft: var(--watch-soft);
+  --color-as-unknown: var(--unknown);
+  --color-as-sim: var(--sim);
+  --color-as-sim-soft: var(--sim-soft);
+  --color-as-glow: var(--glow);
+
+  /* ---- Antarasetu typography ---- */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+
+  /* ---- Antarasetu geometry (border-radius) ---- */
+  --radius-nav: var(--r-nav);
+  --radius-card: var(--r-card);
+  --radius-inner: var(--r-inner);
+  --radius-pill: var(--r-pill);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -59,7 +95,7 @@
   --text-readout: 0.8125rem;
   --text-readout--line-height: 1.125rem;
 
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
 
   --animate-skeleton: skeleton 2s -1s infinite linear;
   --animate-caret-blink: 1s ease-out infinite caret-blink;

@@ -775,6 +775,84 @@ function writeActions(namespace: 'station' | 'hq', actions: Record<string, Actio
 }
 
 /**
+ * Chain append, inlined here on purpose. src/lib/hashChain.ts is the richer
+ * reader/verifier over the SAME `auditChain` bucket; duplicating the twelve
+ * lines below is what keeps this file dependency-free and free of an import
+ * cycle, while still guaranteeing NFR-G4: EVERY transition written through
+ * this state machine lands in the chain, including Dev A's call sites.
+ */
+interface StoredChainEntry extends AuditEntry {
+  payload: Record<string, unknown>;
+}
+
+async function appendChainEntry(
+  namespace: 'station' | 'hq',
+  input: {
+    actor: string; actorRole: string;
+    objectType: string; objectId: string;
+    transition: string; payload: Record<string, unknown>;
+    payloadSummary?: string; atStation?: string;
+  }
+): Promise<StoredChainEntry> {
+  const chain = lsRead<StoredChainEntry[]>(namespace, 'auditChain', []);
+  const prev = chain[chain.length - 1];
+  const prevHash = prev ? prev.hash : GENESIS_HASH;
+  const seq = prev ? prev.seq + 1 : 0;
+  const at = new Date().toISOString();
+
+  const payloadForHash: AuditPayload = {
+    seq, at, atStation: input.atStation,
+    actor: input.actor, actorRole: input.actorRole,
+    objectType: input.objectType, objectId: input.objectId,
+    transition: input.transition, payload: input.payload,
+  };
+  const hash = await computeEntryHash(prevHash, payloadForHash);
+
+  const entry: StoredChainEntry = {
+    seq, at, atStation: input.atStation,
+    actor: input.actor, actorRole: input.actorRole,
+    objectType: input.objectType, objectId: input.objectId,
+    transition: input.transition,
+    payloadSummary: input.payloadSummary ?? input.transition,
+    hash, prevHash,
+    writtenOffline: namespace === 'station',
+    superseded: false,
+    payload: input.payload,
+  };
+  chain.push(entry);
+  lsWrite(namespace, 'auditChain', chain);
+  return entry;
+}
+
+/**
+ * The state machine itself (FR-6.1): RAISED → ACKNOWLEDGED → ASSIGNED →
+ * IN_PROGRESS → RESOLVED, with DEFERRED reachable from any pre-resolved
+ * state and RESOLVED terminal. Board-view drags and keyboard shortcuts all
+ * funnel through `canTransition`, so an illegal move is rejected with a
+ * reason instead of silently corrupting the timeline.
+ */
+export const ALLOWED_TRANSITIONS: Record<Action['state'], Action['state'][]> = {
+  RAISED: ['ACKNOWLEDGED', 'ASSIGNED', 'DEFERRED'],
+  ACKNOWLEDGED: ['ASSIGNED', 'IN_PROGRESS', 'DEFERRED'],
+  ASSIGNED: ['IN_PROGRESS', 'RESOLVED', 'DEFERRED'],
+  IN_PROGRESS: ['RESOLVED', 'DEFERRED'],
+  DEFERRED: ['ACKNOWLEDGED', 'ASSIGNED', 'IN_PROGRESS'],
+  RESOLVED: [],
+};
+
+export function canTransition(
+  from: Action['state'],
+  to: Action['state']
+): { ok: true } | { ok: false; reason: string } {
+  if (from === to) return { ok: false, reason: `Already ${from}.` };
+  if (from === 'RESOLVED') return { ok: false, reason: 'RESOLVED is terminal — raise a new action instead.' };
+  if (!ALLOWED_TRANSITIONS[from].includes(to)) {
+    return { ok: false, reason: `${from} cannot move straight to ${to}.` };
+  }
+  return { ok: true };
+}
+
+/**
  * useActionTransitions — the real implementation for this build, backed by
  * localStorage. Dev A's pages (Twin zone inspector, Asset detail) call this
  * and never reimplement the state machine. `namespace` defaults to 'hq';
@@ -782,73 +860,158 @@ function writeActions(namespace: 'station' | 'hq', actions: Record<string, Actio
  * transitions land in the station-side store until the sync simulation
  * drains them (see §4.4).
  */
-export function useActionTransitions(namespace: 'station' | 'hq' = 'hq') {
-  const writeTimeline = (a: Action, note: string | undefined, prevHash: string) => {
-    a.timeline.push({
-      state: a.state, at: new Date().toISOString(), by: 'current-user',
-      note, hash: '', prevHash, pendingSync: namespace === 'station',
+export interface TransitionActor { name: string; role: string }
+
+const DEFAULT_ACTOR: TransitionActor = { name: 'current-user', role: 'hq_operator' };
+
+export function useActionTransitions(
+  namespace: 'station' | 'hq' = 'hq',
+  actor: TransitionActor = DEFAULT_ACTOR
+) {
+  /**
+   * One helper for every transition: validate, mutate, hash, record. The
+   * timeline row carries the chain entry's real hash and prevHash, so the
+   * Action Centre timeline and the /compliance audit log are two views of
+   * the same chain rather than two stories.
+   */
+  const apply = async (
+    actionId: string,
+    to: Action['state'],
+    note: string | undefined,
+    mutate: (a: Action) => void,
+    payload: Record<string, unknown>
+  ): Promise<Action> => {
+    const actions = readActions(namespace);
+    const a = actions[actionId];
+    if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
+
+    const check = canTransition(a.state, to);
+    if (!check.ok) throw new Error(check.reason);
+
+    const from = a.state;
+    a.state = to;
+    mutate(a);
+
+    const entry = await appendChainEntry(namespace, {
+      actor: actor.name, actorRole: actor.role,
+      objectType: 'action', objectId: actionId,
+      transition: `${from} -> ${to}`,
+      payload: { from, to, ...payload },
+      payloadSummary: note ?? `${from} -> ${to}`,
+      atStation: namespace === 'station' ? new Date().toISOString() : undefined,
     });
+
+    a.timeline.push({
+      state: to,
+      at: entry.at,
+      by: actor.name,
+      note,
+      hash: entry.hash,
+      prevHash: entry.prevHash,
+      // Offline transitions are optimistic until the outbox drains (FR-6.7).
+      pendingSync: namespace === 'station',
+    });
+
+    writeActions(namespace, actions);
+    notify();
+    return a;
   };
 
   return {
-    acknowledge: async (actionId: string, actor: string) => {
-      const actions = readActions(namespace);
-      const a = actions[actionId];
-      if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
-      a.state = 'ACKNOWLEDGED';
-      writeTimeline(a, `acknowledged by ${actor}`, a.timeline.at(-1)?.hash ?? GENESIS_HASH);
-      writeActions(namespace, actions);
-      notify();
-    },
-    assign: async (actionId: string, assignee: { id: string; name: string; role: string }) => {
-      const actions = readActions(namespace);
-      const a = actions[actionId];
-      if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
-      a.state = 'ASSIGNED'; a.assignee = assignee;
-      writeTimeline(a, `assigned to ${assignee.name}`, a.timeline.at(-1)?.hash ?? GENESIS_HASH);
-      writeActions(namespace, actions);
-      notify();
-    },
-    defer: async (actionId: string, reason: string, reviewDate: string) => {
-      if (!reason || !reviewDate) throw new Error('Defer requires a reason AND a review date');
-      const actions = readActions(namespace);
-      const a = actions[actionId];
-      if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
-      a.state = 'DEFERRED'; a.deferral = { reason, reviewDate };
-      writeTimeline(a, reason, a.timeline.at(-1)?.hash ?? GENESIS_HASH);
-      writeActions(namespace, actions);
-      notify();
-    },
-    resolve: async (actionId: string, note: string, evidenceIds: string[]) => {
-      const actions = readActions(namespace);
-      const a = actions[actionId];
-      if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
-      if ((a.tier === 'T0' || a.tier === 'T1') && evidenceIds.length === 0) {
-        throw new Error('Resolving a T0/T1 action requires at least one evidence item');
+    acknowledge: (actionId: string, actorName: string = actor.name) =>
+      apply(actionId, 'ACKNOWLEDGED', `acknowledged by ${actorName}`, () => {}, { by: actorName }),
+
+    assign: (actionId: string, assignee: { id: string; name: string; role: string }) =>
+      apply(actionId, 'ASSIGNED', `assigned to ${assignee.name}`, (a) => { a.assignee = assignee; }, { assignee }),
+
+    start: (actionId: string, note?: string) =>
+      apply(actionId, 'IN_PROGRESS', note ?? 'work started', () => {}, {}),
+
+    /** FR-6.4: rejected without BOTH a reason and a review date. */
+    defer: (actionId: string, reason: string, reviewDate: string) => {
+      if (!reason?.trim() || !reviewDate) {
+        return Promise.reject(new Error('Defer requires a reason AND a review date.'));
       }
-      a.state = 'RESOLVED';
-      a.resolution = { note, at: new Date().toISOString(), by: 'current-user' };
-      writeTimeline(a, note, a.timeline.at(-1)?.hash ?? GENESIS_HASH);
-      writeActions(namespace, actions);
-      notify();
+      return apply(actionId, 'DEFERRED', reason, (a) => { a.deferral = { reason, reviewDate }; },
+        { reason, reviewDate });
     },
+
+    /** FR-6.5: a resolution note always; evidence too for T0/T1. */
+    resolve: (actionId: string, note: string, evidenceIds: string[] = []) => {
+      const existing = readActions(namespace)[actionId];
+      if (!note?.trim()) return Promise.reject(new Error('Resolving requires a resolution note.'));
+      if (existing && (existing.tier === 'T0' || existing.tier === 'T1')
+          && evidenceIds.length === 0 && existing.evidence.length === 0) {
+        return Promise.reject(new Error('Resolving a T0/T1 action requires at least one evidence item.'));
+      }
+      return apply(actionId, 'RESOLVED', note,
+        (a) => { a.resolution = { note, at: new Date().toISOString(), by: actor.name }; },
+        { note, evidenceIds });
+    },
+
+    /** Generic mover for the board view — same validation, same chain write. */
+    transitionTo: (actionId: string, to: Action['state'], note?: string) =>
+      apply(actionId, to, note, () => {}, {}),
+
     raise: async (
       draft: Pick<Action, 'stationId' | 'tier' | 'title' | 'reason' | 'trigger'> & Partial<Action>
     ): Promise<string> => {
       const id = draft.id ?? `act-${Math.random().toString(36).slice(2, 9)}`;
+      const raisedAt = new Date().toISOString();
       const action: Action = {
         id, state: 'RAISED', evidence: [], timeline: [],
         sla: { targetSeconds: 0, elapsedSeconds: 0, pausedSeconds: 0, breached: false },
-        raisedAt: new Date().toISOString(), ageSeconds: 0,
+        raisedAt, ageSeconds: 0,
         ...draft,
       } as Action;
-      writeTimeline(action, 'raised', GENESIS_HASH);
+
+      const entry = await appendChainEntry(namespace, {
+        actor: actor.name, actorRole: actor.role,
+        objectType: 'action', objectId: id,
+        transition: 'RAISED',
+        payload: { tier: action.tier, title: action.title, stationId: action.stationId },
+        payloadSummary: action.title,
+        atStation: namespace === 'station' ? raisedAt : undefined,
+      });
+
+      action.timeline.push({
+        state: 'RAISED', at: entry.at, by: actor.name, note: action.reason,
+        hash: entry.hash, prevHash: entry.prevHash, pendingSync: namespace === 'station',
+      });
+
       const actions = readActions(namespace);
       actions[id] = action;
       writeActions(namespace, actions);
       notify();
       return id;
     },
+
+    /** FR-5.6 — evidence attaches without blocking its parent record. */
+    attachEvidence: async (
+      actionId: string,
+      evidence: { kind: 'photo' | 'reading' | 'note' | 'file'; label: string }
+    ): Promise<void> => {
+      const actions = readActions(namespace);
+      const a = actions[actionId];
+      if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
+      a.evidence.push({
+        id: `${actionId}-ev-${a.evidence.length}`,
+        kind: evidence.kind,
+        label: evidence.label,
+        at: new Date().toISOString(),
+        pendingSync: namespace === 'station',
+      });
+      await appendChainEntry(namespace, {
+        actor: actor.name, actorRole: actor.role,
+        objectType: 'action', objectId: actionId,
+        transition: 'EVIDENCE_ATTACHED',
+        payload: { kind: evidence.kind, label: evidence.label },
+        payloadSummary: evidence.label,
+      });
+      writeActions(namespace, actions);
+      notify();
+    },
+
     list: (): Action[] => Object.values(readActions(namespace)),
     get: (actionId: string): Action | undefined => readActions(namespace)[actionId],
   };

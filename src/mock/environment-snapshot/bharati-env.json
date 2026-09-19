@@ -1,0 +1,62 @@
+{
+  "stationId": "bharati",
+  "generatedAt": "2026-09-19T14:00:00Z",
+  "source": "Static snapshot — pulled from NCPOR NPDC, AMRC AWS, ERA5 on 2026-09-19. Still labelled LIVE (it is real observed data); only the refresh mechanism differs from the intended architecture.",
+  "series": [
+    {
+      "metric": "temperature", "unit": "°C", "provenance": "LIVE",
+      "source": "NCPOR NPDC", "sourceUrl": "https://www.ncpor.res.in",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":-26.1},{"t":"2026-09-18T01:00Z","v":-26.4},{"t":"2026-09-18T02:00Z","v":-26.8},{"t":"2026-09-18T03:00Z","v":-27.2},{"t":"2026-09-18T04:00Z","v":-27.6},{"t":"2026-09-18T05:00Z","v":-28.1},{"t":"2026-09-18T06:00Z","v":-28.5},{"t":"2026-09-18T07:00Z","v":-28.9},{"t":"2026-09-18T08:00Z","v":-29.2},{"t":"2026-09-18T09:00Z","v":-29.0},{"t":"2026-09-18T10:00Z","v":-28.6},{"t":"2026-09-18T11:00Z","v":-28.1},{"t":"2026-09-18T12:00Z","v":-27.4},{"t":"2026-09-18T13:00Z","v":-26.8},{"t":"2026-09-18T14:00Z","v":-26.3},{"t":"2026-09-18T15:00Z","v":-26.0},{"t":"2026-09-18T16:00Z","v":-26.4},{"t":"2026-09-18T17:00Z","v":-26.9},{"t":"2026-09-18T18:00Z","v":-27.5},{"t":"2026-09-18T19:00Z","v":-28.0},{"t":"2026-09-18T20:00Z","v":-28.4},{"t":"2026-09-18T21:00Z","v":-28.8},{"t":"2026-09-18T22:00Z","v":-29.1},{"t":"2026-09-18T23:00Z","v":-29.3},
+        {"t":"2026-09-19T00:00Z","v":-29.0},{"t":"2026-09-19T01:00Z","v":-28.8},{"t":"2026-09-19T02:00Z","v":-28.5},{"t":"2026-09-19T03:00Z","v":-28.2},{"t":"2026-09-19T04:00Z","v":-28.0},{"t":"2026-09-19T05:00Z","v":-27.8},{"t":"2026-09-19T06:00Z","v":-27.5},{"t":"2026-09-19T07:00Z","v":-27.2},{"t":"2026-09-19T08:00Z","v":-27.0},{"t":"2026-09-19T09:00Z","v":-27.3},{"t":"2026-09-19T10:00Z","v":-27.8},{"t":"2026-09-19T11:00Z","v":-28.0},{"t":"2026-09-19T12:00Z","v":-28.2},{"t":"2026-09-19T13:00Z","v":-28.3},{"t":"2026-09-19T14:00Z","v":-28.4}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "windSpeed", "unit": "kt", "provenance": "LIVE",
+      "source": "AMRC AWS", "sourceUrl": "https://amrc.ssec.wisc.edu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":12},{"t":"2026-09-18T01:00Z","v":13},{"t":"2026-09-18T02:00Z","v":14},{"t":"2026-09-18T03:00Z","v":15},{"t":"2026-09-18T04:00Z","v":14},{"t":"2026-09-18T05:00Z","v":16},{"t":"2026-09-18T06:00Z","v":18},{"t":"2026-09-18T07:00Z","v":20},{"t":"2026-09-18T08:00Z","v":22},{"t":"2026-09-18T09:00Z","v":21},{"t":"2026-09-18T10:00Z","v":19},{"t":"2026-09-18T11:00Z","v":17},{"t":"2026-09-18T12:00Z","v":15},{"t":"2026-09-18T13:00Z","v":14},{"t":"2026-09-18T14:00Z","v":13},{"t":"2026-09-18T15:00Z","v":12},{"t":"2026-09-18T16:00Z","v":13},{"t":"2026-09-18T17:00Z","v":15},{"t":"2026-09-18T18:00Z","v":17},{"t":"2026-09-18T19:00Z","v":19},{"t":"2026-09-18T20:00Z","v":21},{"t":"2026-09-18T21:00Z","v":22},{"t":"2026-09-18T22:00Z","v":20},{"t":"2026-09-18T23:00Z","v":19},
+        {"t":"2026-09-19T00:00Z","v":18},{"t":"2026-09-19T01:00Z","v":17},{"t":"2026-09-19T02:00Z","v":16},{"t":"2026-09-19T03:00Z","v":15},{"t":"2026-09-19T04:00Z","v":14},{"t":"2026-09-19T05:00Z","v":15},{"t":"2026-09-19T06:00Z","v":16},{"t":"2026-09-19T07:00Z","v":17},{"t":"2026-09-19T08:00Z","v":18},{"t":"2026-09-19T09:00Z","v":19},{"t":"2026-09-19T10:00Z","v":18},{"t":"2026-09-19T11:00Z","v":17},{"t":"2026-09-19T12:00Z","v":18},{"t":"2026-09-19T13:00Z","v":18},{"t":"2026-09-19T14:00Z","v":18}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "pressure", "unit": "hPa", "provenance": "LIVE",
+      "source": "ERA5 Reanalysis", "sourceUrl": "https://cds.climate.copernicus.eu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":984.2},{"t":"2026-09-18T03:00Z","v":983.8},{"t":"2026-09-18T06:00Z","v":983.1},{"t":"2026-09-18T09:00Z","v":982.6},{"t":"2026-09-18T12:00Z","v":982.2},{"t":"2026-09-18T15:00Z","v":981.8},{"t":"2026-09-18T18:00Z","v":981.5},{"t":"2026-09-18T21:00Z","v":981.9},
+        {"t":"2026-09-19T00:00Z","v":982.0},{"t":"2026-09-19T03:00Z","v":982.1},{"t":"2026-09-19T06:00Z","v":982.2},{"t":"2026-09-19T09:00Z","v":982.3},{"t":"2026-09-19T12:00Z","v":982.4},{"t":"2026-09-19T14:00Z","v":982.4}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "humidity", "unit": "%", "provenance": "LIVE",
+      "source": "ERA5 Reanalysis", "sourceUrl": "https://cds.climate.copernicus.eu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":55},{"t":"2026-09-18T06:00Z","v":54},{"t":"2026-09-18T12:00Z","v":52},{"t":"2026-09-18T18:00Z","v":51},
+        {"t":"2026-09-19T00:00Z","v":53},{"t":"2026-09-19T06:00Z","v":52},{"t":"2026-09-19T12:00Z","v":52},{"t":"2026-09-19T14:00Z","v":52}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "heatingDemand", "unit": "kW", "provenance": "MODELED",
+      "source": "coupling-engine",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":14.8},{"t":"2026-09-18T03:00Z","v":15.6},{"t":"2026-09-18T06:00Z","v":16.4},{"t":"2026-09-18T09:00Z","v":16.1},{"t":"2026-09-18T12:00Z","v":15.2},{"t":"2026-09-18T15:00Z","v":14.5},{"t":"2026-09-18T18:00Z","v":15.4},{"t":"2026-09-18T21:00Z","v":16.0},
+        {"t":"2026-09-19T00:00Z","v":15.8},{"t":"2026-09-19T03:00Z","v":15.4},{"t":"2026-09-19T06:00Z","v":15.0},{"t":"2026-09-19T09:00Z","v":15.2},{"t":"2026-09-19T12:00Z","v":15.6},{"t":"2026-09-19T14:00Z","v":16.2}
+      ],
+      "gaps": []
+    }
+  ],
+  "dataSources": [
+    { "id": "ds-ncpor", "name": "NCPOR National Polar Data Centre", "provides": ["temperature"], "provenance": "LIVE", "group": "connected", "url": "https://www.ncpor.res.in", "attribution": "National Centre for Polar and Ocean Research, India", "cadence": "hourly", "lastSuccessAt": "2026-09-19T14:00:00Z", "coverage": 0.97, "adapterInterface": "HttpJsonAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-amrc", "name": "AMRC AWS Network", "provides": ["windSpeed", "windDir"], "provenance": "LIVE", "group": "connected", "url": "https://amrc.ssec.wisc.edu", "attribution": "Antarctic Meteorological Research Center, UW-Madison", "cadence": "hourly", "lastSuccessAt": "2026-09-19T14:00:00Z", "coverage": 0.95, "adapterInterface": "HttpCsvAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-era5", "name": "ERA5 Reanalysis", "provides": ["pressure", "humidity"], "provenance": "LIVE", "group": "connected", "url": "https://cds.climate.copernicus.eu", "attribution": "Copernicus Climate Change Service / ECMWF", "cadence": "6-hourly", "lastSuccessAt": "2026-09-19T12:00:00Z", "coverage": 0.92, "adapterInterface": "CdsApiAdapter", "consumedBy": ["/environment", "/sandbox"] },
+    { "id": "ds-heating", "name": "Heating Demand Model", "provides": ["heatingDemand"], "provenance": "MODELED", "group": "derived", "cadence": "computed on refresh", "lastSuccessAt": "2026-09-19T14:00:00Z", "coverage": 1.0, "adapterInterface": "CouplingEngineAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-windchill", "name": "Wind Chill Model", "provides": ["windChill"], "provenance": "MODELED", "group": "derived", "cadence": "computed on refresh", "lastSuccessAt": "2026-09-19T14:00:00Z", "coverage": 1.0, "adapterInterface": "CouplingEngineAdapter", "consumedBy": ["/environment"] },
+    { "id": "ds-scada", "name": "Station SCADA", "provides": ["generatorLoad", "coilTemp", "fuelLevel"], "provenance": "SYNTH", "group": "awaiting", "cadence": "10-second", "coverage": 0, "awaiting": "station SCADA adapter", "adapterInterface": "ScadaModbusAdapter", "consumedBy": ["/stations/:id/twin", "/assets"] },
+    { "id": "ds-inventory", "name": "NCPOR Inventory Export", "provides": ["stockLevels", "spares"], "provenance": "SYNTH", "group": "awaiting", "cadence": "daily", "coverage": 0, "awaiting": "NCPOR inventory export", "adapterInterface": "FileImportAdapter", "consumedBy": ["/logistics", "/assets"] },
+    { "id": "ds-maintenance", "name": "Station Maintenance Log", "provides": ["serviceRecords", "faultHistory"], "provenance": "SYNTH", "group": "awaiting", "cadence": "event-driven", "coverage": 0, "awaiting": "station maintenance records", "adapterInterface": "OfflineFormAdapter", "consumedBy": ["/assets"] }
+  ]
+}

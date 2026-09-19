@@ -1,0 +1,59 @@
+{
+  "stationId": "maitri",
+  "generatedAt": "2026-09-19T12:00:00Z",
+  "source": "Static snapshot — pulled from SCAR READER, AMRC AWS, ERA5 on 2026-09-19.",
+  "series": [
+    {
+      "metric": "temperature", "unit": "°C", "provenance": "LIVE",
+      "source": "SCAR READER", "sourceUrl": "https://www.scar.org/resources/data",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":-31.2},{"t":"2026-09-18T03:00Z","v":-32.0},{"t":"2026-09-18T06:00Z","v":-33.1},{"t":"2026-09-18T09:00Z","v":-33.8},{"t":"2026-09-18T12:00Z","v":-33.2},{"t":"2026-09-18T15:00Z","v":-32.4},{"t":"2026-09-18T18:00Z","v":-33.0},{"t":"2026-09-18T21:00Z","v":-33.6},
+        {"t":"2026-09-19T00:00Z","v":-34.0},{"t":"2026-09-19T03:00Z","v":-34.2},{"t":"2026-09-19T06:00Z","v":-34.4},{"t":"2026-09-19T09:00Z","v":-34.3},{"t":"2026-09-19T12:00Z","v":-34.1}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "windSpeed", "unit": "kt", "provenance": "LIVE",
+      "source": "AMRC AWS", "sourceUrl": "https://amrc.ssec.wisc.edu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":18},{"t":"2026-09-18T03:00Z","v":20},{"t":"2026-09-18T06:00Z","v":22},{"t":"2026-09-18T09:00Z","v":25},{"t":"2026-09-18T12:00Z","v":26},{"t":"2026-09-18T15:00Z","v":24},{"t":"2026-09-18T18:00Z","v":23},{"t":"2026-09-18T21:00Z","v":22},
+        {"t":"2026-09-19T00:00Z","v":21},{"t":"2026-09-19T03:00Z","v":22},{"t":"2026-09-19T06:00Z","v":23},{"t":"2026-09-19T09:00Z","v":24},{"t":"2026-09-19T12:00Z","v":24}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "pressure", "unit": "hPa", "provenance": "LIVE",
+      "source": "ERA5 Reanalysis", "sourceUrl": "https://cds.climate.copernicus.eu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":970.5},{"t":"2026-09-18T06:00Z","v":969.8},{"t":"2026-09-18T12:00Z","v":969.2},{"t":"2026-09-18T18:00Z","v":968.9},
+        {"t":"2026-09-19T00:00Z","v":968.5},{"t":"2026-09-19T06:00Z","v":968.6},{"t":"2026-09-19T12:00Z","v":968.7}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "humidity", "unit": "%", "provenance": "LIVE",
+      "source": "ERA5 Reanalysis", "sourceUrl": "https://cds.climate.copernicus.eu",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":50},{"t":"2026-09-18T06:00Z","v":49},{"t":"2026-09-18T12:00Z","v":47},{"t":"2026-09-18T18:00Z","v":48},
+        {"t":"2026-09-19T00:00Z","v":49},{"t":"2026-09-19T06:00Z","v":48},{"t":"2026-09-19T12:00Z","v":48}
+      ],
+      "gaps": []
+    },
+    {
+      "metric": "heatingDemand", "unit": "kW", "provenance": "MODELED",
+      "source": "coupling-engine",
+      "points": [
+        {"t":"2026-09-18T00:00Z","v":16.8},{"t":"2026-09-18T06:00Z","v":18.2},{"t":"2026-09-18T12:00Z","v":17.6},{"t":"2026-09-18T18:00Z","v":18.0},
+        {"t":"2026-09-19T00:00Z","v":18.6},{"t":"2026-09-19T06:00Z","v":18.9},{"t":"2026-09-19T12:00Z","v":18.4}
+      ],
+      "gaps": []
+    }
+  ],
+  "dataSources": [
+    { "id": "ds-scar", "name": "SCAR READER Data Portal", "provides": ["temperature"], "provenance": "LIVE", "group": "connected", "url": "https://www.scar.org/resources/data", "attribution": "Scientific Committee on Antarctic Research", "cadence": "3-hourly", "lastSuccessAt": "2026-09-19T12:00:00Z", "coverage": 0.94, "adapterInterface": "HttpJsonAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-amrc-mtr", "name": "AMRC AWS Network", "provides": ["windSpeed", "windDir"], "provenance": "LIVE", "group": "connected", "url": "https://amrc.ssec.wisc.edu", "attribution": "Antarctic Meteorological Research Center, UW-Madison", "cadence": "hourly", "lastSuccessAt": "2026-09-19T12:00:00Z", "coverage": 0.91, "adapterInterface": "HttpCsvAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-era5-mtr", "name": "ERA5 Reanalysis", "provides": ["pressure", "humidity"], "provenance": "LIVE", "group": "connected", "url": "https://cds.climate.copernicus.eu", "attribution": "Copernicus Climate Change Service / ECMWF", "cadence": "6-hourly", "lastSuccessAt": "2026-09-19T12:00:00Z", "coverage": 0.88, "adapterInterface": "CdsApiAdapter", "consumedBy": ["/environment", "/sandbox"] },
+    { "id": "ds-heating-mtr", "name": "Heating Demand Model", "provides": ["heatingDemand"], "provenance": "MODELED", "group": "derived", "cadence": "computed on refresh", "coverage": 1.0, "adapterInterface": "CouplingEngineAdapter", "consumedBy": ["/environment", "/stations/:id/twin", "/sandbox"] },
+    { "id": "ds-scada-mtr", "name": "Station SCADA", "provides": ["generatorLoad", "fuelLevel"], "provenance": "SYNTH", "group": "awaiting", "cadence": "10-second", "coverage": 0, "awaiting": "station SCADA adapter", "adapterInterface": "ScadaModbusAdapter", "consumedBy": ["/stations/:id/twin", "/assets"] }
+  ]
+}

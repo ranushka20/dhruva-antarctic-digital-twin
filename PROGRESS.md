@@ -24,6 +24,14 @@
 - Touchpoint completed? none
 - Notes for the other developer: Import the shared contract from `@/shared/contracts` going forward. The original `App.jsx` (3D twin viewer) is preserved at `src/App.jsx` — Dev A should wire it into the Twin page at `/stations/:id/twin` when building that page. The project uses Tailwind CSS v4 with `@tailwindcss/vite` plugin — there is no `tailwind.config.js`; tokens are wired via CSS custom properties in `src/styles/tokens.css` and `@theme inline {}` in `src/index.css`. Use `bg-as-panel`, `text-as-ok`, `font-display`, `rounded-card` etc. as Tailwind classes.
 
+### [2026-09-20 02:20] Dev A — Twin, Assets, Environment, Sandbox
+- Status: done
+- Files changed: src/engine/*, src/mock/*, src/components/viz/*, src/pages/Twin/index.tsx, src/pages/Assets/index.tsx, src/pages/Environment/index.tsx, src/pages/Sandbox/index.tsx
+- Summary: Completed the full Dev A scope. Built the coupling engine re-exports and similarity engine. Created comprehensive mock data. Built the SVG Isometric Renderer. Assembled the Twin page with 3 columns, Asset Register & Detail with TF-IDF similarity, Environment page with stacked charts and data source register, and the Sandbox with isolated fork and persistent SIM banner. All physics coupling points use `runCausalTrace` identically.
+- Touches shared contract? no (only consumed from it)
+- Touchpoint completed? 2, 3, 5 (Dev A side completed)
+- Notes for the other developer: Dev A is finished. The mock data provides all the JSON structure needed to feed the components. Use `CausalTrace` via `runCausalTrace` exactly as done in `Twin` or `Environment`.
+
 ---
 
 ## Integration & Review
@@ -38,16 +46,16 @@ checklist at the bottom) before either side merges to `main`.
 
 | # | Touchpoint | Dev A side | Dev B side | Status |
 |---|---|---|---|---|
-| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | ⬜ not started |
-| 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | ⬜ not started |
-| 3 | Twin / Environment → "Open in Sandbox" | Owns both ends (pre-load payload) | n/a | ⬜ not started |
-| 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | ⬜ not started |
-| 5 | Asset detail → "view in 3D twin" | Owns both ends | n/a | ⬜ not started |
+| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟡 one side done (Dev A complete) |
+| 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | 🟡 one side done (Dev A complete) |
+| 3 | Twin / Environment → "Open in Sandbox" | Owns both ends (pre-load payload) | n/a | 🟢 both sides done, needs review |
+| 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | 🟡 one side done (Dev A complete) |
+| 5 | Asset detail → "view in 3D twin" | Owns both ends | n/a | 🟢 both sides done, needs review |
 | 6 | Logistics ledger row → "Raise action" | n/a | Owns both ends (pre-fill + route) | ⬜ not started |
 | 7 | Overview "View all" → Action Centre | n/a | Owns both ends (query-param filter) | ⬜ not started |
 | 8 | Compliance waste shipped → voyage link | n/a | Owns both ends (`voyageId`) | ⬜ not started |
 | 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | ⬜ not started |
-| 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | ⬜ not started |
+| 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | 🟡 one side done (Dev A complete) |
 
 Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides done, needs review` → `✅ reviewed & merged`.
 

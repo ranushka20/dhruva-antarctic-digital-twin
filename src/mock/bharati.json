@@ -1,1 +1,260 @@
-{}
+{
+  "id": "bharati",
+  "code": "BHR",
+  "name": "Bharati",
+  "lat": -69.4077,
+  "lon": 76.1968,
+  "crew": 23,
+  "sync": { "state": "LIVE", "lastSyncAt": "2026-09-19T14:18:00Z", "ageSeconds": 240 },
+  "domains": {
+    "infrastructure": { "status": "watch", "summary": "Generator #2 coil temp elevated" },
+    "energy": { "status": "ok", "summary": "62 kW load, 38% efficiency" },
+    "logistics": { "status": "ok", "summary": "214 ±18 d fuel autonomy" },
+    "environment": { "status": "ok", "summary": "-28.4 °C, 18 kt wind" }
+  },
+  "zones": [
+    {
+      "code": "A1", "name": "Power House",
+      "grid": { "gx": 0, "gy": 0 }, "height": 68,
+      "status": "warning",
+      "topLabel": "GEN LOAD",
+      "topValue": { "value": 62.4, "unit": "kW", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 62.4, "unit": "kW", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "openActionCount": 1,
+      "assets": [
+        {
+          "id": "bhr-gen-1", "name": "Generator #1",
+          "status": "ok",
+          "current": { "value": 28.5, "unit": "kW", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "threshold": { "value": 45, "unit": "kW", "label": "RATED LOAD" },
+          "series24h": [
+            {"t":"2026-09-18T14:00Z","v":27.1},{"t":"2026-09-18T16:00Z","v":27.8},{"t":"2026-09-18T18:00Z","v":28.2},{"t":"2026-09-18T20:00Z","v":29.1},{"t":"2026-09-18T22:00Z","v":30.4},{"t":"2026-09-19T00:00Z","v":31.2},{"t":"2026-09-19T02:00Z","v":30.8},{"t":"2026-09-19T04:00Z","v":29.6},{"t":"2026-09-19T06:00Z","v":28.9},{"t":"2026-09-19T08:00Z","v":28.4},{"t":"2026-09-19T10:00Z","v":28.1},{"t":"2026-09-19T12:00Z","v":28.3},{"t":"2026-09-19T14:00Z","v":28.5}
+          ],
+          "provenance": "SYNTH"
+        },
+        {
+          "id": "bhr-gen-2", "name": "Generator #2",
+          "status": "warning",
+          "current": { "value": 96.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "threshold": { "value": 90, "unit": "°C", "label": "COIL TEMP MAX" },
+          "series24h": [
+            {"t":"2026-09-18T14:00Z","v":82.1},{"t":"2026-09-18T16:00Z","v":83.5},{"t":"2026-09-18T18:00Z","v":85.2},{"t":"2026-09-18T20:00Z","v":87.8},{"t":"2026-09-18T22:00Z","v":89.4},{"t":"2026-09-19T00:00Z","v":91.2},{"t":"2026-09-19T02:00Z","v":92.8},{"t":"2026-09-19T04:00Z","v":93.6},{"t":"2026-09-19T06:00Z","v":94.1},{"t":"2026-09-19T08:00Z","v":94.8},{"t":"2026-09-19T10:00Z","v":95.3},{"t":"2026-09-19T12:00Z","v":95.9},{"t":"2026-09-19T14:00Z","v":96.2}
+          ],
+          "provenance": "SYNTH"
+        },
+        {
+          "id": "bhr-gen-3", "name": "Generator #3 (Standby)",
+          "status": "ok",
+          "current": { "value": 0, "unit": "kW", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "series24h": [],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": [
+        {
+          "id": "act-bhr-001",
+          "stationId": "bharati", "zoneCode": "A1", "assetId": "bhr-gen-2",
+          "tier": "T1", "title": "Generator #2 coil temperature exceeds threshold",
+          "reason": "Coil temperature 96.2 °C exceeds 90 °C maximum for >6h",
+          "state": "RAISED",
+          "trigger": { "metricName": "coil_temp", "measurement": { "value": 96.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" }, "threshold": { "value": 90, "unit": "°C", "label": "COIL TEMP MAX" } },
+          "consequence": { "kind": "autonomy", "before": 214, "after": 198, "unit": "d", "label": "autonomy −16 d" },
+          "evidence": [], "timeline": [],
+          "sla": { "targetSeconds": 14400, "elapsedSeconds": 3600, "pausedSeconds": 0, "breached": false },
+          "raisedAt": "2026-09-19T13:18:00Z", "ageSeconds": 3600
+        }
+      ]
+    },
+    {
+      "code": "A2", "name": "Fuel Storage",
+      "grid": { "gx": 1, "gy": 0 }, "height": 48,
+      "status": "ok",
+      "topLabel": "DIESEL",
+      "topValue": { "value": 42600, "unit": "L", "timestamp": "2026-09-19T14:18:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station fuel telemetry" },
+      "feature": "tank",
+      "summary": { "value": 42600, "unit": "L", "timestamp": "2026-09-19T14:18:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station fuel telemetry" },
+      "openActionCount": 0,
+      "assets": [
+        {
+          "id": "bhr-fuel-main", "name": "Main Fuel Tank",
+          "status": "ok",
+          "current": { "value": 42600, "unit": "L", "timestamp": "2026-09-19T14:18:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station fuel telemetry" },
+          "threshold": { "value": 10000, "unit": "L", "label": "MIN RESERVE" },
+          "series24h": [
+            {"t":"2026-09-18T14:00Z","v":42850},{"t":"2026-09-18T18:00Z","v":42780},{"t":"2026-09-18T22:00Z","v":42720},{"t":"2026-09-19T02:00Z","v":42680},{"t":"2026-09-19T06:00Z","v":42650},{"t":"2026-09-19T10:00Z","v":42620},{"t":"2026-09-19T14:00Z","v":42600}
+          ],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "A3", "name": "Comms & IT",
+      "grid": { "gx": 2, "gy": 0 }, "height": 52,
+      "status": "ok",
+      "topLabel": "LINK",
+      "topValue": { "value": "LIVE", "unit": "", "timestamp": "2026-09-19T14:18:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station comms adapter" },
+      "feature": "mast",
+      "summary": { "value": "LIVE", "unit": "", "timestamp": "2026-09-19T14:18:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station comms adapter" },
+      "openActionCount": 0,
+      "assets": [
+        {
+          "id": "bhr-vsat", "name": "VSAT Terminal",
+          "status": "ok",
+          "current": { "value": 2.4, "unit": "Mbps", "timestamp": "2026-09-19T14:18:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station comms adapter" },
+          "series24h": [{"t":"2026-09-18T14:00Z","v":2.2},{"t":"2026-09-18T18:00Z","v":2.3},{"t":"2026-09-18T22:00Z","v":2.1},{"t":"2026-09-19T02:00Z","v":1.8},{"t":"2026-09-19T06:00Z","v":2.0},{"t":"2026-09-19T10:00Z","v":2.3},{"t":"2026-09-19T14:00Z","v":2.4}],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "B1", "name": "Living Quarters",
+      "grid": { "gx": 0, "gy": 1 }, "height": 58,
+      "status": "ok",
+      "topLabel": "TEMP",
+      "topValue": { "value": 21.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 21.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "openActionCount": 0,
+      "assets": [
+        {
+          "id": "bhr-hvac-1", "name": "HVAC Unit #1",
+          "status": "ok",
+          "current": { "value": 21.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "threshold": { "value": 16, "unit": "°C", "label": "MIN COMFORT" },
+          "series24h": [{"t":"2026-09-18T14:00Z","v":21.0},{"t":"2026-09-18T18:00Z","v":21.1},{"t":"2026-09-18T22:00Z","v":20.8},{"t":"2026-09-19T02:00Z","v":20.5},{"t":"2026-09-19T06:00Z","v":20.6},{"t":"2026-09-19T10:00Z","v":21.0},{"t":"2026-09-19T14:00Z","v":21.2}],
+          "provenance": "SYNTH"
+        },
+        {
+          "id": "bhr-water-heater", "name": "Water Heater",
+          "status": "ok",
+          "current": { "value": 58.3, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "threshold": { "value": 65, "unit": "°C", "label": "MAX SAFE" },
+          "series24h": [{"t":"2026-09-18T14:00Z","v":57.8},{"t":"2026-09-18T18:00Z","v":58.0},{"t":"2026-09-18T22:00Z","v":58.1},{"t":"2026-09-19T02:00Z","v":57.5},{"t":"2026-09-19T06:00Z","v":57.9},{"t":"2026-09-19T10:00Z","v":58.1},{"t":"2026-09-19T14:00Z","v":58.3}],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "B2", "name": "Labs & Science",
+      "grid": { "gx": 1, "gy": 1 }, "height": 54,
+      "status": "ok",
+      "topLabel": "TEMP",
+      "topValue": { "value": 20.8, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 20.8, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+      "openActionCount": 0,
+      "assets": [
+        {
+          "id": "bhr-freezer-1", "name": "Sample Freezer",
+          "status": "ok",
+          "current": { "value": -80.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "lab instruments", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" },
+          "threshold": { "value": -75, "unit": "°C", "label": "MIN TEMP" },
+          "series24h": [{"t":"2026-09-18T14:00Z","v":-80.1},{"t":"2026-09-18T18:00Z","v":-80.3},{"t":"2026-09-18T22:00Z","v":-80.0},{"t":"2026-09-19T02:00Z","v":-79.8},{"t":"2026-09-19T06:00Z","v":-80.2},{"t":"2026-09-19T10:00Z","v":-80.1},{"t":"2026-09-19T14:00Z","v":-80.2}],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "B3", "name": "Storage & Workshop",
+      "grid": { "gx": 2, "gy": 1 }, "height": 46,
+      "status": "watch",
+      "topLabel": "SPARES",
+      "topValue": { "value": 78, "unit": "%", "timestamp": "2026-09-19T14:18:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station inventory system" },
+      "feature": "none",
+      "summary": { "value": 78, "unit": "%", "timestamp": "2026-09-19T14:18:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station inventory system" },
+      "openActionCount": 0,
+      "assets": [
+        {
+          "id": "bhr-crane", "name": "Overhead Crane",
+          "status": "ok",
+          "current": { "value": 1240, "unit": "h", "timestamp": "2026-09-19T14:18:00Z", "source": "station maintenance records", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station maintenance records" },
+          "series24h": [],
+          "provenance": "SYNTH"
+        }
+      ],
+      "openActions": []
+    }
+  ],
+  "resources": [
+    {
+      "id": "bhr-diesel", "name": "Diesel (ANP)", "stationId": "bharati",
+      "category": "fuel",
+      "stock": { "value": 42600, "unit": "L", "timestamp": "2026-09-19T14:18:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station fuel telemetry" },
+      "burnRate": { "value": 199, "unit": "L/day", "timestamp": "2026-09-19T14:18:00Z", "source": "coupling engine", "provenance": "MODELED", "freshnessSeconds": 0, "model": "burnRate = demand / generatorEfficiency" },
+      "autonomyDays": 214,
+      "autonomyBandDays": 18,
+      "shipWindow": { "earliestDay": 240, "latestDay": 280 },
+      "marginDays": { "min": 8, "max": 84 },
+      "lsodDays": 171,
+      "risk": "ok",
+      "provenance": "MODELED"
+    },
+    {
+      "id": "bhr-provisions", "name": "Provisions", "stationId": "bharati",
+      "category": "provisions",
+      "stock": { "value": 4200, "unit": "person-days", "timestamp": "2026-09-19T14:18:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station inventory system" },
+      "burnRate": { "value": 23, "unit": "person-days/day", "timestamp": "2026-09-19T14:18:00Z", "source": "crew count", "provenance": "MODELED", "freshnessSeconds": 0, "model": "burnRate = crew" },
+      "autonomyDays": 183,
+      "autonomyBandDays": 15,
+      "shipWindow": { "earliestDay": 240, "latestDay": 280 },
+      "marginDays": { "min": 42, "max": 112 },
+      "lsodDays": 140,
+      "risk": "ok",
+      "provenance": "MODELED"
+    },
+    {
+      "id": "bhr-spares", "name": "Critical Spares", "stationId": "bharati",
+      "category": "spares",
+      "stock": { "value": 156, "unit": "items", "timestamp": "2026-09-19T14:18:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station inventory system" },
+      "burnRate": { "value": 0.8, "unit": "items/day", "timestamp": "2026-09-19T14:18:00Z", "source": "historical average", "provenance": "MODELED", "freshnessSeconds": 0, "model": "historical consumption rate" },
+      "autonomyDays": 195,
+      "autonomyBandDays": 20,
+      "shipWindow": { "earliestDay": 240, "latestDay": 280 },
+      "marginDays": { "min": 25, "max": 105 },
+      "lsodDays": 152,
+      "risk": "ok",
+      "provenance": "MODELED"
+    }
+  ],
+  "openActions": [
+    {
+      "id": "act-bhr-001",
+      "stationId": "bharati", "zoneCode": "A1", "assetId": "bhr-gen-2",
+      "tier": "T1", "title": "Generator #2 coil temperature exceeds threshold",
+      "reason": "Coil temperature 96.2 °C exceeds 90 °C maximum for >6h",
+      "state": "RAISED",
+      "trigger": { "metricName": "coil_temp", "measurement": { "value": 96.2, "unit": "°C", "timestamp": "2026-09-19T14:18:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 240, "awaiting": "station SCADA adapter" }, "threshold": { "value": 90, "unit": "°C", "label": "COIL TEMP MAX" } },
+      "consequence": { "kind": "autonomy", "before": 214, "after": 198, "unit": "d", "label": "autonomy −16 d" },
+      "evidence": [], "timeline": [],
+      "sla": { "targetSeconds": 14400, "elapsedSeconds": 3600, "pausedSeconds": 0, "breached": false },
+      "raisedAt": "2026-09-19T13:18:00Z", "ageSeconds": 3600
+    }
+  ],
+  "outbox": [
+    { "tier": "T0", "queued": 0, "sent": 0 },
+    { "tier": "T1", "queued": 1, "sent": 0 },
+    { "tier": "T2", "queued": 3, "sent": 0 },
+    { "tier": "T3", "queued": 8, "sent": 0 }
+  ],
+  "environment": {
+    "temperature": { "value": -28.4, "unit": "°C", "timestamp": "2026-09-19T14:00:00Z", "source": "NCPOR NPDC", "provenance": "LIVE", "freshnessSeconds": 1080 },
+    "wind": { "value": 18, "unit": "kt", "timestamp": "2026-09-19T14:00:00Z", "source": "AMRC AWS", "provenance": "LIVE", "freshnessSeconds": 1080 },
+    "windDir": { "value": 225, "unit": "°", "timestamp": "2026-09-19T14:00:00Z", "source": "AMRC AWS", "provenance": "LIVE", "freshnessSeconds": 1080 },
+    "pressure": { "value": 982.4, "unit": "hPa", "timestamp": "2026-09-19T14:00:00Z", "source": "ERA5", "provenance": "LIVE", "freshnessSeconds": 1080 },
+    "humidity": { "value": 52, "unit": "%", "timestamp": "2026-09-19T14:00:00Z", "source": "ERA5", "provenance": "LIVE", "freshnessSeconds": 1080 },
+    "windChill": { "value": -48.1, "unit": "°C", "timestamp": "2026-09-19T14:00:00Z", "source": "coupling-engine", "provenance": "MODELED", "freshnessSeconds": 0, "model": "NWS/EC wind chill formula", "parents": [{"name": "temperature", "provenance": "LIVE"}, {"name": "wind", "provenance": "LIVE"}] }
+  },
+  "engineInputs": {
+    "ambientTempC": -28.4,
+    "windKmh": 33.34,
+    "uValue": 0.35,
+    "areaM2": 840,
+    "stockUnits": 42600,
+    "shipWindow": { "earliestDay": 240, "latestDay": 280 }
+  }
+}

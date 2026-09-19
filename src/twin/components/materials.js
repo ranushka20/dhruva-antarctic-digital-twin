@@ -299,3 +299,37 @@ export const sampleTrayMaterial = standard("#4b5663", {
 });
 
 export { PALETTE };
+
+/* --- Zone status ---
+   Used only when the state model has an actual basis for a status. Most
+   zones on this station have neither a feed nor a model behind them, so
+   their honest status is "unknown" and they carry no tint at all — the
+   absence of colour is information here, not an oversight. */
+export const zoneWatchMaterial = standard("#8a6a2e", {
+  emissive: PALETTE.statusAmber,
+  emissiveIntensity: 0.18,
+  roughness: 0.6,
+  metalness: 0.05,
+});
+
+export const zoneRiskMaterial = standard("#8a3d36", {
+  emissive: PALETTE.statusRed,
+  emissiveIntensity: 0.22,
+  roughness: 0.6,
+  metalness: 0.05,
+});
+
+export const zoneOkMaterial = standard("#35705a", {
+  emissive: PALETTE.statusGreen,
+  emissiveIntensity: 0.14,
+  roughness: 0.62,
+  metalness: 0.05,
+});
+
+/** null means "no basis for a status" — render the surface untinted. */
+export function zoneStatusMaterial(status) {
+  if (status === "risk") return zoneRiskMaterial;
+  if (status === "watch") return zoneWatchMaterial;
+  if (status === "ok") return zoneOkMaterial;
+  return null;
+}

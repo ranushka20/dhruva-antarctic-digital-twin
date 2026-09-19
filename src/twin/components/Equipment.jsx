@@ -7,14 +7,12 @@ import {
   indicatorGreenMaterial,
   indicatorOrangeMaterial,
   indicatorRedMaterial,
-  laserGlowMaterial,
   metalMaterial,
   rockMaterial,
   sampleTrayMaterial,
   sanitaryMaterial,
   screenAmberMaterial,
   screenGlowMaterial,
-  stationHullDarkMaterial,
   steelLightMaterial,
   tableTopMaterial,
   trimMaterial,
@@ -80,25 +78,6 @@ export function LabBench({
   );
 }
 
-/* --- Chemical Safety Fume Hood --- */
-export function FumeHood({ position = [0, 0, 0], width = 1.6 }) {
-  return (
-    <group position={position}>
-      {/* Base Cabinet */}
-      <Box position={[0, 0.45, 0]} size={[width, 0.9, 0.85]} material={darkMetalMaterial} />
-      {/* Upper Enclosure */}
-      <Box position={[0, 1.55, 0]} size={[width, 1.3, 0.85]} material={trimMaterial} />
-      {/* Internal Working Chamber */}
-      <Box position={[0, 1.45, 0.1]} size={[width - 0.2, 0.95, 0.65]} material={darkMetalMaterial} />
-      {/* Sliding Glass Sash Window */}
-      <Box position={[0, 1.6, 0.42]} size={[width - 0.16, 0.6, 0.02]} material={glassMaterial} castShadow={false} />
-      {/* Exhaust Duct on top */}
-      <Box position={[0, 2.35, 0]} size={[0.35, 0.45, 0.35]} material={metalMaterial} />
-    </group>
-  );
-}
-
-/* --- Operations Command Console (Curved/Wrap-around) --- */
 export function CommandConsole({ position = [0, 0, 0], rotation = [0, 0, 0], width = 3.6 }) {
   return (
     <group position={position} rotation={rotation}>
@@ -270,97 +249,6 @@ export function GantryHoist({ position = [0, 2.15, 0], length = 4.8 }) {
   );
 }
 
-/* --- Ultra-Low Temperature (-80°C) Sample Freezer --- */
-export function UltraLowFreezer({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Heavy Insulated Body */}
-      <Box position={[0, 0.95, 0]} size={[0.9, 1.9, 0.85]} material={steelLightMaterial} />
-      {/* Door with Heavy Latch */}
-      <Box position={[0, 0.95, 0.44]} size={[0.84, 1.82, 0.04]} material={sanitaryMaterial} />
-      <Box position={[0.36, 0.95, 0.48]} size={[0.05, 0.22, 0.06]} material={chromeMaterial} />
-      {/* Digital Temp Controller Display showing -80°C */}
-      <Box position={[-0.22, 1.65, 0.47]} size={[0.24, 0.12, 0.02]} material={screenAmberMaterial} />
-      <Box position={[-0.05, 1.65, 0.47]} size={[0.04, 0.04, 0.02]} material={indicatorGreenMaterial} />
-    </group>
-  );
-}
-
-/* --- Electronics & Sensor Test Bench --- */
-export function ElectronicsTestBench({ position = [0, 0, 0], width = 2.4 }) {
-  return (
-    <group position={position}>
-      {/* ESD Worktable */}
-      <Box position={[0, 0.4, 0]} size={[width, 0.8, 0.85]} material={darkMetalMaterial} />
-      <Box position={[0, 0.82, 0]} size={[width + 0.04, 0.04, 0.9]} material={tableTopMaterial} />
-      {/* Upper Equipment Riser Shelf */}
-      <Box position={[0, 1.25, -0.22]} size={[width - 0.2, 0.04, 0.38]} material={tableTopMaterial} />
-      <Box position={[-width / 2 + 0.15, 1.02, -0.22]} size={[0.04, 0.42, 0.35]} material={metalMaterial} />
-      <Box position={[width / 2 - 0.15, 1.02, -0.22]} size={[0.04, 0.42, 0.35]} material={metalMaterial} />
-
-      {/* Digital Oscilloscope on Riser */}
-      <group position={[-0.6, 1.45, -0.2]}>
-        <Box position={[0, 0, 0]} size={[0.42, 0.28, 0.24]} material={metalMaterial} />
-        <Box position={[-0.08, 0, 0.13]} size={[0.22, 0.2, 0.01]} material={screenGlowMaterial} />
-        <Box position={[0.12, 0.04, 0.13]} size={[0.08, 0.08, 0.02]} material={darkMetalMaterial} />
-      </group>
-
-      {/* DC Regulated Power Supply */}
-      <group position={[0.1, 1.45, -0.2]}>
-        <Box position={[0, 0, 0]} size={[0.38, 0.26, 0.22]} material={metalMaterial} />
-        <Box position={[-0.08, 0.05, 0.12]} size={[0.16, 0.1, 0.01]} material={screenAmberMaterial} />
-        <Box position={[0.1, -0.04, 0.12]} size={[0.04, 0.04, 0.02]} material={indicatorRedMaterial} />
-        <Box position={[0.1, 0.04, 0.12]} size={[0.04, 0.04, 0.02]} material={indicatorGreenMaterial} />
-      </group>
-
-      {/* Soldering Station & Fume Extractor on Tabletop */}
-      <group position={[0.7, 0.94, 0.1]}>
-        <Box position={[0, 0, 0]} size={[0.22, 0.14, 0.18]} material={indicatorOrangeMaterial} />
-        <Box position={[-0.05, 0.12, 0]} size={[0.03, 0.18, 0.03]} material={chromeMaterial} />
-      </group>
-    </group>
-  );
-}
-
-/* --- Vertical Atmospheric LIDAR Laser Assembly --- */
-export function LidarLaserUnit({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Heavy Base Optical Pedestal */}
-      <Box position={[0, 0.45, 0]} size={[0.9, 0.9, 0.9]} material={darkMetalMaterial} />
-      {/* High-Power Laser Generator Tube */}
-      <Box position={[0, 1.35, 0]} size={[0.48, 1.0, 0.48]} material={metalMaterial} />
-      {/* Optical Collimator Head */}
-      <Box position={[0, 1.95, 0]} size={[0.38, 0.3, 0.38]} material={steelLightMaterial} />
-      {/* Glass Sky Emission Port Window */}
-      <Box position={[0, 2.15, 0]} size={[0.42, 0.08, 0.42]} material={glassMaterial} />
-      {/* Glowing Green Laser Pulse Beam */}
-      <Box position={[0, 2.25, 0]} size={[0.1, 0.25, 0.1]} material={laserGlowMaterial} />
-    </group>
-  );
-}
-
-/* --- Equatorial Astronomical & Aurora Telescope --- */
-export function ObservationTelescope({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Tripod Base */}
-      {[-0.3, 0, 0.3].map((x) => (
-        <Box key={x} position={[x, 0.45, 0]} size={[0.05, 0.9, 0.05]} material={darkMetalMaterial} />
-      ))}
-      {/* Equatorial Mount Head */}
-      <Box position={[0, 0.98, 0]} size={[0.18, 0.2, 0.18]} material={chromeMaterial} />
-      {/* Optical Telescope Barrel pointing 45° upward */}
-      <group position={[0, 1.15, 0]} rotation={[-0.45, 0, 0]}>
-        <Box position={[0, 0, 0]} size={[0.16, 0.16, 0.85]} material={stationHullDarkMaterial} />
-        <Box position={[0, 0, 0.44]} size={[0.2, 0.2, 0.04]} material={glassMaterial} />
-        <Box position={[0, 0, -0.44]} size={[0.08, 0.08, 0.12]} material={chromeMaterial} />
-      </group>
-    </group>
-  );
-}
-
-/* --- Geological Sample Core Tray with Cylinders --- */
 export function GeologicalSampleTray({ position = [0, 0, 0] }) {
   return (
     <group position={position}>

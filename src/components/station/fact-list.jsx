@@ -1,43 +1,32 @@
 import { PlugZap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "@/components/ui/tooltip";
 import { EvidenceChip } from "./evidence-chip";
 import { Label } from "./primitives";
 
 function FactRow({ fact }) {
-  const body = (
+  return (
     <div className="flex flex-col gap-1 py-2">
       <div className="flex items-start justify-between gap-2">
         <span className="text-muted-foreground text-xs leading-snug">
           {fact.label}
         </span>
-        <EvidenceChip cls={fact.cls} />
+        <EvidenceChip cls={fact.cls} live={fact.live} source={fact.source} />
       </div>
       <span
         className={cn(
           "text-readout leading-snug",
-          fact.cls === "S" || fact.cls === "D"
-            ? "text-warning-foreground"
-            : "text-foreground",
+          fact.cls === "S" ? "text-warning-foreground" : "text-foreground",
         )}
         data-numeric=""
       >
         {fact.value}
       </span>
+      {fact.note && (
+        <span className="text-[0.6875rem] text-muted-foreground leading-snug">
+          {fact.note}
+        </span>
+      )}
     </div>
-  );
-
-  if (!fact.source) return body;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<div className="cursor-help">{body}</div>}
-      />
-      <TooltipPopup className="max-w-72">
-        <span className="block py-0.5 text-muted-foreground">{fact.source}</span>
-      </TooltipPopup>
-    </Tooltip>
   );
 }
 

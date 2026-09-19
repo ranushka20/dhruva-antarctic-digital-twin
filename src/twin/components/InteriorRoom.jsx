@@ -2,6 +2,7 @@ import Box from "./Box";
 import Door from "./Door";
 import RoomLabel from "./RoomLabel";
 import Wall from "./Wall";
+import { useZoneStatus } from "../zone-status-context";
 import {
   floorCorridorMaterial,
   floorLabMaterial,
@@ -10,6 +11,7 @@ import {
   floorWoodMaterial,
   selectedMaterial,
   wallMaterial,
+  zoneStatusMaterial,
 } from "./materials";
 
 export default function InteriorRoom({
@@ -24,6 +26,7 @@ export default function InteriorRoom({
   windowConfig = { count: 1, side: "back" },
 }) {
   const { x, z, w, d, name, type, floorType } = room;
+  const status = useZoneStatus(room.zone);
   const halfW = w / 2;
   const halfD = d / 2;
 
@@ -41,11 +44,15 @@ export default function InteriorRoom({
 
   return (
     <group position={[x, 0, z]} onClick={handlePointer}>
-      {/* Floor Slab */}
+      {/* Floor Slab. Selection wins over status, and a zone with no basis
+          for a status keeps its ordinary floor rather than being coloured
+          in as though it were healthy. */}
       <Box
         position={[0, 0.07, 0]}
         size={[w, 0.14, d]}
-        material={selected ? selectedMaterial : floorMat}
+        material={
+          selected ? selectedMaterial : (zoneStatusMaterial(status) ?? floorMat)
+        }
       />
 
       {/* Localized Warm Interior Illumination (Open-Roof Cutaway Lighting) */}

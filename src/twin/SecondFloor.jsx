@@ -1,7 +1,5 @@
 import Box from "./components/Box";
 import {
-  AtmosphericLidarInterior,
-  CupolaLoungeInterior,
   MetObservatoryInterior,
   SatProcessingInterior,
 } from "./components/InteriorFurniture";
@@ -54,7 +52,7 @@ export default function SecondFloor({ selectedId, onSelect }) {
         <MetObservatoryInterior />
       </InteriorRoom>
 
-      {/* --- ROOM 2: Atmospheric LIDAR Lab --- */}
+      {/* --- ROOM 2: Satellite Earth Station --- */}
       <InteriorRoom
         room={SECOND_ROOMS[1]}
         selected={selectedId === SECOND_ROOMS[1].id}
@@ -62,29 +60,7 @@ export default function SecondFloor({ selectedId, onSelect }) {
         doorConfig={{ side: "front", offset: -1.2, type: "emergency" }}
         windowConfig={{ side: "back" }}
       >
-        <AtmosphericLidarInterior />
-      </InteriorRoom>
-
-      {/* --- ROOM 3: Satellite Data Processing --- */}
-      <InteriorRoom
-        room={SECOND_ROOMS[2]}
-        selected={selectedId === SECOND_ROOMS[2].id}
-        onSelect={onSelect}
-        doorConfig={{ side: "back", offset: 1.0, type: "emergency" }}
-        windowConfig={{ side: "front" }}
-      >
         <SatProcessingInterior />
-      </InteriorRoom>
-
-      {/* --- ROOM 4: Observation Cupola Lounge --- */}
-      <InteriorRoom
-        room={SECOND_ROOMS[3]}
-        selected={selectedId === SECOND_ROOMS[3].id}
-        onSelect={onSelect}
-        doorConfig={{ side: "back", offset: -1.2, type: "glass" }}
-        windowConfig={{ side: "front" }}
-      >
-        <CupolaLoungeInterior />
       </InteriorRoom>
     </group>
   );

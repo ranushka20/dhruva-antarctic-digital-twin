@@ -4,7 +4,13 @@ import {
   AntarcticTerrain,
   EntranceDeck,
   RooftopEquipment,
+  AwsMast,
+  EffluentOutfall,
+  EmergencyShelter,
   FuelFarm,
+  OffloadPoint,
+  SeawaterIntake,
+  VehicleApron,
   StationStilts,
 } from "./components/Exterior";
 import Window from "./components/Window";
@@ -19,17 +25,78 @@ import {
 } from "./components/materials";
 import { EXTERIOR_ASSETS } from "./stationData";
 
+/**
+ * One click target per exterior asset. The scene compresses the documented
+ * distances to fit a single viewport, but keeps their ORDER — intake
+ * upstream of the outfall, fuel farm beside the ship anchor point.
+ */
+function Pickable({ asset, onSelect, children }) {
+  if (!asset) return children;
+  return (
+    <group
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(asset);
+      }}
+    >
+      {children}
+    </group>
+  );
+}
+
 export default function ExteriorView({ selectedId, onSelect }) {
   const handleSelect = (asset) => {
     onSelect?.(asset);
   };
 
   const isSelected = (id) => selectedId === id;
+  const asset = (id) => EXTERIOR_ASSETS.find((a) => a.id === id);
 
   return (
     <group position={[0, 0, 0]}>
       {/* Antarctic Snow Terrain & Drifts */}
       <AntarcticTerrain />
+
+      {/* --- THE WATER CHAIN ---
+          Intake upstream, outfall 60 m downstream. That separation is the
+          environmental control, and it is the clearest thing in this whole
+          model that only reads in plan. */}
+      <Pickable asset={asset("seawater-intake-ext")} onSelect={handleSelect}>
+        <SeawaterIntake
+          position={[-6, 0, 21]}
+          selected={isSelected("seawater-intake-ext")}
+        />
+      </Pickable>
+
+      <Pickable asset={asset("outfall-ext")} onSelect={handleSelect}>
+        <EffluentOutfall position={[6, 0, 23]} selected={isSelected("outfall-ext")} />
+      </Pickable>
+
+      {/* --- THE LOGISTICS CHAIN --- */}
+      <Pickable asset={asset("offload-point-ext")} onSelect={handleSelect}>
+        <OffloadPoint position={[-19, 0, 15]} selected={isSelected("offload-point-ext")} />
+      </Pickable>
+
+      <Pickable asset={asset("vehicle-apron-ext")} onSelect={handleSelect}>
+        <VehicleApron
+          position={[16, 0, 12]}
+          rotation={[0, -0.18, 0]}
+          selected={isSelected("vehicle-apron-ext")}
+        />
+      </Pickable>
+
+      {/* --- THE ONE LIVE INSTRUMENT --- */}
+      <Pickable asset={asset("aws-mast-ext")} onSelect={handleSelect}>
+        <AwsMast position={[13.5, 0, -9]} selected={isSelected("aws-mast-ext")} />
+      </Pickable>
+
+      <Pickable asset={asset("emergency-shelter-ext")} onSelect={handleSelect}>
+        <EmergencyShelter
+          position={[-16, 0, -11]}
+          rotation={[0, 0.3, 0]}
+          selected={isSelected("emergency-shelter-ext")}
+        />
+      </Pickable>
 
       {/* Fuel Farm.
           The solar array that stood here had no source at all — the dossier
@@ -40,13 +107,13 @@ export default function ExteriorView({ selectedId, onSelect }) {
       <group
         onClick={(e) => {
           e.stopPropagation();
-          handleSelect(EXTERIOR_ASSETS[1]);
+          handleSelect(asset("fuel-farm-ext"));
         }}
       >
         <FuelFarm
           position={[-17, 0, 5.5]}
           rotation={[0, 0.22, 0]}
-          selected={isSelected(EXTERIOR_ASSETS[1].id)}
+          selected={isSelected("fuel-farm-ext")}
         />
       </group>
 
@@ -55,7 +122,7 @@ export default function ExteriorView({ selectedId, onSelect }) {
         position={[15, 0, 4]}
         onClick={(e) => {
           e.stopPropagation();
-          handleSelect(EXTERIOR_ASSETS[3]);
+          handleSelect(asset("aux-power-ext"));
         }}
       >
         {/* Foundation Stilts */}
@@ -68,7 +135,7 @@ export default function ExteriorView({ selectedId, onSelect }) {
         <Box
           position={[0, 0.9, 0]}
           size={[4.5, 2.2, 2.6]}
-          material={isSelected(EXTERIOR_ASSETS[3].id) ? selectedMaterial : stationHullDarkMaterial}
+          material={isSelected("aux-power-ext") ? selectedMaterial : stationHullDarkMaterial}
         />
         <Box position={[0, 2.05, 0]} size={[4.6, 0.1, 2.7]} material={steelLightMaterial} />
         {/* Louvers & Exhausts */}
@@ -80,7 +147,7 @@ export default function ExteriorView({ selectedId, onSelect }) {
       <group
         onClick={(e) => {
           e.stopPropagation();
-          handleSelect(EXTERIOR_ASSETS[0]);
+          handleSelect(asset("station-envelope"));
         }}
       >
         {/* Structural Steel Stilts & Grid */}
@@ -96,7 +163,7 @@ export default function ExteriorView({ selectedId, onSelect }) {
           <Box
             position={[0.8, 0, 0]}
             size={[23.6, 4.8, 12.2]}
-            material={isSelected(EXTERIOR_ASSETS[0].id) ? selectedMaterial : stationHullMaterial}
+            material={isSelected("station-envelope") ? selectedMaterial : stationHullMaterial}
           />
 
           {/* Chamfered Aerodynamic Corner Facets */}

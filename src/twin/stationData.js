@@ -24,6 +24,7 @@ const AWS = "data.ncpor.res.in — Bharati AWS (IMD), verified first-hand";
 export const GROUND_ROOMS = [
   {
     id: "science-lab",
+    zone: "Labs",
     name: "Science Laboratory",
     category: "Research",
     type: "lab",
@@ -56,6 +57,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "waste-store",
+    zone: "Waste",
     name: "Waste Store",
     category: "Compliance",
     type: "storage",
@@ -103,6 +105,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "wastewater-plant",
+    zone: "Utilities",
     name: "Wastewater & MBR Plant",
     category: "Life Support",
     type: "utility",
@@ -154,6 +157,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "fuel-store",
+    zone: "Fuel",
     name: "Fuel Storage Room",
     category: "Energy",
     type: "storage",
@@ -186,6 +190,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "workshop",
+    zone: "Workshop",
     name: "Heavy Workshop & Maintenance",
     category: "Logistics",
     type: "workshop",
@@ -235,6 +240,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "entrance-airlock",
+    zone: "Access",
     name: "Main Entry & Mudroom",
     category: "Access",
     type: "airlock",
@@ -259,6 +265,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "ro-plant",
+    zone: "Utilities",
     name: "Seawater RO Plant",
     category: "Life Support",
     type: "utility",
@@ -298,6 +305,7 @@ export const GROUND_ROOMS = [
   },
   {
     id: "chp-station",
+    zone: "Power",
     name: "CHP Power Station",
     category: "Energy",
     type: "power",
@@ -358,6 +366,7 @@ export const GROUND_ROOMS = [
 export const FIRST_ROOMS = [
   {
     id: "control-room",
+    zone: "Operations",
     name: "Control Room",
     category: "Operations",
     type: "operations",
@@ -401,6 +410,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "comms-room",
+    zone: "Communications",
     name: "Communication Centre",
     category: "Connectivity",
     type: "comms",
@@ -457,6 +467,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "berthing-ab",
+    zone: "Living",
     name: "Crew Cabins A & B",
     category: "Habitation",
     type: "living",
@@ -480,6 +491,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "berthing-cd",
+    zone: "Living",
     name: "Crew Cabins C & D",
     category: "Habitation",
     type: "living",
@@ -506,6 +518,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "medical-bay",
+    zone: "Living",
     name: "Medical Bay",
     category: "Life Support",
     type: "medical",
@@ -533,6 +546,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "galley-kitchen",
+    zone: "Living",
     name: "Galley & Pantry",
     category: "Habitation",
     type: "kitchen",
@@ -572,6 +586,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "dining-lounge",
+    zone: "Living",
     name: "Dining Hall & Crew Lounge",
     category: "Habitation",
     type: "lounge",
@@ -596,6 +611,7 @@ export const FIRST_ROOMS = [
   },
   {
     id: "briefing-room",
+    zone: "Operations",
     name: "Conference & Briefing",
     category: "Operations",
     type: "operations",
@@ -629,6 +645,7 @@ export const FIRST_ROOMS = [
 export const SECOND_ROOMS = [
   {
     id: "met-observatory",
+    zone: "Environment",
     name: "Meteorological Observatory",
     category: "Environment",
     type: "observatory",
@@ -687,40 +704,17 @@ export const SECOND_ROOMS = [
     ],
   },
   {
-    id: "geophysics-bay",
-    name: "Geophysics Instrument Bay",
-    category: "Research",
-    type: "lab",
+    id: "earth-station",
+    zone: "Communications",
+    name: "Satellite Earth Station",
+    category: "Connectivity",
+    type: "comms",
     floor: "Second Floor",
     floorId: "second",
     x: 2.2,
     z: -2.0,
     w: 6.8,
     d: 4.4,
-    floorType: "lab",
-    tier: 4,
-    summary:
-      "Previously an “Atmospheric LIDAR Lab”. No source places a LIDAR at Bharati, so the room now holds only instrument classes NCPOR's data centre is known to carry.",
-    facts: [
-      fact(
-        "Instrument classes",
-        "16-channel riometer, fluxgate / induction-coil / proton-precession magnetometers, GEC, surface ozone, radiation, NOx, black carbon",
-        "C",
-        "NPDC gated tier — station attribution is not public",
-      ),
-    ],
-  },
-  {
-    id: "earth-station",
-    name: "Satellite Earth Station",
-    category: "Connectivity",
-    type: "comms",
-    floor: "Second Floor",
-    floorId: "second",
-    x: -5.5,
-    z: 2.8,
-    w: 6.2,
-    d: 4.0,
     floorType: "lab",
     tier: 2,
     summary:
@@ -742,28 +736,12 @@ export const SECOND_ROOMS = [
       boundary("Throughput, utilisation and latency", "No public figures at any date"),
     ],
   },
-  {
-    id: "cupola-lounge",
-    name: "Observation Deck",
-    category: "Habitation",
-    type: "cupola",
-    floor: "Second Floor",
-    floorId: "second",
-    x: 2.2,
-    z: 2.8,
-    w: 6.8,
-    d: 4.0,
-    floorType: "living",
-    tier: 4,
-    summary:
-      "Architectural invention. No source describes a cupola or viewing deck at Bharati — it carries no data and no status.",
-    facts: [],
-  },
 ];
 
 export const EXTERIOR_ASSETS = [
   {
     id: "station-envelope",
+    zone: "Structure",
     name: "Bharati Main Station Complex",
     category: "Structure",
     type: "station",
@@ -804,6 +782,7 @@ export const EXTERIOR_ASSETS = [
   },
   {
     id: "fuel-farm-ext",
+    zone: "Fuel",
     name: "Fuel Farm",
     category: "Energy",
     type: "fuel",
@@ -837,6 +816,7 @@ export const EXTERIOR_ASSETS = [
   },
   {
     id: "comms-mast-ext",
+    zone: "Communications",
     name: "Earth Station & HF/Iridium Mast",
     category: "Connectivity",
     type: "comms",
@@ -864,7 +844,174 @@ export const EXTERIOR_ASSETS = [
     ],
   },
   {
+    id: "seawater-intake-ext",
+    zone: "Utilities",
+    name: "Seawater Intake",
+    category: "Life Support",
+    type: "intake",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 1,
+    summary:
+      "Quilty Bay, 12 m down, 300 m out. The far end of the chain that keeps 47 people in water.",
+    facts: [
+      fact("Source", "Quilty Bay at 12 m depth", "A", `${OMRC} \u00a72.5`),
+      fact("Line", "~300 m insulated pipeline to the RO plant", "A", `${OMRC} \u00a72.5`),
+      fact(
+        "Separation from outfall",
+        "Treated effluent is discharged 60 m downstream of this point",
+        "A",
+        `${OMRC} \u00a72.5\u20132.6 \u2014 the separation is the environmental control`,
+      ),
+      boundary("Intake flow and seawater temperature", "No public feed"),
+    ],
+  },
+  {
+    id: "outfall-ext",
+    zone: "Waste",
+    name: "Treated Effluent Outfall",
+    category: "Compliance",
+    type: "outfall",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 1,
+    summary:
+      "Sited 60 m downstream of the intake. That distance is the whole reason the two can coexist in one bay.",
+    facts: [
+      fact("Position", "Quilty Bay, 60 m downstream of the intake", "A", `${OMRC} \u00a72.5\u20132.6`),
+      fact(
+        "Statutory limits",
+        "BOD\u2085 \u2264 25, COD \u2264 125, TSS \u2264 35 mg/L, pH 6\u20139",
+        "A",
+        "IAEP Rules 2023 Schedule 3",
+      ),
+      fact(
+        "Discharge permit",
+        "No sea discharge of oil, effluent, bilge or food waste without permit",
+        "A",
+        "Indian Antarctic Act 2022 s.13",
+      ),
+      boundary("Discharge events and effluent quality", "Compelled to be recorded, not published"),
+    ],
+  },
+  {
+    id: "offload-point-ext",
+    zone: "Logistics",
+    name: "Ship Offload Point",
+    category: "Logistics",
+    type: "offload",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 2,
+    summary:
+      "Bharati offloads ~100 m from the station. Maitri runs a 120 km convoy over the ice shelf for the same job \u2014 the single largest operational difference between the two.",
+    facts: [
+      fact("Offload distance", "~100 m from the station", "A", "Dossier \u00a712"),
+      fact("Maitri comparison", "120 km convoy over the ice shelf", "A", ATCM36),
+      fact("Ship-to-shore fuel hose", "~500 m", "A", "Vessel tender NCPOR/14(102)/26 \u00a713.8"),
+      fact("Fuel farm siting", "20 m from the ship anchor point", "A", `${OMRC} \u00a72.8`),
+      fact(
+        "Access window",
+        "Roughly November\u2013March; about eight months a year with no scheduled transport",
+        "A",
+        "39-ISEA \u00a74.0",
+      ),
+      fact(
+        "Voyage duration",
+        "10\u201316 days depending on sea ice",
+        "A",
+        "NCPOR AL-02 \u2014 every depletion forecast inherits this uncertainty",
+      ),
+      boundary("Actual resupply execution against plan", "Itineraries are public; actuals are not"),
+    ],
+  },
+  {
+    id: "vehicle-apron-ext",
+    zone: "Logistics",
+    name: "Vehicle Apron",
+    category: "Logistics",
+    type: "vehicles",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 2,
+    summary:
+      "The fleet is one of the few things the record enumerates exactly \u2014 unit by unit, for both stations.",
+    facts: [
+      fact("Pisten Bully", "6", "A", "NCPOR AL-02 \u00a71"),
+      fact("Snow scooters", "4", "A", "39-ISEA \u00a73.2.4"),
+      fact("Excavators", "2 (BE-71 / H340L)", "A", "NCPOR AL-02 \u00a71"),
+      fact("Mantis cranes", "2 (50 / 27 MT)", "A", "NCPOR AL-02 \u00a71"),
+      fact("Telehandler", "1", "A", "NCPOR AL-02 \u00a71"),
+      fact("Bulldozer", "1 (BD-50)", "A", "NCPOR AL-02 \u00a71"),
+      fact(
+        "Helicopters",
+        "2, both remain aboard the vessel \u2014 heavy lift exists only while the ship is on station",
+        "A",
+        "NCPOR AL-01 \u00a72.3",
+      ),
+      fact(
+        "Authorisation",
+        "Vehicles used only with prior permission from the station Leader",
+        "A",
+        "NCPOR AL-02 \u00a71",
+      ),
+      boundary("Engine hours, fuel burn and fault state", "No public feed"),
+    ],
+  },
+  {
+    id: "aws-mast-ext",
+    zone: "Environment",
+    name: "Automatic Weather Station",
+    category: "Environment",
+    type: "aws",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 1,
+    live: true,
+    summary:
+      "The only instrument on this entire station that streams. Everything else in this twin is documentation.",
+    facts: [
+      fact("Owner", "India Meteorological Department, served by NCPOR", "A", AWS),
+      fact("Cadence", "1-minute, continuous, 2015\u20132026", "A", AWS),
+      fact("Access", "Plain HTTP GET, no authentication", "A", AWS),
+      fact(
+        "Sensor health is per-instrument",
+        "Barometer 18.06% missing against 0.68% for every other sensor",
+        "A",
+        `${AWS} \u2014 measured over 100,000 rows`,
+      ),
+      fact(
+        "No visibility sensor",
+        "A Condition I/II/III work tier cannot honestly be computed for Bharati",
+        "A",
+        AWS,
+      ),
+    ],
+  },
+  {
+    id: "emergency-shelter-ext",
+    zone: "Living",
+    name: "Emergency Shelter",
+    category: "Habitation",
+    type: "shelter",
+    floor: "Exterior",
+    floorId: "exterior",
+    tier: 3,
+    summary:
+      "A separate facility for 25. Its capacity is documented; where it sits relative to the main building is not.",
+    facts: [
+      fact("Capacity", "25, taking the station total to 72", "A", ATCM36),
+      fact(
+        "Siting",
+        "Shown detached from the main building",
+        "S",
+        "The dossier gives the capacity but is silent on its position",
+      ),
+    ],
+  },
+  {
     id: "aux-power-ext",
+    zone: "Power",
     name: "Backup Generator",
     category: "Energy",
     type: "power",
@@ -880,6 +1027,29 @@ export const EXTERIOR_ASSETS = [
     ],
   },
 ];
+
+export const ALL_OBJECTS = [
+  ...GROUND_ROOMS,
+  ...FIRST_ROOMS,
+  ...SECOND_ROOMS,
+  ...EXTERIOR_ASSETS,
+];
+
+/** Distinct zones present in the model, in a stable order. */
+export const ZONES = [...new Set(ALL_OBJECTS.map((o) => o.zone))].sort();
+
+/**
+ * How much of this station actually streams. Counting it rather than
+ * asserting it keeps the claim honest as the model grows.
+ */
+export const FEED_COVERAGE = {
+  live: ALL_OBJECTS.filter((o) => o.live).length,
+  total: ALL_OBJECTS.length,
+  boundaries: ALL_OBJECTS.reduce(
+    (n, o) => n + (o.facts ?? []).filter((f) => f.value == null).length,
+    0,
+  ),
+};
 
 export function getRoomsForFloor(floor) {
   if (floor === "first") return FIRST_ROOMS;

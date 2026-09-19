@@ -1,18 +1,13 @@
 import Box from "./Box";
 import {
   CommandConsole,
-  ElectronicsTestBench,
-  FumeHood,
   GantryHoist,
   GeneratorModule,
   GeologicalSampleTray,
   LabBench,
-  LidarLaserUnit,
-  ObservationTelescope,
   RadioCommsConsole,
   ServerRack,
   StatusDisplayWall,
-  UltraLowFreezer,
   WaterFiltrationSkid,
   WorkshopBench,
 } from "./Equipment";
@@ -31,7 +26,6 @@ import {
 import {
   darkMetalMaterial,
   galvanizedSteelMaterial,
-  glassTintedMaterial,
   indicatorGreenMaterial,
   sanitaryMaterial,
   screenAmberMaterial,
@@ -63,57 +57,6 @@ export function EarthSciencesLabInterior() {
   );
 }
 
-/* --- 2. Life Sciences & Marine Lab Interior Set --- */
-export function LifeSciencesLabInterior() {
-  return (
-    <group>
-      {/* Bio Lab Bench with Stereo Microscope */}
-      <LabBench position={[-0.8, 0, -0.6]} width={2.3} instrumentType="microscope" />
-      {/* Centrifuge & Analysis Bench */}
-      <LabBench position={[1.2, 0, 0.5]} width={1.9} instrumentType="centrifuge" />
-      {/* Ultra-Low (-80°C) Sample Freezer */}
-      <UltraLowFreezer position={[-1.8, 0, 0.9]} />
-      {/* Lab Stools / Chairs */}
-      <ErgonomicChair position={[-0.8, 0, 0.2]} color="blue" />
-      <StorageRack position={[1.8, 0, -0.7]} length={1.1} tiers={3} />
-    </group>
-  );
-}
-
-/* --- 3. Chemical & Atmospheric Lab Interior Set --- */
-export function ChemicalLabInterior() {
-  return (
-    <group>
-      {/* Ducted Chemical Safety Fume Hood */}
-      <FumeHood position={[-1.2, 0, -0.6]} width={1.8} />
-      {/* Analytical Mass Spectrometer Bench */}
-      <LabBench position={[1.1, 0, -0.6]} width={1.8} instrumentType="spectrometer" />
-      {/* Workstation PC Desk */}
-      <WorkstationDesk position={[0.8, 0, 0.6]} width={1.6} depth={0.7} dualMonitor />
-      {/* Chemical Reagent Storage Rack & Safety Server */}
-      <ServerRack position={[-1.8, 0, 1.0]} />
-      <StorageRack position={[1.8, 0, 1.0]} length={1.0} tiers={3} />
-    </group>
-  );
-}
-
-/* --- 4. Electronics & Sensor Lab Interior Set --- */
-export function ElectronicsLabInterior() {
-  return (
-    <group>
-      {/* ESD Electronics Workstation with Oscilloscope & Soldering Station */}
-      <ElectronicsTestBench position={[0.1, 0, -0.6]} width={2.4} />
-      {/* Diagnostics Workstation PC */}
-      <WorkstationDesk position={[0.7, 0, 0.6]} width={1.6} depth={0.7} dualMonitor />
-      {/* Calibration Instrument Server Rack */}
-      <ServerRack position={[-1.5, 0, 1.0]} />
-      {/* Component Storage Rack */}
-      <StorageRack position={[1.5, 0, 1.0]} length={1.3} tiers={3} />
-    </group>
-  );
-}
-
-/* --- 5. Heavy Maintenance Workshop Interior Set --- */
 export function WorkshopInterior() {
   return (
     <group>
@@ -331,23 +274,6 @@ export function MetObservatoryInterior() {
   );
 }
 
-/* --- 2. Atmospheric LIDAR Lab Interior Set --- */
-export function AtmosphericLidarInterior() {
-  return (
-    <group>
-      {/* Optical Bench with Spectrometer */}
-      <LabBench position={[-0.8, 0, -0.6]} width={2.6} instrumentType="spectrometer" />
-      {/* Vertical Atmospheric LIDAR Laser Tube pointing through roof port */}
-      <LidarLaserUnit position={[1.8, 0, 0.3]} />
-      {/* Compute & Laser Power Rack */}
-      <ServerRack position={[-2.2, 0, 0.6]} />
-      {/* Laser Operator Workstation */}
-      <WorkstationDesk position={[0.4, 0, 0.6]} width={1.4} depth={0.7} />
-    </group>
-  );
-}
-
-/* --- 3. Satellite Data Processing (Compute Farm) Interior Set --- */
 export function SatProcessingInterior() {
   return (
     <group>
@@ -359,23 +285,6 @@ export function SatProcessingInterior() {
       <WorkstationDesk position={[1.4, 0, 0.5]} width={1.8} depth={0.7} dualMonitor />
       {/* Telecom Storage Rack */}
       <StorageRack position={[1.8, 0, -0.6]} length={1.1} tiers={3} />
-    </group>
-  );
-}
-
-/* --- 4. Observation Cupola Lounge Interior Set --- */
-export function CupolaLoungeInterior() {
-  return (
-    <group>
-      {/* Panoramic Glass Roof Canopy Frame */}
-      <Box position={[0, 2.35, 0]} size={[4.8, 0.08, 2.6]} material={glassTintedMaterial} castShadow={false} />
-      {/* Sky & Aurora Viewing Telescope */}
-      <ObservationTelescope position={[1.9, 0, -0.4]} />
-      {/* Comfortable Lounge Seating */}
-      <LoungeSofaSet position={[-0.5, 0, 0]} />
-      <ErgonomicChair position={[1.9, 0, 0.6]} color="orange" />
-      {/* Aurora Sky Monitor */}
-      <Box position={[2.1, 1.1, 1.4]} size={[1.4, 0.8, 0.04]} material={screenGlowMaterial} />
     </group>
   );
 }

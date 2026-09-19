@@ -3,11 +3,7 @@ import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
-export default function RoomCamera({
-  floor = "ground",
-  isInteriorMode = false,
-  activeRoom = null,
-}) {
+export default function RoomCamera({ floor = "ground" }) {
   const { camera } = useThree();
   const controlsRef = useRef();
 
@@ -15,17 +11,11 @@ export default function RoomCamera({
     let targetPos;
     let targetLook;
 
-    if (isInteriorMode && activeRoom) {
-      const rw = activeRoom.w || 5.6;
-      const rd = activeRoom.d || 4.2;
-
-      // Position camera inside the room at eye level (Y = 1.55m) in front-right quadrant
-      targetPos = [rw * 0.32, 1.55, rd * 0.32];
-      // Look toward the center / main operations wall
-      targetLook = [-0.2, 1.2, -0.3];
-    } else if (floor === "exterior") {
-      targetPos = [32, 17, 34];
-      targetLook = [0, 2.0, 0];
+    if (floor === "exterior") {
+      // Framed on the whole site, not the hull: the water chain, the offload
+      // point and the apron are the reason this view exists.
+      targetPos = [44, 30, 52];
+      targetLook = [-1, 1.5, 4];
     } else if (floor === "first") {
       targetPos = [21, 26, 24];
       targetLook = [0.8, 1.0, 0.2];
@@ -45,7 +35,7 @@ export default function RoomCamera({
       controlsRef.current.target.set(targetLook[0], targetLook[1], targetLook[2]);
       controlsRef.current.update();
     }
-  }, [floor, isInteriorMode, activeRoom, camera]);
+  }, [floor, camera]);
 
   return (
     <OrbitControls
@@ -53,9 +43,9 @@ export default function RoomCamera({
       makeDefault
       enableDamping
       dampingFactor={0.08}
-      minDistance={isInteriorMode ? 0.2 : 12}
-      maxDistance={isInteriorMode ? 6.5 : 70}
-      maxPolarAngle={isInteriorMode ? Math.PI / 1.95 : Math.PI / 2.05}
+      minDistance={12}
+      maxDistance={110}
+      maxPolarAngle={Math.PI / 2.05}
     />
   );
 }

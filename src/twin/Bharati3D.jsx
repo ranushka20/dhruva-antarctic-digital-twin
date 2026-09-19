@@ -1,18 +1,17 @@
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { ContactShadows } from "@react-three/drei";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
+import { StalenessBanner } from "@/components/station/sync-indicator";
 import CanvasLoader from "./components/CanvasLoader";
-import DedicatedInteriorScene from "./DedicatedInteriorScene";
+import { ZoneStatusProvider } from "./zone-status";
 import ExteriorView from "./ExteriorView";
 import FirstFloor from "./FirstFloor";
 import GroundFloor from "./GroundFloor";
 import SecondFloor from "./SecondFloor";
 import { AntarcticTerrain } from "./components/Exterior";
 import RoomCamera from "./components/RoomCamera";
-import RoomNavigation from "./components/RoomNavigation";
-import { getRoomsForFloor } from "./stationData";
 
 const FLOOR_COMPONENTS = {
   ground: GroundFloor,
@@ -87,84 +86,67 @@ function SceneLighting() {
   );
 }
 
-function Scene({ floor, isInteriorMode, activeRoom, selectedRoom, onSelectRoom }) {
+function Scene({ floor, selectedRoom, onSelectRoom }) {
   const FloorComponent = FLOOR_COMPONENTS[floor];
 
   return (
     <>
-      {isInteriorMode && activeRoom ? (
-        <DedicatedInteriorScene room={activeRoom} />
-      ) : (
+      <SceneLighting />
+
+      {FloorComponent && (
         <>
-          <SceneLighting />
-
-          {FloorComponent && (
-            <>
-              <AntarcticTerrain />
-              <FloorComponent onSelect={onSelectRoom} selectedId={selectedRoom?.id} />
-              <GroundShadows />
-            </>
-          )}
-
-          {floor === "exterior" && (
-            <>
-              <ExteriorView onSelect={onSelectRoom} selectedId={selectedRoom?.id} />
-              <GroundShadows opacity={0.38} scale={46} />
-            </>
-          )}
+          <AntarcticTerrain />
+          <FloorComponent onSelect={onSelectRoom} selectedId={selectedRoom?.id} />
+          <GroundShadows />
         </>
       )}
 
-      <RoomCamera
-        activeRoom={activeRoom}
-        floor={floor}
-        isInteriorMode={isInteriorMode}
-      />
+      {floor === "exterior" && (
+        <>
+          <ExteriorView onSelect={onSelectRoom} selectedId={selectedRoom?.id} />
+          <GroundShadows opacity={0.38} scale={46} />
+        </>
+      )}
+
+      <RoomCamera floor={floor} />
     </>
   );
 }
 
 export default function Bharati3D({
   floor = "ground",
-  isInteriorMode = false,
   onSelectAsset,
   selectedAsset,
-  onExitRoom,
+  zoneStatus,
+  sync = { state: "live", staleness: 0, label: "just now" },
 }) {
-  const selectedRoom = selectedAsset?.raw ?? null;
-  const floorRooms = useMemo(() => getRoomsForFloor(floor), [floor]);
   const caption = VIEW_CAPTIONS[floor];
 
+  // Rooms are the twin's own objects now, so selection passes them straight
+  // through rather than flattening them into a separate telemetry shape.
   const handleSelectRoom = useCallback(
     (room) => {
-      if (!room || !onSelectAsset) return;
-      onSelectAsset({
-        id: room.id,
-        name: room.name,
-        type: room.category || room.type,
-        floor: room.floor,
-        status: room.status || "ONLINE",
-        powerKw: room.powerKw,
-        temp: room.temp,
-        occupancy: room.occupancy,
-        source: room.classification,
-        raw: room,
-      });
+      if (room) onSelectAsset?.(room);
     },
     [onSelectAsset],
   );
 
-  const clearSelection = useCallback(() => {
-    if (!isInteriorMode) onSelectAsset?.(null);
-  }, [isInteriorMode, onSelectAsset]);
+  const clearSelection = useCallback(() => onSelectAsset?.(null), [onSelectAsset]);
 
   return (
     <div className="absolute inset-0">
+      {/* The scene itself desaturates and dims as HQ's picture ages. A stale
+          twin that still looks crisp is the failure mode this guards against:
+          it invites you to act on a memory as though it were the station. */}
       {/* Transparent canvas: the viewport background comes from the theme
           token, so the scene follows light/dark without a second source of
           truth for its colour. */}
       <Canvas
         camera={{ position: [25, 22, 29], fov: 40 }}
+        style={{
+          filter: `saturate(${1 - 0.75 * sync.staleness}) brightness(${1 - 0.18 * sync.staleness})`,
+          transition: "filter 600ms ease-out",
+        }}
         dpr={[1, 1.5]}
         frameloop="demand"
         gl={{
@@ -180,52 +162,40 @@ export default function Bharati3D({
         performance={{ min: 0.5 }}
         shadows
       >
-        <Scene
-          activeRoom={selectedRoom}
-          floor={floor}
-          isInteriorMode={isInteriorMode}
-          onSelectRoom={handleSelectRoom}
-          selectedRoom={selectedRoom}
-        />
+        <ZoneStatusProvider value={zoneStatus}>
+          <Scene
+            floor={floor}
+            onSelectRoom={handleSelectRoom}
+            selectedRoom={selectedAsset}
+          />
+        </ZoneStatusProvider>
       </Canvas>
 
       <CanvasLoader />
 
-      {isInteriorMode && selectedRoom ? (
-        <RoomNavigation
-          activeRoom={selectedRoom}
-          floor={floor}
-          floorRooms={floorRooms}
-          onExitRoom={onExitRoom}
-          onSelectRoom={handleSelectRoom}
-        />
-      ) : (
-        <>
-          {/* Overlays sit on bright snow as often as on the dark backdrop, so
-              each one carries its own surface rather than relying on the
-              viewport for contrast. */}
-          {caption && (
-            <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 rounded-lg border bg-popover/85 px-3 py-2 shadow-sm backdrop-blur-sm">
-              <span className="font-medium text-popover-foreground text-readout">
-                {caption.title}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {caption.detail}
-              </span>
-            </div>
-          )}
+      <StalenessBanner label={sync.label} state={sync.state} />
 
-          <div className="pointer-events-none absolute top-4 right-4 z-10">
-            <Badge className="bg-popover/85 shadow-sm backdrop-blur-sm" variant="outline">
-              Architectural reconstruction
-            </Badge>
-          </div>
-
-          <span className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-md border bg-popover/85 px-2.5 py-1.5 text-muted-foreground text-xs shadow-sm backdrop-blur-sm">
-            Drag to orbit · Scroll to zoom · Click a room
+      {/* Overlays sit on bright snow as often as on the dark backdrop, so
+          each one carries its own surface rather than relying on the
+          viewport for contrast. */}
+      {caption && (
+        <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 rounded-lg border bg-popover/85 px-3 py-2 shadow-sm backdrop-blur-sm">
+          <span className="font-medium text-popover-foreground text-readout">
+            {caption.title}
           </span>
-        </>
+          <span className="text-muted-foreground text-xs">{caption.detail}</span>
+        </div>
       )}
+
+      <div className="pointer-events-none absolute top-4 right-4 z-10">
+        <Badge className="bg-popover/85 shadow-sm backdrop-blur-sm" variant="outline">
+          Zone model · not an as-built survey
+        </Badge>
+      </div>
+
+      <span className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-md border bg-popover/85 px-2.5 py-1.5 text-muted-foreground text-xs shadow-sm backdrop-blur-sm">
+        Drag to orbit · Scroll to zoom · Click a zone
+      </span>
     </div>
   );
 }

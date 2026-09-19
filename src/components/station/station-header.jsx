@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Metric } from "./primitives";
+import { SyncIndicator } from "./sync-indicator";
 
 function FlagMark() {
   return (
@@ -22,7 +23,15 @@ function FlagMark() {
   );
 }
 
-export function StationHeader({ clock, environment, loading, theme, onToggleTheme }) {
+export function StationHeader({
+  clock,
+  environment,
+  feedNote,
+  loading,
+  sync,
+  theme,
+  onToggleTheme,
+}) {
   return (
     <header className="z-40 flex h-14 shrink-0 items-center gap-4 border-b bg-surface px-4">
       <div className="flex shrink-0 items-center gap-2.5">
@@ -39,28 +48,30 @@ export function StationHeader({ clock, environment, loading, theme, onToggleThem
 
       <Separator className="h-7" orientation="vertical" />
 
-      {/* Environment strip. Hidden on narrow viewports rather than
-          compressed into unreadable type. The AWS feed is not wired up, so
-          the strip says so instead of passing demo values off as readings. */}
+      {/* Environment strip.
+          These are the real NCPOR values — the newest the feed can reach.
+          The badge says how old that is, because the endpoint's row cap
+          makes anything newer unreachable, not because the station is quiet. */}
       <div className="hidden min-w-0 flex-1 items-center gap-6 lg:flex">
         {environment.map((m) => (
           <Metric key={m.label} label={m.label} loading={loading} value={m.value} />
         ))}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Badge className="cursor-help self-end" variant="warning">
-                Not live
-              </Badge>
-            }
-          />
-          <TooltipPopup className="max-w-64">
-            <span className="block py-0.5 text-muted-foreground">
-              Demo values, taken from the medians measured in the real Bharati
-              AWS export. The live feed is not connected yet.
-            </span>
-          </TooltipPopup>
-        </Tooltip>
+        {feedNote && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Badge className="cursor-help self-end" variant={feedNote.variant}>
+                  {feedNote.label}
+                </Badge>
+              }
+            />
+            <TooltipPopup className="max-w-72">
+              <span className="block py-0.5 text-muted-foreground">
+                {feedNote.detail}
+              </span>
+            </TooltipPopup>
+          </Tooltip>
+        )}
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
@@ -76,6 +87,8 @@ export function StationHeader({ clock, environment, loading, theme, onToggleThem
             <span className="font-normal text-muted-foreground text-xs">IST</span>
           </span>
         </div>
+
+        {sync && <SyncIndicator label={sync.label} state={sync.state} />}
 
         <Separator className="h-7" orientation="vertical" />
 

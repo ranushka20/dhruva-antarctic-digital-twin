@@ -61,3 +61,81 @@ export function fact(label, value, cls, source, note) {
 export function boundary(label, source, note) {
   return { label, value: null, cls: "B", source, note };
 }
+
+/* =========================================================
+   PROVENANCE TIERS
+
+   Two vocabularies, deliberately layered.
+
+   The dossier's A/A-ext/B/C/D/S scheme above is the research vocabulary —
+   precise, but it asks a viewer to learn six letters before they can read a
+   number. The Antarasetu solution doc (§4.2) defines the three words an HQ
+   operator or a judge actually needs:
+
+       LIVE       real external feed, arriving now
+       MODELED    documented or derived from real information
+       SYNTHETIC  prototype placeholder
+
+   So the tier is what the badge says, and the evidence class is what the
+   tooltip says. Neither replaces the other: collapsing A (a citable spec)
+   and D (a two-point fit) into one badge would lose the distinction the
+   dossier exists to preserve, which is why the class travels with it.
+========================================================= */
+
+export const PROVENANCE = {
+  LIVE: {
+    id: "LIVE",
+    label: "Live",
+    description: "Arriving now from a real external feed.",
+    tone: "success",
+  },
+  MODELED: {
+    id: "MODELED",
+    label: "Modeled",
+    description:
+      "Documented in a public source, or derived from one. Not a live reading.",
+    // Quiet on purpose: nearly every fact here is modeled, so if this shouted
+    // the two tiers that actually need attention would be lost in it.
+    tone: "muted",
+  },
+  SYNTHETIC: {
+    id: "SYNTHETIC",
+    label: "Synthetic",
+    description:
+      "Prototype placeholder. Carries no claim about the real station.",
+    tone: "warning",
+  },
+  BOUNDARY: {
+    id: "BOUNDARY",
+    label: "Not connected",
+    description:
+      "A real, documented system with no public feed behind it. An integration boundary this platform would close.",
+    tone: "muted",
+  },
+};
+
+const CLASS_TO_TIER = {
+  A: "MODELED",
+  "A-ext": "MODELED",
+  B: "BOUNDARY",
+  C: "BOUNDARY",
+  D: "MODELED",
+  S: "SYNTHETIC",
+};
+
+/**
+ * Resolve the badge tier for a fact.
+ *
+ * `live` is a property of the reading, not of the class: "3 x 100 kW CHP" is
+ * class A and will never be live, while a temperature from the AWS is class A
+ * and is live. Only the caller knows which it is holding.
+ */
+export function tierFor(cls, live = false) {
+  if (live) return PROVENANCE.LIVE;
+  return PROVENANCE[CLASS_TO_TIER[cls]] ?? PROVENANCE.BOUNDARY;
+}
+
+/** Mark a fact as arriving from a live feed rather than a document. */
+export function liveFact(label, value, source, note) {
+  return { label, value, cls: "A", live: true, source, note };
+}

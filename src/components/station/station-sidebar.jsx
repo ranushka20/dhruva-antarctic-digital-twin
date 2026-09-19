@@ -1,5 +1,8 @@
+import { CloudOff, PlugZap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FEED_COVERAGE } from "@/twin/stationData";
 import { Label } from "./primitives";
 
 function LocationCard() {
@@ -25,7 +28,14 @@ function LocationCard() {
   );
 }
 
-export function StationSidebar({ items, activeId, onSelect }) {
+export function StationSidebar({
+  items,
+  activeId,
+  onSelect,
+  syncState = "live",
+  onSimulateOutage,
+  onRestoreLink,
+}) {
   return (
     <aside className="flex w-56 shrink-0 flex-col gap-1 border-r bg-surface p-3">
       <Label className="px-2 pt-1 pb-2">Station systems</Label>
@@ -76,11 +86,43 @@ export function StationSidebar({ items, activeId, onSelect }) {
 
       {/* "Telemetry: Live" was a claim the station cannot support. One feed
           exists and it is the weather station. */}
-      <div className="flex items-center justify-between px-2 pt-2.5">
-        <span className="text-[0.6875rem] text-muted-foreground">Live feeds</span>
-        <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
-          1 of 12
-        </span>
+      <div className="mt-2.5 flex flex-col gap-1.5 border-t pt-2.5">
+        <div className="flex items-center justify-between px-2">
+          <span className="text-[0.6875rem] text-muted-foreground">Connected</span>
+          <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
+            {FEED_COVERAGE.live} of {FEED_COVERAGE.total}
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-2">
+          <span className="text-[0.6875rem] text-muted-foreground">
+            Integration boundaries
+          </span>
+          <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
+            {FEED_COVERAGE.boundaries}
+          </span>
+        </div>
+
+        {/* The outage scenario. Replays the shape of a documented event
+            rather than an invented one: Bharati lost its satellite link for
+            five days in October 2013. */}
+        <Button
+          className="mt-1.5 w-full"
+          onClick={syncState === "live" ? onSimulateOutage : onRestoreLink}
+          size="sm"
+          variant="outline"
+        >
+          {syncState === "live" ? (
+            <>
+              <CloudOff />
+              Simulate outage
+            </>
+          ) : (
+            <>
+              <PlugZap />
+              Restore link
+            </>
+          )}
+        </Button>
       </div>
     </aside>
   );

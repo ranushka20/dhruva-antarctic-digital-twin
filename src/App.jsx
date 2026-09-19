@@ -21,9 +21,12 @@ import {
   ViewModeSwitch,
   ViewportBreadcrumb,
 } from "@/components/station/viewport-toolbar";
+import { reachGapDays, useAwsFeed } from "@/hooks/use-aws-feed";
 import { useClock } from "@/hooks/use-clock";
+import { useSyncState } from "@/hooks/use-sync-state";
 import { useTheme } from "@/hooks/use-theme";
-import { FIRST_ROOMS, GROUND_ROOMS } from "./twin/stationData";
+import { computeStationState, zoneStatus } from "./twin/state/index.js";
+import { FIRST_ROOMS } from "./twin/stationData";
 
 // three.js is ~900 kB of the bundle. Splitting it out lets the shell paint
 // immediately and gives the Suspense fallback something real to cover.
@@ -40,13 +43,10 @@ const NAV_ITEMS = [
   { id: "alerts", label: "Alerts", icon: Bell, badge: 2, disabled: true },
 ];
 
+// Eye-level walkthrough is gone: it toured rooms the evidence base is silent
+// on, and the solution doc puts photorealistic reconstruction under "do not
+// make core". What is left is the zone-based spatial index it asks for.
 const VIEW_MODES = [
-  {
-    id: "interior",
-    label: "Interior",
-    icon: Compass,
-    hint: "Walk a single room at eye level",
-  },
   {
     id: "cutaway",
     label: "Cutaway",
@@ -67,62 +67,96 @@ const FLOORS = [
   { id: "second", label: "Second", title: "Second Floor" },
 ];
 
-// Environment strip. The AWS feed is not wired up yet, so these are the
-// medians measured from the real 2024 Bharati export rather than invented
-// numbers — and the strip says plainly that it is not live. The previous
-// -24 C sat outside Bharati's entire measured record (min -14.7 C).
-const ENVIRONMENT = [
-  { label: "Temperature", value: "\u22121.7 \u00b0C" },
-  { label: "Wind", value: "13.5 kt" },
-  { label: "Pressure", value: "977.9 mbar" },
-  { label: "Humidity", value: "53.5 %" },
-];
-
 function App() {
   const { theme, toggleTheme } = useTheme();
   const clock = useClock();
 
+  // Last contact with the station. Held here so the outage scenario can move
+  // it backwards and the whole view ages with it.
+  const [lastSyncAt, setLastSyncAt] = useState(() => Date.now());
+  const sync = useSyncState(lastSyncAt);
+
+  const aws = useAwsFeed();
+
+  // The environment strip shows the newest values the NCPOR endpoint can
+  // reach. It caps at 100,000 rows with no pagination, so "newest reachable"
+  // and "now" are months apart — the badge says which.
+  const environment = useMemo(() => {
+    const n = aws.data?.newest;
+    if (!n) return [];
+    return [
+      { label: "Temperature", value: `${n.tempr.value} \u00b0C` },
+      { label: "Wind", value: `${n.ws.value} kt` },
+      { label: "Pressure", value: `${n.ap.value} mbar` },
+      { label: "Humidity", value: `${n.rh.value} %` },
+    ];
+  }, [aws.data]);
+
+  const feedNote = useMemo(() => {
+    if (aws.status === "error") {
+      return {
+        label: "Feed unreachable",
+        variant: "error",
+        detail: `The NCPOR endpoint did not respond: ${aws.error}. The station's only public feed being down is itself operational information, so the twin shows it rather than falling back to a placeholder.`,
+      };
+    }
+    if (aws.status !== "ready") return null;
+    const gap = reachGapDays(aws.data.coverage?.to);
+    return {
+      label: `Real data \u00b7 ${gap} days behind`,
+      variant: "warning",
+      detail: `Real NCPOR values, newest the feed can reach. The export caps at 100,000 rows with no pagination parameter, so it returns 1 January onwards and stops at ${new Date(aws.data.coverage.to).toUTCString()}. Everything since is structurally unreachable by this route \u2014 that limit is the integration boundary, not a station outage.`,
+    };
+  }, [aws]);
+
+  // Zone status comes from the station-state model. Most zones resolve to
+  // "unknown" and stay untinted, which is the honest answer for a station
+  // whose only public instrument is a weather mast.
+  const stationState = useMemo(
+    () =>
+      computeStationState({
+        population: 47,
+        conditions: aws.data?.newest
+          ? { windKt: aws.data.newest.ws.value, tempC: aws.data.newest.tempr.value }
+          : undefined,
+        lastSyncAt,
+        // The sync hook already owns the ticking clock; deriving now from it
+        // keeps this memo pure and the two views of time consistent.
+        now: lastSyncAt + sync.ageMs,
+      }),
+    [aws.data, lastSyncAt, sync.ageMs],
+  );
+
+  const zoneDetail = useMemo(() => zoneStatus(stationState) ?? {}, [stationState]);
+
+  // The 3D only needs the word; the panel needs the reasoning behind it.
+  const zones = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(zoneDetail).map(([zone, q]) => [zone, q?.value ?? "unknown"]),
+      ),
+    [zoneDetail],
+  );
+
   const [floor, setFloor] = useState("ground");
   const [activeNav, setActiveNav] = useState("twin");
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [isInteriorMode, setIsInteriorMode] = useState(false);
 
-  const viewMode = isInteriorMode
-    ? "interior"
-    : floor === "exterior"
-      ? "exterior"
-      : "cutaway";
+  const viewMode = floor === "exterior" ? "exterior" : "cutaway";
 
-  const handleEnterRoom = useCallback((room) => {
+  const showRoom = useCallback((room) => {
     if (!room || room.floorId === "exterior") return;
     setFloor(room.floorId);
-    setIsInteriorMode(true);
     setSelectedAsset(room);
   }, []);
 
-  const handleViewModeChange = useCallback(
-    (mode) => {
-      if (mode === "exterior") {
-        setFloor("exterior");
-        setIsInteriorMode(false);
-        setSelectedAsset(null);
-        return;
-      }
-      if (floor === "exterior") setFloor("ground");
-      if (mode === "cutaway") {
-        setIsInteriorMode(false);
-        return;
-      }
-      // Interior needs a room; fall back to the first one on this floor.
-      setIsInteriorMode(true);
-      if (!selectedAsset) handleEnterRoom(GROUND_ROOMS[0]);
-    },
-    [floor, selectedAsset, handleEnterRoom],
-  );
+  const handleViewModeChange = useCallback((mode) => {
+    setFloor(mode === "exterior" ? "exterior" : "ground");
+    setSelectedAsset(null);
+  }, []);
 
   const handleFloorChange = useCallback((next) => {
     setFloor(next);
-    setIsInteriorMode(false);
     setSelectedAsset(null);
   }, []);
 
@@ -133,17 +167,20 @@ function App() {
       return segments;
     }
     segments.push(FLOORS.find((f) => f.id === floor)?.title ?? "Ground Floor");
-    if (isInteriorMode && selectedAsset?.name) segments.push(selectedAsset.name);
+    if (selectedAsset?.name) segments.push(selectedAsset.name);
     return segments;
-  }, [floor, isInteriorMode, selectedAsset]);
+  }, [floor, selectedAsset]);
 
   return (
     <TooltipProvider>
       <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
         <StationHeader
           clock={clock}
-          environment={ENVIRONMENT}
+          environment={environment}
+          feedNote={feedNote}
+          loading={aws.status === "loading"}
           onToggleTheme={toggleTheme}
+          sync={sync}
           theme={theme}
         />
 
@@ -152,6 +189,9 @@ function App() {
             activeId={activeNav}
             items={NAV_ITEMS}
             onSelect={setActiveNav}
+            onSimulateOutage={() => setLastSyncAt(Date.now() - 14 * 60 * 60 * 1000)}
+            onRestoreLink={() => setLastSyncAt(Date.now())}
+            syncState={sync.state}
           />
 
           <main className="flex min-w-0 flex-1 flex-col bg-viewport">
@@ -169,16 +209,15 @@ function App() {
                 <Suspense fallback={<ViewportSkeleton />}>
                   <BharatiTwin
                     floor={floor}
-                    isInteriorMode={isInteriorMode}
-                    onEnterRoom={handleEnterRoom}
-                    onExitRoom={() => setIsInteriorMode(false)}
                     onSelectAsset={setSelectedAsset}
                     selectedAsset={selectedAsset}
+                    sync={sync}
+                    zoneStatus={zones}
                   />
                 </Suspense>
               </SceneErrorBoundary>
 
-              {floor !== "exterior" && !isInteriorMode && (
+              {floor !== "exterior" && (
                 <FloorSwitch
                   onChange={handleFloorChange}
                   options={FLOORS}
@@ -190,15 +229,10 @@ function App() {
 
           <DetailPanel
             asset={selectedAsset}
+            zoneDetail={zoneDetail}
             emptyOnExterior={floor === "exterior"}
-            isInteriorMode={isInteriorMode}
-            onClear={() => {
-              setSelectedAsset(null);
-              setIsInteriorMode(false);
-            }}
-            onEnterControlRoom={() => handleEnterRoom(FIRST_ROOMS[0])}
-            onEnterRoom={handleEnterRoom}
-            onExitRoom={() => setIsInteriorMode(false)}
+            onClear={() => setSelectedAsset(null)}
+            onEnterControlRoom={() => showRoom(FIRST_ROOMS[0])}
           />
         </div>
       </div>

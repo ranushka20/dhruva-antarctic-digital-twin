@@ -5,12 +5,14 @@ import {
   chromeMaterial,
   darkMetalMaterial,
   galvanizedSteelMaterial,
+  glassTintedMaterial,
+  hazardYellowMaterial,
   indicatorRedMaterial,
   rockMaterial,
   selectedMaterial,
   snowDriftMaterial,
   snowMaterial,
-  solarMaterial,
+  stationAccentOrangeMaterial,
   stationHullDarkMaterial,
   stationHullMaterial,
   steelLightMaterial,
@@ -119,6 +121,160 @@ export function EntranceDeck({
   );
 }
 
+
+/* --- Coastal assets: the water chain and the offload point ---
+   Their positions here are compressed to fit one viewport; the documented
+   distances (300 m intake line, 60 m intake-to-outfall separation, ~500 m
+   ship hose, ~100 m offload) are carried as data on each asset, not as
+   literal scene units. What the scene preserves is the ORDER and the
+   relationship: intake upstream, outfall downstream, farm beside the anchor. */
+export function SeawaterIntake({ position = [0, 0, 0], selected = false }) {
+  const mat = selected ? selectedMaterial : steelLightMaterial;
+  return (
+    <group position={position}>
+      {/* Wellhead and pump housing */}
+      <Box material={galvanizedSteelMaterial} position={[0, -0.1, 0]} size={[2.2, 0.4, 1.8]} />
+      <Box material={mat} position={[0, 0.55, 0]} size={[1.2, 1.1, 1.0]} />
+      <mesh castShadow position={[0, 1.35, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.22, 0.22, 1.0, 12]} />
+        <primitive attach="material" object={mat} />
+      </mesh>
+      {/* Insulated line heading inland */}
+      <Box material={steelLightMaterial} position={[3.2, 0.25, 0]} size={[5.4, 0.22, 0.22]} />
+    </group>
+  );
+}
+
+export function EffluentOutfall({ position = [0, 0, 0], selected = false }) {
+  const mat = selected ? selectedMaterial : darkMetalMaterial;
+  return (
+    <group position={position}>
+      <Box material={galvanizedSteelMaterial} position={[0, -0.15, 0]} size={[1.6, 0.3, 1.4]} />
+      <Box material={mat} position={[0, 0.4, 0]} size={[0.9, 0.8, 0.8]} />
+      {/* Discharge pipe running out to the bay */}
+      <Box material={steelLightMaterial} position={[-1.6, 0.05, 0]} size={[2.6, 0.18, 0.18]} />
+      {/* Sampling post — Schedule 3 limits are checked here */}
+      <Box material={hazardYellowMaterial} position={[0.9, 0.55, 0.6]} size={[0.08, 1.1, 0.08]} />
+    </group>
+  );
+}
+
+export function OffloadPoint({ position = [0, 0, 0], selected = false }) {
+  const mat = selected ? selectedMaterial : hazardYellowMaterial;
+  return (
+    <group position={position}>
+      {/* Hardstand */}
+      <Box material={rockMaterial} position={[0, -0.28, 0]} size={[7.0, 0.3, 5.0]} />
+      {/* Anchor bollards */}
+      {[-2.6, 2.6].map((x, i) => (
+        <group key={`bollard-${i}`} position={[x, 0, -1.8]}>
+          <mesh castShadow position={[0, 0.35, 0]}>
+            <cylinderGeometry args={[0.22, 0.28, 0.7, 12]} />
+            <primitive attach="material" object={mat} />
+          </mesh>
+        </group>
+      ))}
+      {/* Staged cargo containers */}
+      {[[-1.9, 1.2], [0.4, 1.2], [-0.75, 1.2]].map(([x, z], i) => (
+        <Box
+          key={`crate-${i}`}
+          material={i === 2 ? stationHullDarkMaterial : galvanizedSteelMaterial}
+          position={[x, i === 2 ? 1.05 : 0.4, z]}
+          size={[2.2, 0.8, 1.3]}
+        />
+      ))}
+      {/* Fuel hose reel — the ~500 m ship-to-shore run */}
+      <mesh castShadow position={[2.6, 0.45, 1.4]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.45, 0.45, 0.6, 16]} />
+        <primitive attach="material" object={darkMetalMaterial} />
+      </mesh>
+    </group>
+  );
+}
+
+export function VehicleApron({ position = [0, 0, 0], rotation = [0, 0, 0], selected = false }) {
+  // 6 Pisten Bully, 4 snow scooters — the counts are documented exactly.
+  // Dark bodies with an orange cab band: six fully-orange machines pulled the
+  // eye away from the assets the view is actually about.
+  const bodyMaterial = selected ? selectedMaterial : stationHullDarkMaterial;
+  const accentMaterial = selected ? selectedMaterial : stationAccentOrangeMaterial;
+  return (
+    <group position={position} rotation={rotation}>
+      <Box material={rockMaterial} position={[0, -0.28, 0]} size={[12.0, 0.3, 6.0]} />
+      {Array.from({ length: 6 }).map((_, i) => {
+        const x = (i % 3) * 3.4 - 3.4;
+        const z = i < 3 ? -1.4 : 1.6;
+        return (
+          <group key={`pb-${i}`} position={[x, 0, z]}>
+            {/* Tracks */}
+            {[-0.62, 0.62].map((tx, ti) => (
+              <Box key={ti} material={darkMetalMaterial} position={[tx, 0.2, 0]} size={[0.34, 0.4, 2.3]} />
+            ))}
+            {/* Cab */}
+            <Box material={bodyMaterial} position={[0, 0.62, -0.1]} size={[1.5, 0.7, 1.5]} />
+            <Box material={accentMaterial} position={[0, 0.35, -0.1]} size={[1.54, 0.16, 1.54]} />
+            <Box material={glassTintedMaterial} position={[0, 0.95, 0.55]} size={[1.2, 0.5, 0.06]} />
+            {/* Front blade */}
+            <Box material={steelLightMaterial} position={[0, 0.28, 1.35]} size={[1.9, 0.5, 0.12]} />
+          </group>
+        );
+      })}
+      {/* Snow scooters, racked along the edge */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <group key={`sc-${i}`} position={[-4.6 + i * 1.1, 0, 2.5]}>
+          <Box material={darkMetalMaterial} position={[0, 0.16, 0]} size={[0.42, 0.24, 1.3]} />
+          <Box material={accentMaterial} position={[0, 0.42, -0.1]} size={[0.5, 0.3, 0.8]} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+export function AwsMast({ position = [0, 0, 0], selected = false }) {
+  // The only instrument on the station that streams.
+  const mat = selected ? selectedMaterial : chromeMaterial;
+  return (
+    <group position={position}>
+      <Box material={galvanizedSteelMaterial} position={[0, -0.05, 0]} size={[1.0, 0.3, 1.0]} />
+      {/* Guyed mast */}
+      <Box material={steelLightMaterial} position={[0, 1.7, 0]} size={[0.1, 3.4, 0.1]} />
+      {[[-0.8, -0.8], [0.8, -0.8], [0, 0.9]].map(([gx, gz], i) => (
+        <Box key={`guy-${i}`} material={chromeMaterial} position={[gx / 2, 1.2, gz / 2]} size={[0.03, 2.4, 0.03]} />
+      ))}
+      {/* Anemometer crossarm and cups */}
+      <Box material={mat} position={[0, 3.3, 0]} size={[1.0, 0.04, 0.04]} />
+      <Box material={mat} position={[-0.5, 3.42, 0]} size={[0.14, 0.14, 0.14]} />
+      <Box material={mat} position={[0.5, 3.42, 0]} size={[0.14, 0.14, 0.14]} />
+      {/* Radiation shield holding the T/RH probe */}
+      <mesh castShadow position={[0.36, 2.5, 0]}>
+        <cylinderGeometry args={[0.16, 0.16, 0.42, 12]} />
+        <primitive attach="material" object={mat} />
+      </mesh>
+      {/* Logger enclosure — where the -999.0 sentinels come from */}
+      <Box material={stationHullMaterial} position={[0, 0.55, 0.42]} size={[0.44, 0.6, 0.3]} />
+    </group>
+  );
+}
+
+export function EmergencyShelter({ position = [0, 0, 0], rotation = [0, 0, 0], selected = false }) {
+  const mat = selected ? selectedMaterial : stationAccentOrangeMaterial;
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Two containerised modules on a low frame, for 25 */}
+      {[-1.45, 1.45].map((z, i) => (
+        <group key={`mod-${i}`} position={[0, 0, z]}>
+          {[-2.4, 2.4].map((x, j) => (
+            <Box key={j} material={galvanizedSteelMaterial} position={[x, -0.25, 0]} size={[0.26, 0.5, 2.4]} />
+          ))}
+          <Box material={mat} position={[0, 0.75, 0]} size={[6.0, 2.0, 2.5]} />
+          <Box material={stationHullDarkMaterial} position={[0, 1.8, 0]} size={[6.2, 0.12, 2.7]} />
+          <Box material={darkMetalMaterial} position={[3.05, 0.65, 0]} size={[0.06, 1.5, 0.8]} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
 /* --- Rooftop Meteorological & Antenna Mast --- */
 export function RooftopEquipment({ position = [0, 0, 0] }) {
   return (
@@ -209,27 +365,6 @@ export function FuelFarm({ position = [0, 0, 0], rotation = [0, 0, 0], selected 
   );
 }
 
-/* --- Photovoltaic Solar Array --- */
-export function SolarPanelArray({ position = [-10, 0, -6], rotation = [0, 0.2, 0] }) {
-  return (
-    <group position={position} rotation={rotation}>
-      {[-2.2, -1.1, 0, 1.1, 2.2].map((x, idx) => (
-        <group key={idx} position={[x, 0, 0]}>
-          {/* Angled Solar Panel */}
-          <group position={[0, 1.35, 0]} rotation={[0.45, 0, 0]}>
-            <Box position={[0, 0, 0]} size={[0.95, 0.04, 2.2]} material={solarMaterial} />
-            <Box position={[0, -0.03, 0]} size={[0.98, 0.04, 2.24]} material={darkMetalMaterial} />
-          </group>
-          {/* Steel Ground Legs */}
-          <Box position={[0, 0.7, -0.7]} size={[0.08, 1.4, 0.08]} material={galvanizedSteelMaterial} />
-          <Box position={[0, 0.4, 0.6]} size={[0.08, 0.8, 0.08]} material={galvanizedSteelMaterial} />
-        </group>
-      ))}
-    </group>
-  );
-}
-
-/* --- Antarctic Snow Terrain & Drifts --- */
 export function AntarcticTerrain() {
   const drifts = [
     [-14, -0.6, -9, 8, 0.9, 4.5, 0.3],

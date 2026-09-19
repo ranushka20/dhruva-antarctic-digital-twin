@@ -1,4 +1,4 @@
-import { CornerUpLeft, MousePointerClick, Radio, X } from "lucide-react";
+import { MousePointerClick, Radio, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,16 @@ import {
 } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PROVENANCE } from "@/twin/evidence";
 import { FactList } from "./fact-list";
 import { Label, SectionTitle, StatusDot } from "./primitives";
+
+const TIER_VARIANT = {
+  success: "success",
+  info: "info",
+  warning: "warning",
+  muted: "secondary",
+};
 
 function PanelShell({ children }) {
   return (
@@ -103,6 +111,34 @@ function StationOverview({ onEnterControlRoom }) {
           </p>
         </div>
 
+        <div>
+          <SectionTitle>Reading the badges</SectionTitle>
+          <div className="flex flex-col gap-2">
+            {[
+              PROVENANCE.LIVE,
+              PROVENANCE.MODELED,
+              PROVENANCE.SYNTHETIC,
+              PROVENANCE.BOUNDARY,
+            ].map((tier) => (
+              <div className="flex items-start gap-2.5" key={tier.id}>
+                <Badge
+                  className="mt-px shrink-0"
+                  size="sm"
+                  variant={TIER_VARIANT[tier.tone]}
+                >
+                  {tier.label}
+                </Badge>
+                <span className="text-[0.6875rem] text-muted-foreground leading-relaxed">
+                  {tier.description}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2.5 text-[0.6875rem] text-muted-foreground leading-relaxed">
+            Hover any badge for the underlying evidence class and its source.
+          </p>
+        </div>
+
         <Button className="w-full" onClick={onEnterControlRoom} variant="outline">
           Open control room
         </Button>
@@ -118,7 +154,34 @@ function StationOverview({ onEnterControlRoom }) {
   );
 }
 
-function ModuleView({ asset, isInteriorMode, onEnterRoom, onExitRoom, onClear }) {
+const ZONE_TONE = {
+  ok: { label: "Nominal", variant: "success" },
+  watch: { label: "Watch", variant: "warning" },
+  risk: { label: "At risk", variant: "error" },
+  unknown: { label: "Unknown", variant: "secondary" },
+};
+
+function ZoneStatusRow({ zone, detail }) {
+  const tone = ZONE_TONE[detail?.value ?? "unknown"] ?? ZONE_TONE.unknown;
+
+  return (
+    <div className="flex flex-col gap-2 border-b px-4 py-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label>{zone} zone</Label>
+        <Badge size="sm" variant={tone.variant}>
+          {tone.label}
+        </Badge>
+      </div>
+      {detail?.note && (
+        <p className="text-[0.6875rem] text-muted-foreground leading-relaxed">
+          {detail.note}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ModuleView({ asset, onClear, zoneDetail }) {
   return (
     <>
       <PanelHeader
@@ -136,9 +199,12 @@ function ModuleView({ asset, isInteriorMode, onEnterRoom, onExitRoom, onClear })
         </div>
       )}
 
+      {asset.zone && (
+        <ZoneStatusRow detail={zoneDetail?.[asset.zone]} zone={asset.zone} />
+      )}
+
       {asset.summary && (
         <>
-          <Separator />
           <p className="px-4 py-3.5 text-muted-foreground text-xs leading-relaxed">
             {asset.summary}
           </p>
@@ -151,18 +217,7 @@ function ModuleView({ asset, isInteriorMode, onEnterRoom, onExitRoom, onClear })
         <SectionTitle>Evidence</SectionTitle>
         <FactList facts={asset.facts} />
 
-        <div className="mt-5 flex flex-col gap-2">
-          {!isInteriorMode && asset.floorId !== "exterior" && (
-            <Button className="w-full" onClick={() => onEnterRoom(asset)}>
-              Enter room
-            </Button>
-          )}
-          {isInteriorMode && (
-            <Button className="w-full" onClick={onExitRoom} variant="outline">
-              <CornerUpLeft />
-              Exit to floor
-            </Button>
-          )}
+        <div className="mt-5">
           <Button className="w-full" onClick={onClear} variant="ghost">
             <X />
             Clear selection
@@ -175,23 +230,15 @@ function ModuleView({ asset, isInteriorMode, onEnterRoom, onExitRoom, onClear })
 
 export function DetailPanel({
   asset,
-  isInteriorMode,
-  onEnterRoom,
-  onExitRoom,
   onClear,
   onEnterControlRoom,
+  zoneDetail,
   emptyOnExterior = false,
 }) {
   if (asset) {
     return (
       <PanelShell>
-        <ModuleView
-          asset={asset}
-          isInteriorMode={isInteriorMode}
-          onClear={onClear}
-          onEnterRoom={onEnterRoom}
-          onExitRoom={onExitRoom}
-        />
+        <ModuleView asset={asset} onClear={onClear} zoneDetail={zoneDetail} />
       </PanelShell>
     );
   }

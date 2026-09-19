@@ -24,7 +24,13 @@ export default function TwinPage() {
   const [stationData, setStationData] = useState<any>(null); // Full mock data
   const [selectedZone, setSelectedZone] = useState<string | undefined>();
   const [colorMode, setColorMode] = useState<'status' | 'provenance' | 'freshness'>('status');
-  const [renderMode, setRenderMode] = useState<'svg' | '3d'>('svg');
+  const [renderMode, setRenderMode] = useState<'svg' | '3d'>(stationId === 'bharati' ? '3d' : 'svg');
+
+  // Switch to SVG if navigating to Maitri
+  useEffect(() => {
+    if (stationId === 'maitri') setRenderMode('svg');
+    else setRenderMode('3d');
+  }, [stationId]);
 
   // --- Fetch Mock Data ---
   useEffect(() => {

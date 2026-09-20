@@ -11,7 +11,7 @@ import {
 } from '@/shared/contracts';
 import { readStore, writeStore } from '@/lib/localStore';
 import { appendAudit } from '@/lib/hashChain';
-import { getParamValue } from '@/state/params';
+import { getParamValue, criticalityWeight } from '@/state/params';
 import {
   getResources, getActiveVoyage, getFollowingVoyage, shipWindowDays,
   type DerivedResource,
@@ -26,6 +26,13 @@ export interface Candidate extends ManifestItem {
   risk: DerivedResource['risk'];
   /** True when this item's LSOD falls before the FOLLOWING voyage. */
   atRiskIfDeferred: boolean;
+  /**
+   * Which figure drove urgency. A station we cannot currently reach has no
+   * computable LSOD, but we still know its cover — ranking those items at
+   * zero urgency would quietly send nothing to the station in the worst
+   * shape. We rank them on autonomy instead and say so on the row.
+   */
+  urgencyBasis: 'lsod' | 'autonomy';
 }
 
 const num = (v: unknown, fallback = 0) => (typeof v === 'number' && isFinite(v) ? v : fallback);
@@ -50,15 +57,16 @@ export function buildCandidates(filter: StationFilter = 'all', season?: string):
       const quantity = Math.ceil(shortfall);
       const massKg = quantity * (r.massPerUnitKg ?? 1);
       const category = r.category ?? 'spares';
-      // A resource whose LSOD cannot be computed is scored at the horizon —
-      // it ranks low rather than vanishing, and the row says why.
-      const lsodForScore = r.lsodDays ?? horizonDays;
-      const score = scoreManifestCandidate(horizonDays, lsodForScore, category);
-      const criticality = score > 0 ? score / Math.min(1, Math.max(0, (horizonDays - lsodForScore) / horizonDays)) : 0;
+
+      // Prefer the real deadline. Fall back to days of cover when the station
+      // is unreachable, so an item we cannot date still competes on how close
+      // it is to running out.
+      const usingLsod = r.lsodDays !== null;
+      const daysForScore = usingLsod ? r.lsodDays! : r.autonomyDays;
+      const score = scoreManifestCandidate(horizonDays, daysForScore, category);
 
       const followingWindow = following ? shipWindowDays(r.stationId, following) : null;
-      const atRiskIfDeferred =
-        r.lsodDays !== null && followingWindow !== null && r.lsodDays < followingWindow.earliestDay;
+      const atRiskIfDeferred = followingWindow !== null && daysForScore < followingWindow.earliestDay;
 
       return {
         resourceId: r.id,
@@ -67,14 +75,15 @@ export function buildCandidates(filter: StationFilter = 'all', season?: string):
         unit: r.unit ?? r.stock.unit,
         quantity,
         massKg: Math.round(massKg),
-        urgency: Math.min(1, Math.max(0, (horizonDays - lsodForScore) / horizonDays)),
-        criticality: Number.isFinite(criticality) ? criticality : 0,
+        urgency: Math.min(1, Math.max(0, (horizonDays - daysForScore) / horizonDays)),
+        criticality: criticalityWeight(category),
         score,
         included: false,
         manualOverride: false,
         lsodDays: r.lsodDays,
         risk: r.risk,
         atRiskIfDeferred,
+        urgencyBasis: usingLsod ? 'lsod' : 'autonomy',
       };
     })
     .filter((c): c is Candidate => c !== null)

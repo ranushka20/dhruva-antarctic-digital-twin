@@ -63,10 +63,17 @@ function WindowBlock({ window: w }: { window: MissedWindow }) {
         )}
       </div>
 
-      {w.stationReportedNothing ? (
+      {w.stillOpen && w.entries.length === 0 ? (
+        <p className="text-[11.5px]" style={{ color: 'var(--act-soft)' }}>
+          Gap still open — nothing from this window has reached HQ yet. We cannot say the station
+          has been quiet, only that we have heard nothing. Whatever it has written is waiting in
+          its local outbox.
+        </p>
+      ) : w.stationReportedNothing ? (
         <p className="text-[11.5px]" style={{ color: 'var(--watch-soft)' }}>
           No records — the station reported nothing in this window. That is not the same as “no
-          data available”: nothing was queued locally either, so there is nothing still to arrive.
+          data available”: the gap has closed and nothing was queued, so there is nothing still to
+          arrive.
         </p>
       ) : (
         <ul className="space-y-1.5">

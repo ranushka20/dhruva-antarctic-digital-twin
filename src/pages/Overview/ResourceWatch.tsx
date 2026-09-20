@@ -12,15 +12,9 @@ import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { STATION_CODE } from '@/state/stationScope';
 import { SYNC_OPACITY } from '@/lib/freshness';
+import { lsodColor } from '@/lib/risk';
 
 const RISK_DOT = { ok: 'ok', watch: 'watch', warning: 'warning', critical: 'critical' } as const;
-
-export function lsodColor(lsodDays: number | null): string {
-  if (lsodDays === null) return 'var(--text-3)';
-  if (lsodDays <= 14) return 'var(--act-soft)';
-  if (lsodDays <= 45) return 'var(--watch-soft)';
-  return 'var(--text-3)';
-}
 
 export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
   const navigate = useNavigate();
@@ -40,7 +34,7 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
           Resource watch
         </h2>
         <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
-          Ranked by last safe order date
+          Unresolvable deadlines first, then LSOD
         </span>
       </div>
 

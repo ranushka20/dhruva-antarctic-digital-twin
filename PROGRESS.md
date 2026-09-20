@@ -24,6 +24,31 @@
 - Touchpoint completed? none
 - Notes for the other developer: Import the shared contract from `@/shared/contracts` going forward. The original `App.jsx` (3D twin viewer) is preserved at `src/App.jsx` — Dev A should wire it into the Twin page at `/stations/:id/twin` when building that page. The project uses Tailwind CSS v4 with `@tailwindcss/vite` plugin — there is no `tailwind.config.js`; tokens are wired via CSS custom properties in `src/styles/tokens.css` and `@theme inline {}` in `src/index.css`. Use `bg-as-panel`, `text-as-ok`, `font-display`, `rounded-card` etc. as Tailwind classes.
 
+### [2026-09-20 03:40] Dev B — All six pages + the simulated backend layer
+- Status: done
+- Files changed: `src/lib/{time,localStore,hashChain,provenance,freshness}.ts`, `src/state/{useStore,params,connectivity,stationScope,auth,data,sync,manifest,handover,bootstrap}.ts`, `src/engine/similarity.ts`, `src/mock/seed.ts`, `src/components/shared/{ProvenanceBadge,MetricRow,ProgressBar,ChainBanner}.tsx`, `src/components/shell/{AppShell,NavBar,CommandPalette}.tsx`, `src/components/viz/AntarcticaMap.tsx`, `src/pages/Overview/*`, `src/pages/Actions/*`, `src/pages/Comms/*`, `src/pages/StationConsole/index.tsx`, `src/pages/Logistics/*`, `src/pages/Compliance/*`, `src/pages/Handover/index.tsx`, `src/pages/Settings/index.tsx`, `src/pages/Login/index.tsx`, `src/router.tsx`, `src/shared/contracts.ts`, `tsconfig.json`, `package.json`
+- Summary: Built the whole Dev B surface — HQ Overview, Action Centre (+ drawer, board, SLA), Sync/Comms, Station Console, Logistics (+ manifest builder route), Compliance & Audit, Handover, Settings and Login — on top of a real simulated backend: `localStore`, a working SHA-256 audit chain with client-side verification, the parameter registry that backs `/settings`, and a tier-ordered, idempotent, resumable outbox drain. Seed data for both stations is the primary data source. `bun run build` and `bun run lint` are clean and `tsc --noEmit` reports no errors.
+- Touches shared contract? **yes** — `useActionTransitions` (extended in place), new `canTransition` / `ALLOWED_TRANSITIONS` / `TransitionActor` exports. See "Contract changes" below.
+- Touchpoint completed? 6, 7, 8 (both ends, mine); Dev B side of 1, 2, 4, 9, 10
+- Notes for the other developer:
+  - **Please read the `computeMarginDays` note in Contract changes — I think there is a sign bug in the engine and I did NOT patch it locally.**
+  - Build a `CausalTraceInput` with `causalTraceInput(stationId, { resourceId, zoneCode })` from `src/state/data.ts` rather than assembling one by hand. That is what makes the Twin page and my Action Centre drawer agree; I verified 140 d on both sides for Bharati HSD.
+  - Fuel burn rate is now DERIVED from the coupling engine at read time, not read from the store — ambient → heating → generator load → burn → autonomy is a live chain on `/logistics`, not a stored number. Non-fuel resources keep their SYNTH observed burn rates.
+  - Read connectivity with `useConnectivity(stationId)` / `useSyncInfo(stationId)` from `src/state/connectivity.ts`. Never write to it — `/comms` owns the toggle.
+  - `useStoreValue(read)` (`src/state/useStore.ts`) re-renders on any store write. It calls `read` during render and returns a FRESH object each time, so never put its result in a hook dependency array — derive with `useMemo` from its contents instead. An earlier version cached it in state and caused an infinite render loop.
+  - I added `tsconfig.json` (the `@/*` path alias was unresolvable for the IDE and for type-checking) and `typescript` as a dev dependency via `bun add -d`. `./node_modules/.bin/tsc --noEmit` now type-checks the whole repo; `.js`/`.jsx` files are included but unchecked.
+
+### [2026-09-20 04:20] Dev B — Logistics page simplified
+- Status: done
+- Files changed: `src/pages/Logistics/{index,ResupplyTable,VoyageEditor}.tsx`, deleted `src/pages/Logistics/{AutonomyTimeline,ResourceLedger}.tsx`, `src/lib/risk.ts` (new), `src/pages/Overview/ResourceWatch.tsx`, `src/components/shared/ResourceRow.tsx`, `src/state/manifest.ts`, `src/state/params.ts`, `src/mock/seed.ts`
+- Summary: The page had four panels — a full-width Gantt, a ten-column ledger, a voyage card and the whole ranked manifest — all showing the same thirteen resources. Rebuilt as one answer strip (at risk / next resupply / manifest) over one table whose row IS the timeline: depletion bar, ± band, ship window and LSOD tick share one axis per row, and stock, burn rate, margin, reorder point and provenance sit one click down on the row. The full manifest builder keeps its own route.
+- Touches shared contract? no
+- Touchpoint completed? none (6 already merged; the pre-fill path is unchanged)
+- Notes for the other developer:
+  - `lsodColor()` now lives in `src/lib/risk.ts` and reads its thresholds from `/settings` instead of being hard-coded as 14/45 in three files. Import from there.
+  - Cargo capacity was 42–58 t, which could not hold one station's fuel order (120 t). It is now 260–300 t, which is the right order of magnitude for a combined resupply lift, and the manifest now splits 8 carried / 5 deferred with 3 at risk — a real cut line rather than one item and a long tail.
+  - Manifest urgency falls back to days-of-cover when a station is unreachable and has no computable LSOD. Ranking those at zero urgency was quietly sending nothing to the station in the worst shape; rows say which basis was used.
+
 ---
 
 ## Integration & Review
@@ -38,16 +63,16 @@ checklist at the bottom) before either side merges to `main`.
 
 | # | Touchpoint | Dev A side | Dev B side | Status |
 |---|---|---|---|---|
-| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | ⬜ not started |
-| 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | ⬜ not started |
+| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟡 one side done — Dev B implementation live, validates transitions and writes the chain |
+| 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | 🟡 one side done — drawer consumes it via `causalTraceInput()`, no local maths |
 | 3 | Twin / Environment → "Open in Sandbox" | Owns both ends (pre-load payload) | n/a | ⬜ not started |
-| 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | ⬜ not started |
+| 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | 🟡 one side done — `decrementResource()` is the single stock write path; station console Inventory change uses it |
 | 5 | Asset detail → "view in 3D twin" | Owns both ends | n/a | ⬜ not started |
-| 6 | Logistics ledger row → "Raise action" | n/a | Owns both ends (pre-fill + route) | ⬜ not started |
-| 7 | Overview "View all" → Action Centre | n/a | Owns both ends (query-param filter) | ⬜ not started |
-| 8 | Compliance waste shipped → voyage link | n/a | Owns both ends (`voyageId`) | ⬜ not started |
-| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | ⬜ not started |
-| 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | ⬜ not started |
+| 6 | Logistics ledger row → "Raise action" | n/a | Owns both ends (pre-fill + route) | ✅ reviewed & merged — pre-fills resource, consequence and LSOD, routes to `/actions/:id` |
+| 7 | Overview "View all" → Action Centre | n/a | Owns both ends (query-param filter) | ✅ reviewed & merged — `/actions?station=&tier=&state=` all pre-fill the filters |
+| 8 | Compliance waste shipped → voyage link | n/a | Owns both ends (`voyageId`) | ✅ reviewed & merged — shipped rows link through to the voyage manifest |
+| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | 🟡 one side done — toggle + demo outage scenario live; Dev A's pages still to read it |
+| 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | 🟡 one side done — drawer matches `/logistics` at 140 d for Bharati HSD; needs Twin-side check |
 
 Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides done, needs review` → `✅ reviewed & merged`.
 
@@ -74,3 +99,32 @@ Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides d
 | Date | Who | Change | Reason |
 |---|---|---|---|
 | 2026-09-20 | Scaffolding | Moved `contracts.ts` → `src/shared/contracts.ts` | Path change only — no signature or type changes |
+| 2026-09-20 | Dev B | `useActionTransitions(namespace, actor?)` — added an optional second argument `{ name, role }` | Every transition now records a real actor instead of the literal string `current-user`. Existing one-argument call sites keep working. |
+| 2026-09-20 | Dev B | `useActionTransitions` now validates every transition and writes a REAL hash-chain entry | Previously the timeline row carried `hash: ''`. Each transition now appends to the `auditChain` bucket and the timeline row carries that entry's real `hash`/`prevHash`, so the Action Centre timeline and the `/compliance` audit log are two views of one chain. **Illegal transitions now throw** — e.g. anything out of `RESOLVED`. Wrap calls in try/catch. |
+| 2026-09-20 | Dev B | New methods on `useActionTransitions`: `start`, `transitionTo`, `attachEvidence` | Needed for the board view's drag-between-columns and for evidence capture. Nothing removed. |
+| 2026-09-20 | Dev B | New exports: `ALLOWED_TRANSITIONS`, `canTransition(from, to)`, `TransitionActor` | So a UI can grey out or reject an illegal move before attempting it. |
+| 2026-09-20 | Dev B | `defer` and `resolve` now reject harder | `defer` requires reason AND review date; `resolve` requires a note, plus evidence for T0/T1 (FR-6.4 / FR-6.5). |
+| 2026-09-20 | Dev B | New module `src/engine/similarity.ts` (TF-IDF cosine, top 5, min score 0.35) | `engine/similarity.ts` is listed in FRONTEND.md §12 but did not exist, and both `/actions` (similar past faults) and `/handover` (recurring faults) need it. **This sits in Dev A's `engine/` folder — please adopt or replace it rather than writing a second one.** |
+| 2026-09-20 | Dev B | New parameters: `energy.fuelEnergyKwhPerL`, `thermal.zoneWarningLossPct`, `thermal.zoneWatchLossPct`, `logistics.targetCoverDays` | NFR-B1: every constant the engine consumes must be editable on `/settings`. The first converts the engine's kW-equivalent burn into the litres the fuel ledger uses. |
+| 2026-09-20 | Dev B | Added `tsconfig.json` and `typescript` as a dev dependency (`bun add -d typescript`) | The `@/*` alias existed only in `vite.config.js`, so the IDE and any type-check could not resolve it. `.js`/`.jsx` are included but unchecked, so the 3D twin is unaffected. |
+
+#### ⚠ Open question for Dev A — suspected sign bug in `computeMarginDays`
+
+`FRONTEND.md` §9 (and the engine implementing it) defines:
+
+```
+marginDays.min = shipWindow.earliestDay − (autonomyDays + band)
+risk = critical if marginDays.min < 0
+```
+
+Those two lines disagree with each other. With that subtraction order, a resource
+that comfortably **outlasts** the voyage produces a negative margin, and a resource
+that runs out **long before** the ship arrives produces a positive one — so every
+healthy resource would classify as `critical` and the colour contract would be
+meaningless.
+
+I did **not** patch the engine, and I did not write a second formula. `computeMarginDays`
+stays the only implementation; `src/state/data.ts → marginToShip()` calls it and flips
+the sign once, at a single site, so "margin to ship" means what the column header says:
+days of cover beyond the ship's arrival. The correction belongs in the engine — your
+call on whether to change the formula or the risk rule.

@@ -14,12 +14,14 @@ import {
   type Voyage, type WasteEvent, type Zone, type DomainState, type Risk,
   type CausalTraceInput,
   computeAutonomy, computeLSOD, computeMarginDays, computeRisk, runCausalTrace,
+  computeHDD, computeHeatLoss, computeEnergyDemand, computeFuelBurn,
 } from '@/shared/contracts';
 import { readStore, writeStore } from '@/lib/localStore';
 import { ageSeconds, daysFromNow } from '@/lib/time';
 import { getEngineConfig, getParamValue, slaTargetSeconds } from '@/state/params';
 import { getSyncInfo, type StationId, STATION_IDS } from '@/state/connectivity';
 import { canDeriveDeadline } from '@/lib/freshness';
+import { derived } from '@/lib/provenance';
 import { STATION_PROFILES, envSnapshot, ROSTER, type RosterMember } from '@/mock/seed';
 import type { StationFilter } from '@/state/stationScope';
 
@@ -75,9 +77,13 @@ export function shipWindowDays(stationId: StationId, voyage: Voyage | null): Shi
   if (!voyage) return null;
   const arrival = voyage.arrival[stationId];
   if (!arrival) return null;
+  // Rounded to whole days on purpose: an arrival window is a date, not a
+  // timestamp, and leaving sub-second drift in here would make two calls a
+  // millisecond apart produce inputs that are not byte-identical — which the
+  // CausalTrace parity check across pages relies on.
   return {
-    earliestDay: daysFromNow(arrival.from),
-    latestDay: daysFromNow(arrival.to),
+    earliestDay: Math.round(daysFromNow(arrival.from)),
+    latestDay: Math.round(daysFromNow(arrival.to)),
   };
 }
 
@@ -150,13 +156,64 @@ export function getResource(id: string, season?: string): DerivedResource | unde
   return deriveResource(raw, getActiveVoyage(season));
 }
 
+/**
+ * Fuel burn is not an observation in this build — it is the OUTPUT of the
+ * coupling chain: ambient falls, heating demand rises, generator load rises,
+ * burn rises. Deriving it here (rather than reading a stored SYNTH figure)
+ * is what makes the ledger's autonomy and the CausalTrace panel's autonomy
+ * the same number rather than two numbers that happen to sit on one screen.
+ *
+ * Returns litres per day, converted from the engine's kW-equivalent by the
+ * fuel energy density on /settings.
+ */
+function derivedFuelBurn(stationId: StationId): { perDay: number; measurement: Measurement } {
+  const config = getEngineConfig(stationId);
+  const env = envSnapshot(stationId);
+  const ambient = num(env.ambientC);
+  const hdd = computeHDD(ambient, config.degreeDayBaseC);
+  const heatLossW = computeHeatLoss(
+    getParamValue<number>('thermal.uValue', stationId),
+    getParamValue<number>('thermal.areaM2', stationId),
+    hdd
+  );
+  const demandKw = computeEnergyDemand(heatLossW, config);
+  const burnKwEquivalent = computeFuelBurn(demandKw, config);
+  const kwhPerL = getParamValue<number>('energy.fuelEnergyKwhPerL', stationId);
+  const perDay = (burnKwEquivalent * 24) / kwhPerL;
+
+  return {
+    perDay,
+    measurement: derived(
+      Number(perDay.toFixed(1)),
+      'L/day',
+      'coupling engine',
+      'burnRate = (baselineLoad + U·A·HDD) / generatorEfficiency, converted at the configured fuel energy density',
+      [
+        { name: 'ambient temperature', provenance: env.ambientC.provenance },
+        { name: 'baseline station load', provenance: 'SYNTH' },
+        { name: 'generator efficiency', provenance: 'SYNTH' },
+        { name: 'envelope U-value and area', provenance: 'SYNTH' },
+      ]
+    ),
+  };
+}
+
+/** Stock expressed in the engine's own units, so trace autonomy == ledger autonomy. */
+export function stockInEngineUnits(stationId: StationId, stockLitres: number): number {
+  const kwhPerL = getParamValue<number>('energy.fuelEnergyKwhPerL', stationId);
+  return (stockLitres * kwhPerL) / 24;
+}
+
 export function deriveResource(raw: Resource, voyage: Voyage | null): DerivedResource {
   const stationId = raw.stationId;
   const config = getEngineConfig(stationId);
   const sync = getSyncInfo(stationId);
 
   const stock = num(raw.stock);
-  const burn = num(raw.burnRate);
+  const isFuel = raw.category === 'fuel';
+  const fuel = isFuel ? derivedFuelBurn(stationId) : null;
+  const burnRate = fuel ? fuel.measurement : raw.burnRate;
+  const burn = fuel ? fuel.perDay : num(raw.burnRate);
   const { autonomyDays, autonomyBandDays } = computeAutonomy(stock, burn, config);
 
   const window = shipWindowDays(stationId, voyage);
@@ -177,6 +234,7 @@ export function deriveResource(raw: Resource, voyage: Voyage | null): DerivedRes
 
   return {
     ...raw,
+    burnRate,
     autonomyDays,
     autonomyBandDays,
     marginDays: margin,
@@ -189,11 +247,26 @@ export function deriveResource(raw: Resource, voyage: Voyage | null): DerivedRes
   };
 }
 
-/** LSOD ascending, with "cannot compute" rows kept visible at the end. */
+/**
+ * LSOD ascending — with one deliberate exception.
+ *
+ * A resource whose LSOD cannot be computed because its station is stale, and
+ * whose margin is already negative, is NOT safe to bury below a resource
+ * with a comfortable 99-day deadline. We cannot prove it is fine, and the
+ * evidence we do have says it is not. Those rows sort to the top; every
+ * resource with a computable deadline then sorts by LSOD ascending, and
+ * stale-but-healthy rows sort last. The column caption says so.
+ */
 export function byLsodAscending(a: DerivedResource, b: DerivedResource): number {
-  if (a.lsodDays === null && b.lsodDays === null) return a.autonomyDays - b.autonomyDays;
-  if (a.lsodDays === null) return 1;
-  if (b.lsodDays === null) return -1;
+  const rank = (r: DerivedResource): number => {
+    if (r.lsodDays === null) return (r.risk === 'critical' || r.risk === 'warning') ? 0 : 2;
+    return 1;
+  };
+  const ra = rank(a), rb = rank(b);
+  if (ra !== rb) return ra - rb;
+  if (a.lsodDays === null || b.lsodDays === null) {
+    return a.autonomyDays - b.autonomyDays;
+  }
   return a.lsodDays - b.lsodDays;
 }
 
@@ -467,17 +540,33 @@ export function putObligations(obligations: Obligation[]): void {
   writeStore('hq', 'obligations', obligations);
 }
 
+/** syncRecordId -> obligationId. Which queued record satisfies which duty. */
+export function getRecordLinks(): Record<string, string> {
+  return readStore<Record<string, string>>('hq', 'recordLinks', {});
+}
+
 /**
  * FR-2.6: an obligation whose evidence is sitting in a station outbox reads
- * QUEUED OFFLINE, not OVERDUE. The station did its part; the link did not.
+ * QUEUED OFFLINE, not OVERDUE. The station did its part; the link did not —
+ * and once the outbox drains, the same obligation reads SUBMITTED, because
+ * the record has now actually arrived. Those are three different facts and
+ * the page shows three different words for them.
  */
 export function resolveObligationStatus(o: Obligation): Obligation['status'] {
   if (o.status === 'submitted') return 'submitted';
-  const queued = getOutbox().some(
-    (r) => r.type === 'compliance' && r.stationId === o.stationId && r.state !== 'SENT'
-  );
+
+  const links = getRecordLinks();
+  const linkedIds = Object.entries(links)
+    .filter(([, obligationId]) => obligationId === o.id)
+    .map(([recordId]) => recordId);
+
+  if (linkedIds.length > 0) {
+    if (getReceivedRecords().some((r) => linkedIds.includes(r.id))) return 'submitted';
+    if (getOutbox().some((r) => linkedIds.includes(r.id) && r.state !== 'SENT')) return 'queued_offline';
+  }
+
   const dueInDays = daysFromNow(o.dueDate);
-  if (dueInDays < 0) return queued ? 'queued_offline' : 'overdue';
+  if (dueInDays < 0) return 'overdue';
   if (dueInDays <= 30) return 'due_soon';
   return 'future';
 }
@@ -503,13 +592,22 @@ export interface WasteBalanceRow {
   withinTolerance: boolean;
 }
 
+/** The station's own reported compound inventory — an independent input. */
+export function getWasteInventory(): Record<string, number> {
+  return readStore<Record<string, number>>('hq', 'wasteInventory', {});
+}
+
 /**
  * FR-3.4 — the page's most useful integrity feature. `generated − shipped =
- * stored`; anything beyond the configured tolerance renders orange and earns
- * a T2 action.
+ * stored`, where all THREE figures are reported independently: generation
+ * and removal come from the event ledger, stored mass from the station's own
+ * compound inventory. Deriving stored from the other two would make the
+ * check tautological and it would only ever fire on over-shipment.
+ * Anything beyond the configured tolerance renders orange and earns a T2 action.
  */
 export function wasteBalance(filter: StationFilter = 'all'): WasteBalanceRow[] {
   const tolerance = getParamValue<number>('thresholds.wasteBalanceToleranceKg');
+  const inventory = getWasteInventory();
   const events = getWasteEvents(filter);
   const key = (e: WasteEvent) => e.stationId + '|' + e.stream;
   const groups = new Map<string, WasteEvent[]>();
@@ -522,13 +620,17 @@ export function wasteBalance(filter: StationFilter = 'all'): WasteBalanceRow[] {
   const rows: WasteBalanceRow[] = [];
   for (const [k, list] of groups) {
     const [stationId, stream] = k.split('|') as [StationId, WasteEvent['stream']];
-    const generatedKg = list.filter((e) => e.direction === 'generated').reduce((s, e) => s + num(e.massKg), 0);
-    const shippedKg = list.filter((e) => e.direction === 'shipped').reduce((s, e) => s + num(e.massKg), 0);
-    const storedKg = Math.max(0, generatedKg - shippedKg);
-    const discrepancyKg = generatedKg - shippedKg - storedKg;
+    const generatedKg = Number(
+      list.filter((e) => e.direction === 'generated').reduce((s, e) => s + num(e.massKg), 0).toFixed(1)
+    );
+    const shippedKg = Number(
+      list.filter((e) => e.direction === 'shipped').reduce((s, e) => s + num(e.massKg), 0).toFixed(1)
+    );
+    const storedKg = inventory[k] ?? Math.max(0, generatedKg - shippedKg);
+    const discrepancyKg = Number((generatedKg - shippedKg - storedKg).toFixed(1));
     rows.push({
       stream, stationId, generatedKg, shippedKg, storedKg,
-      discrepancyKg: Number(discrepancyKg.toFixed(1)),
+      discrepancyKg,
       withinTolerance: Math.abs(discrepancyKg) <= tolerance,
     });
   }
@@ -600,7 +702,10 @@ export function causalTraceInput(
     windKmh: num(env.windKt) * 1.852,
     uValue: baseU * (1 + lossPct / 100),
     areaM2: getParamValue<number>('thermal.areaM2', stationId),
-    stockUnits: num(fuel?.stock),
+    // The engine's burn rate is a kW-equivalent, so the stock it divides must
+    // be too. Converting here is what makes the trace's autonomy identical to
+    // the ledger's for the same resource (touchpoint #10).
+    stockUnits: stockInEngineUnits(stationId, num(fuel?.stock)),
     shipWindow: window,
     config,
     provenanceOverride: opts.provenanceOverride,

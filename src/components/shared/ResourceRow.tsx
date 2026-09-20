@@ -4,6 +4,7 @@
 
 import { type Resource } from '@/shared/contracts';
 import { StatusDot } from './StatusDot';
+import { lsodColor } from '@/lib/risk';
 
 interface ResourceRowProps {
   resource: Resource;
@@ -12,14 +13,6 @@ interface ResourceRowProps {
 }
 
 export function ResourceRow({ resource, onClick, className = '' }: ResourceRowProps) {
-  const lsodColor = resource.lsodDays === null
-    ? 'var(--text-3)'
-    : resource.lsodDays <= 14
-      ? 'var(--act-soft)'
-      : resource.lsodDays <= 45
-        ? 'var(--watch-soft)'
-        : 'var(--text-3)';
-
   return (
     <button
       onClick={onClick}
@@ -36,7 +29,7 @@ export function ResourceRow({ resource, onClick, className = '' }: ResourceRowPr
         {Math.round(resource.autonomyDays)} ±{Math.round(resource.autonomyBandDays)} d
       </span>
 
-      <span className="font-mono text-[11px] w-16 text-right" style={{ color: lsodColor }}>
+      <span className="font-mono text-[11px] w-16 text-right" style={{ color: lsodColor(resource.lsodDays) }}>
         {resource.lsodDays === null ? 'stale' : `${Math.round(resource.lsodDays)} d`}
       </span>
     </button>

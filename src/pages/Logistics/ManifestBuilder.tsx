@@ -191,7 +191,9 @@ function CandidateRow({ candidate, rank, onToggle }: { candidate: Candidate; ran
           {STATION_CODE[candidate.stationId as 'bharati' | 'maitri']} ·{' '}
           {candidate.quantity.toLocaleString()} {candidate.unit} ·{' '}
           {candidate.massKg.toLocaleString()} kg ·{' '}
-          LSOD {candidate.lsodDays === null ? 'cannot compute' : Math.round(candidate.lsodDays) + ' d'}
+          {candidate.urgencyBasis === 'lsod'
+            ? `LSOD ${Math.round(candidate.lsodDays!)} d`
+            : 'ranked on cover — no LSOD while the station is unreachable'}
         </span>
       </span>
 

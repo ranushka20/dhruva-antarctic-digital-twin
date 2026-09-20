@@ -137,7 +137,7 @@ export function seedVoyages(): Voyage[] {
         bharati: { from: iso(days(93)), to: iso(days(101)) },
         maitri: { from: iso(days(107)), to: iso(days(114)) },
       },
-      capacityKg: { min: 42000, max: 58000 },
+      capacityKg: { min: 260000, max: 300000 },
       provenance: 'SYNTH',
       status: 'planned',
     },
@@ -150,7 +150,7 @@ export function seedVoyages(): Voyage[] {
         bharati: { from: iso(days(147)), to: iso(days(155)) },
         maitri: { from: iso(days(158)), to: iso(days(166)) },
       },
-      capacityKg: { min: 38000, max: 52000 },
+      capacityKg: { min: 240000, max: 285000 },
       provenance: 'SYNTH',
       status: 'planned',
     },
@@ -163,7 +163,7 @@ export function seedVoyages(): Voyage[] {
         bharati: { from: iso(-days(201)), to: iso(-days(196)) },
         maitri: { from: iso(-days(188)), to: iso(-days(182)) },
       },
-      capacityKg: { min: 40000, max: 55000 },
+      capacityKg: { min: 250000, max: 295000 },
       provenance: 'SYNTH',
       status: 'completed',
     },
@@ -199,7 +199,7 @@ interface ResourceSeed {
 
 const RESOURCE_SEEDS: ResourceSeed[] = [
   // ---- Bharati ----
-  { id: 'bhr-hsd', name: 'HSD bulk fuel', stationId: 'bharati', category: 'fuel', stock: 168000, unit: 'L', burnRate: 1180, burnDrift: 9, reorderPoint: 60000, massPerUnitKg: 0.84, awaiting: 'station fuel telemetry' },
+  { id: 'bhr-hsd', name: 'HSD bulk fuel', stationId: 'bharati', category: 'fuel', stock: 77000, unit: 'L', burnRate: 550, burnDrift: 4, reorderPoint: 60000, massPerUnitKg: 0.84, awaiting: 'station fuel telemetry' },
   { id: 'bhr-lpg', name: 'LPG cylinders', stationId: 'bharati', category: 'power', stock: 210, unit: 'cyl', burnRate: 1.9, burnDrift: 0.01, reorderPoint: 90, massPerUnitKg: 33, awaiting: 'station inventory system' },
   { id: 'bhr-prov', name: 'Dry provisions', stationId: 'bharati', category: 'provisions', stock: 9400, unit: 'kg', burnRate: 41, burnDrift: 0.12, reorderPoint: 3600, massPerUnitKg: 1, awaiting: 'station inventory system' },
   { id: 'bhr-med', name: 'Medical consumables', stationId: 'bharati', category: 'medical', stock: 1250, unit: 'unit', burnRate: 4.1, burnDrift: 0.02, reorderPoint: 500, massPerUnitKg: 0.4, awaiting: 'station inventory system' },
@@ -208,7 +208,7 @@ const RESOURCE_SEEDS: ResourceSeed[] = [
   { id: 'bhr-sci', name: 'Aerosol filter cassettes', stationId: 'bharati', category: 'science', stock: 480, unit: 'unit', burnRate: 2.4, burnDrift: 0.01, reorderPoint: 120, massPerUnitKg: 0.05, awaiting: 'station inventory system' },
 
   // ---- Maitri ----
-  { id: 'mtr-hsd', name: 'HSD bulk fuel', stationId: 'maitri', category: 'fuel', stock: 96500, unit: 'L', burnRate: 1310, burnDrift: 14, reorderPoint: 60000, massPerUnitKg: 0.84, awaiting: 'station fuel telemetry' },
+  { id: 'mtr-hsd', name: 'HSD bulk fuel', stationId: 'maitri', category: 'fuel', stock: 40000, unit: 'L', burnRate: 574, burnDrift: 6, reorderPoint: 60000, massPerUnitKg: 0.84, awaiting: 'station fuel telemetry' },
   { id: 'mtr-prov', name: 'Dry provisions', stationId: 'maitri', category: 'provisions', stock: 8100, unit: 'kg', burnRate: 44, burnDrift: 0.1, reorderPoint: 3600, massPerUnitKg: 1, awaiting: 'station inventory system' },
   { id: 'mtr-med', name: 'Medical consumables', stationId: 'maitri', category: 'medical', stock: 640, unit: 'unit', burnRate: 4.6, burnDrift: 0.03, reorderPoint: 500, massPerUnitKg: 0.4, awaiting: 'station inventory system' },
   { id: 'mtr-gensp', name: 'Generator spares (set 1)', stationId: 'maitri', category: 'spares', stock: 3, unit: 'set', burnRate: 0.062, burnDrift: 0.0012, reorderPoint: 4, massPerUnitKg: 62, awaiting: 'station maintenance records' },
@@ -321,7 +321,7 @@ const ACTION_SEEDS: ActionSeed[] = [
     ageHours: 31.6,
     trigger: {
       metricName: 'HSD bulk stock',
-      measurement: synth(96500, 'L', 'station fuel telemetry'),
+      measurement: synth(40000, 'L', 'station fuel telemetry'),
       threshold: { value: 60000, unit: 'L', label: 'reorder point' },
     },
     consequence: { kind: 'lsod', before: 41, after: 12, unit: 'd', label: 'LSOD in 12 d' },
@@ -862,6 +862,58 @@ export function seedOutbox(): SyncRecord[] {
   }));
 }
 
+/**
+ * Independently REPORTED stored mass per station and stream — the station's
+ * own compound inventory, not a figure derived from generated minus shipped.
+ *
+ * This is what makes the balance check meaningful rather than tautological:
+ * if stored mass were computed from the other two, the check could only ever
+ * fail on over-shipment. Here the three figures come from three places and
+ * can genuinely disagree, which is exactly the condition an auditor cares
+ * about.
+ */
+export function seedWasteInventory(): Record<string, number> {
+  const inventory: Record<string, number> = {};
+  const events = seedWasteEvents();
+
+  for (const stationId of ['bharati', 'maitri'] as StationId[]) {
+    for (const stream of STREAMS) {
+      const rows = events.filter((e) => e.stationId === stationId && e.stream === stream);
+      const generated = rows.filter((e) => e.direction === 'generated')
+        .reduce((s, e) => s + (typeof e.massKg.value === 'number' ? e.massKg.value : 0), 0);
+      const shipped = rows.filter((e) => e.direction === 'shipped')
+        .reduce((s, e) => s + (typeof e.massKg.value === 'number' ? e.massKg.value : 0), 0);
+      inventory[stationId + '|' + stream] = Number(Math.max(0, generated - shipped).toFixed(1));
+    }
+  }
+
+  // Two deliberate discrepancies for the integrity demo. Both are the shape a
+  // real compound audit throws up: drums moved without a ledger entry, and a
+  // stream double-counted at the weighbridge.
+  inventory['maitri|hazardous'] = Number((inventory['maitri|hazardous'] + 148).toFixed(1));
+  inventory['bharati|fuel_oily'] = Number((inventory['bharati|fuel_oily'] - 96).toFixed(1));
+
+  return inventory;
+}
+
+/**
+ * Which queued compliance record satisfies which obligation. Without this the
+ * UI could not tell QUEUED OFFLINE from OVERDUE, which is the one distinction
+ * Page 7 exists to make.
+ */
+export function seedRecordLinks(outbox: SyncRecord[]): Record<string, string> {
+  const links: Record<string, string> = {};
+  const byRef: Record<string, string> = {
+    'Waste return August — draft': 'obl-002',
+    'Mid-season inspection record': 'obl-007',
+  };
+  for (const record of outbox) {
+    const obligationId = byRef[record.payloadRef];
+    if (obligationId) links[record.id] = obligationId;
+  }
+  return links;
+}
+
 export function seedConflicts(): Conflict[] {
   return [
     {
@@ -883,8 +935,8 @@ export function seedConflicts(): Conflict[] {
     {
       objectType: 'resource',
       objectId: 'mtr-hsd',
-      hqVersion: { actor: 'P. Sharma', at: iso(-hours(20)), fields: { stock: 98000, source: 'last synced gauge' } },
-      stationVersion: { actor: 'V. Chandran', at: iso(-hours(31.4)), fields: { stock: 96500, source: 'manual dip 04:10 IST' } },
+      hqVersion: { actor: 'P. Sharma', at: iso(-hours(20)), fields: { stock: 41200, source: 'last synced gauge' } },
+      stationVersion: { actor: 'V. Chandran', at: iso(-hours(31.4)), fields: { stock: 40000, source: 'manual dip 04:10 IST' } },
       differingFields: ['stock'],
       defaultResolution: 'station',
     },

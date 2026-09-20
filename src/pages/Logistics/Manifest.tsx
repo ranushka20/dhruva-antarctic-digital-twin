@@ -5,7 +5,7 @@
 // /logistics. Versions are append-only: regenerating creates a new version
 // and the previous ones stay listed with their audit hashes (NFR-4.4).
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
 import { ManifestBuilder } from './ManifestBuilder';
@@ -29,26 +29,37 @@ export default function ManifestPage() {
   const canGenerate = useCan('logistics.manifest');
 
   const [capacityKg, setCapacityKg] = useState(() => getParamValue<number>('logistics.capacityMaxKg'));
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [toast, setToast] = useState<string | null>(null);
 
-  const seed = useStoreValue(() => buildCandidates('all', voyage?.season));
+  // Only the operator's departures from the algorithm are state. The ranked
+  // list itself is derived, so a parameter or voyage change flows straight
+  // through without an effect that could fight the store (NFR-4.2).
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    setCandidates(fillCapacity(seed, capacityKg));
-    // Seed identity changes whenever the underlying resources or parameters do.
-  }, [seed, capacityKg]);
+  const seed = useStoreValue(() => buildCandidates('all', voyage?.season));
+  const seedKey = seed.map((c) => `${c.resourceId}:${c.stationId}:${c.massKg}:${c.score.toFixed(4)}`).join('|');
+
+  const candidates: Candidate[] = useMemo(() => {
+    const filled = fillCapacity(
+      seed.map((c) => {
+        const key = c.resourceId + '|' + c.stationId;
+        return key in overrides
+          ? { ...c, included: overrides[key], manualOverride: true }
+          : c;
+      }),
+      capacityKg
+    );
+    return filled;
+    // seedKey stands in for seed's contents — seed is a fresh array each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedKey, capacityKg, overrides]);
 
   const versions = useStoreValue(() => (voyage ? getManifests(voyage.id) : []));
 
   const toggleItem = (resourceId: string, stationId: string) => {
-    setCandidates((cur) =>
-      cur.map((c) =>
-        c.resourceId === resourceId && c.stationId === stationId
-          ? { ...c, included: !c.included, manualOverride: true }
-          : c
-      )
-    );
+    const key = resourceId + '|' + stationId;
+    const current = candidates.find((c) => c.resourceId === resourceId && c.stationId === stationId);
+    setOverrides((cur) => ({ ...cur, [key]: !(current?.included ?? false) }));
   };
 
   const onGenerate = async () => {

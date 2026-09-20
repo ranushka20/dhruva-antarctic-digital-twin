@@ -62,11 +62,11 @@ export const PARAM_DEFS: Def[] = [
   def('logistics.unloadingDays', 'logistics', 'Unloading at station', DEFAULT_ENGINE_CONFIG.unloadingDays, {
     unit: 'days', min: 0, max: 60, usedBy: ['computeLSOD'],
   }),
-  def('logistics.capacityMinKg', 'logistics', 'Cargo capacity — low', 42000, {
-    unit: 'kg', min: 0, max: 500000, usedBy: ['manifestBuilder'],
+  def('logistics.capacityMinKg', 'logistics', 'Cargo capacity — low', 260000, {
+    unit: 'kg', min: 0, max: 2000000, usedBy: ['manifestBuilder'],
   }),
-  def('logistics.capacityMaxKg', 'logistics', 'Cargo capacity — high', 58000, {
-    unit: 'kg', min: 0, max: 500000, usedBy: ['manifestBuilder'],
+  def('logistics.capacityMaxKg', 'logistics', 'Cargo capacity — high', 300000, {
+    unit: 'kg', min: 0, max: 2000000, usedBy: ['manifestBuilder'],
   }),
   def('logistics.horizonDays', 'logistics', 'Prioritisation horizon', 365, {
     unit: 'days', min: 30, max: 1095, usedBy: ['scoreManifestCandidate'],
@@ -103,6 +103,14 @@ export const PARAM_DEFS: Def[] = [
   }),
   def('energy.burnRateVariance', 'energy', 'Burn-rate variance (± band)', DEFAULT_ENGINE_CONFIG.burnRateVariance, {
     min: 0, max: 0.5, usedBy: ['computeAutonomy'],
+  }),
+  // computeFuelBurn() returns a kW-equivalent. This is the one factor that
+  // turns it into the litres the fuel ledger is denominated in, so the
+  // causal trace and the resource ledger cannot drift apart.
+  def('energy.fuelEnergyKwhPerL', 'energy', 'Fuel energy density', 10.0, {
+    unit: 'kWh/L', min: 1, max: 20, usedBy: ['computeFuelBurn', 'causalTraceInput'],
+    source: 'diesel lower heating value, ~9.9–10.1 kWh/L (published)',
+    provenance: 'MODELED',
   }),
 
   // ---- Thermal (FR-B5) ----
@@ -215,7 +223,27 @@ export function getParameter(key: string, scope: ParamScope = 'global'): Paramet
   return getParameters(scope).find((p) => p.key === key);
 }
 
+/**
+ * A synchronous, in-memory override layer used by the /settings impact
+ * preview. It never touches storage and never notifies, so "what would this
+ * value do?" can be answered by the real engine without a write that other
+ * views would see — and without clobbering an override the operator already
+ * has at that scope.
+ */
+let sandboxOverrides: Record<string, ParamValue> | null = null;
+
+export function withSandboxParams<T>(overrides: Record<string, ParamValue>, fn: () => T): T {
+  const previous = sandboxOverrides;
+  sandboxOverrides = { ...(previous ?? {}), ...overrides };
+  try {
+    return fn();
+  } finally {
+    sandboxOverrides = previous;
+  }
+}
+
 export function getParamValue<T extends ParamValue>(key: string, scope: ParamScope = 'global'): T {
+  if (sandboxOverrides && key in sandboxOverrides) return sandboxOverrides[key] as T;
   const overrides = readOverrides();
   const scoped = scope !== 'global' ? overrides[scope]?.[key] : undefined;
   const globalOv = overrides.global?.[key];

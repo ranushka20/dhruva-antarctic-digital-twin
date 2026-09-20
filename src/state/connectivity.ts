@@ -112,6 +112,8 @@ export interface LinkSegment {
   toMs: number;
   durationSeconds: number;
   cause?: string;
+  /** True while this interval is still running — it has no end yet. */
+  open: boolean;
 }
 
 /** Segments clipped to a window, ready for the timeline strip (FR-1.2). */
@@ -133,6 +135,7 @@ export function getLinkSegments(stationId: StationId, windowHours: number, now =
       toMs: clippedTo,
       durationSeconds: Math.round((clippedTo - clippedFrom) / 1000),
       cause: event.cause,
+      open: !event.to,
     });
   });
 

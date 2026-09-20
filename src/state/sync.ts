@@ -340,8 +340,14 @@ export interface MissedWindow {
   toMs: number;
   durationSeconds: number;
   entries: MissedEntry[];
-  /** True when the station reported nothing — different from "no data". */
+  /**
+   * True ONLY for a closed gap that recovered no records: the station was
+   * quiet. Different from "we have no data", and different again from a gap
+   * still in progress — see `stillOpen`.
+   */
   stationReportedNothing: boolean;
+  /** The gap has not closed yet, so nothing can have reached HQ from it. */
+  stillOpen: boolean;
   cause?: string;
 }
 
@@ -378,7 +384,11 @@ export function reconstructMissedLog(stationId: StationId, windowHours = 168): M
       toMs: segment.toMs,
       durationSeconds: segment.durationSeconds,
       entries,
-      stationReportedNothing: entries.length === 0,
+      // "The station reported nothing" is a claim about a FINISHED gap. While
+      // the link is still down, the truthful statement is that nothing has
+      // reached HQ yet — asserting silence would be inventing a fact.
+      stationReportedNothing: entries.length === 0 && !segment.open,
+      stillOpen: segment.open,
       cause: segment.cause,
     };
   });

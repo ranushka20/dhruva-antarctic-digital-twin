@@ -13,12 +13,18 @@ import { refreshChainStatus } from '@/lib/hashChain';
 import {
   seedActions, seedInspections, seedLinkHistory, seedObligations,
   seedOutbox, seedResources, seedTimelineTransitions, seedVoyages,
-  seedWasteEvents, seedZones, seedConflicts,
+  seedWasteEvents, seedWasteInventory, seedRecordLinks, seedZones, seedConflicts,
 } from '@/mock/seed';
 import { setLinkHistory, STATION_IDS, type StationId } from '@/state/connectivity';
 import { setConnectivity } from '@/shared/contracts';
 
-const SEED_VERSION = 'devb-1';
+/**
+ * Bump this whenever the seed's SHAPE or content changes. A browser that
+ * already holds an older seed re-seeds on next load instead of rendering a
+ * half-populated store — the missing bucket would otherwise show up as a
+ * silently empty panel, which is exactly what NFR-G2 forbids.
+ */
+const SEED_VERSION = 'devb-3';
 
 interface StoredChainEntry extends AuditEntry {
   payload: Record<string, unknown>;
@@ -74,6 +80,7 @@ export async function reseed(): Promise<void> {
 
   writeStore('hq', 'obligations', seedObligations());
   writeStore('hq', 'wasteEvents', seedWasteEvents());
+  writeStore('hq', 'wasteInventory', seedWasteInventory());
   writeStore('hq', 'inspections', seedInspections());
   writeStore('hq', 'conflicts', seedConflicts());
 
@@ -86,8 +93,10 @@ export async function reseed(): Promise<void> {
   writeStore('hq', 'lastSyncAt:maitri', new Date(Date.now() - 31.66 * 3_600_000).toISOString());
 
   // ---- Station-side outbox ----
-  writeStore('station', 'outbox', seedOutbox());
+  const outbox = seedOutbox();
+  writeStore('station', 'outbox', outbox);
   writeStore('hq', 'received', []);
+  writeStore('hq', 'recordLinks', seedRecordLinks(outbox));
 
   // ---- Actions + the chain that records them ----
   const actions = seedActions();

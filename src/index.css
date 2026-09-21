@@ -69,7 +69,12 @@
   --color-as-sim-soft: var(--sim-soft);
   --color-as-glow: var(--glow);
 
-  /* ---- Antarasetu typography ---- */
+  /* ---- Antarasetu typography ----
+     --font-sans is Tailwind's default body face, and <html> carries
+     `font-sans`. Pointing it at --font-body is what makes unstyled text
+     render in IBM Plex Sans instead of the OS UI font — otherwise the app
+     mixes two different sans faces on the same screen. */
+  --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 

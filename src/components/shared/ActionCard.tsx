@@ -56,9 +56,10 @@ export function ActionCard({ action, variant = 'compact', onAcknowledge, classNa
           style={{
             backgroundColor: 'var(--act)',
             color: 'var(--bg)',
+            fontFamily: 'var(--font-body)',
           }}
         >
-          ACK
+          Acknowledge
         </button>
       )}
     </div>

@@ -99,20 +99,20 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
                           <button
                             type="button"
                             onClick={() => onOpenAction(item.linkedActionId!)}
-                            className="font-mono text-[9px] px-2 py-1 rounded shrink-0 min-h-[30px]"
-                            style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
+                            style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                           >
-                            OPEN ACTION
+                            Open action
                           </button>
                         ) : (
                           <button
                             type="button"
                             disabled={!canRaise}
                             onClick={() => onRaiseForFinding(record, item.id, item.label)}
-                            className="font-mono text-[9px] px-2 py-1 rounded shrink-0 min-h-[30px]"
-                            style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canRaise ? 1 : 0.4 }}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
+                            style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
                           >
-                            RAISE ACTION
+                            Raise action
                           </button>
                         )
                       )}

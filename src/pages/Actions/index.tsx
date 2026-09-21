@@ -174,13 +174,13 @@ export default function ActionsPage() {
           />
         </label>
 
-        <div className="flex items-center gap-3 font-mono text-[11px] tabular-nums">
-          <span style={{ color: 'var(--text-2)' }}>{counts.open} OPEN</span>
+        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tabular-nums">
+          <span style={{ color: 'var(--text-2)' }}>{counts.open} open</span>
           <span style={{ color: counts.unacked > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.unacked} UNACKED
+            {counts.unacked} unacked
           </span>
           <span style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.breaching} BREACHING SLA
+            {counts.breaching} breaching SLA
           </span>
         </div>
 
@@ -217,10 +217,10 @@ export default function ActionsPage() {
             type="button"
             disabled={!canBulk || chainBroken}
             onClick={bulkAck}
-            className="px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em]"
-            style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
+            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+            style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
           >
-            BULK ACK
+            Bulk acknowledge
           </button>
           <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
             Bulk resolve is deliberately unavailable — a resolution needs per-action evidence.
@@ -233,10 +233,10 @@ export default function ActionsPage() {
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="ml-auto font-mono text-[10px]"
-            style={{ color: 'var(--text-3)' }}
+            className="ml-auto text-[11.5px] font-medium"
+            style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
           >
-            CLEAR
+            Clear
           </button>
         </div>
       )}

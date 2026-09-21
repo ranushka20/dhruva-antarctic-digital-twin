@@ -175,10 +175,10 @@ export function ActionDrawer({ action, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => setDialog('evidence')}
-                  className="font-mono text-[9px] tracking-[0.06em] px-2 py-1 rounded"
-                  style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                  className="text-[11px] font-medium px-2.5 py-1 rounded"
+                  style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                 >
-                  ATTACH
+                  Attach
                 </button>
               ) : null
             }
@@ -200,9 +200,9 @@ export function ActionDrawer({ action, onClose }: Props) {
                       {e.label}
                     </span>
                     {e.pendingSync && (
-                      <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded shrink-0"
+                      <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded shrink-0"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        PENDING SYNC
+                        Pending sync
                       </span>
                     )}
                   </li>
@@ -383,15 +383,15 @@ function TimelineRow({ entry }: { entry: Action['timeline'][number] }) {
             {formatShortIST(entry.at)} · {entry.by}
           </span>
           {entry.pendingSync && (
-            <span className="font-mono text-[8px] px-1 py-0.5 rounded"
+            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded"
               style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-              PENDING SYNC
+              Pending sync
             </span>
           )}
           {entry.superseded && (
-            <span className="font-mono text-[8px] px-1 py-0.5 rounded"
+            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)' }}>
-              SUPERSEDED
+              Superseded
             </span>
           )}
         </div>
@@ -594,14 +594,15 @@ function EvidenceDialog({
             key={k}
             type="button"
             onClick={() => setKind(k)}
-            className="flex-1 py-2 font-mono text-[10px] tracking-[0.06em] rounded-full min-h-[40px]"
+            className="flex-1 py-2 text-[11.5px] font-medium rounded-full min-h-[40px] capitalize"
             style={{
+              fontFamily: 'var(--font-body)',
               backgroundColor: kind === k ? 'var(--panel-raised)' : 'transparent',
               border: `1px solid ${kind === k ? 'var(--line-strong)' : 'var(--line)'}`,
               color: kind === k ? 'var(--text)' : 'var(--text-3)',
             }}
           >
-            {k.toUpperCase()}
+            {k}
           </button>
         ))}
       </div>

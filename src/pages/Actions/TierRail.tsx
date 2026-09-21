@@ -118,8 +118,8 @@ export function TierRail({
           borderRadius: 'var(--r-inner)',
         }}
       >
-        <span className="font-mono text-[10px] tracking-[0.06em] flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-          SLA BREACH
+        <span className="font-mono text-[10px] uppercase tracking-[0.06em] flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+          SLA breach
         </span>
         <span className="font-mono text-[12px] tabular-nums" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
           {counts.breaching}

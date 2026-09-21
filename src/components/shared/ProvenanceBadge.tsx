@@ -19,6 +19,15 @@ interface ProvenanceBadgeProps {
   measurement: Measurement;
   /** What the value IS — shown as the hover card's second line. */
   label?: string;
+  /**
+   * Three-letter face for tiles too narrow to hold the full word — MODELED
+   * alone is wider than a third of the Overview right rail, and a badge that
+   * overflows its card is worse than an abbreviated one. The full class name
+   * still reaches the screen reader and the hover card, so nothing is lost.
+   */
+  abbreviated?: boolean;
+  /** Which edge the hover card hangs from. 'right' keeps it inside a narrow rail. */
+  align?: 'left' | 'right';
   className?: string;
 }
 
@@ -55,12 +64,18 @@ const BADGE_STYLES: Record<BadgeClass, { bg: string; border: string; text: strin
   },
 };
 
+const SHORT_FACE: Record<BadgeClass, string> = {
+  LIVE: 'LIVE', MODELED: 'MDL', SYNTH: 'SYN', SIM: 'SIM', UNKNOWN: 'UNK',
+};
+
 export function badgeClassOf(measurement: Measurement): BadgeClass {
   if (isUnknown(measurement)) return 'UNKNOWN';
   return measurement.provenance;
 }
 
-export function ProvenanceBadge({ measurement, label, className = '' }: ProvenanceBadgeProps) {
+export function ProvenanceBadge({
+  measurement, label, abbreviated = false, align = 'left', className = '',
+}: ProvenanceBadgeProps) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const cls = badgeClassOf(measurement);
@@ -86,24 +101,27 @@ export function ProvenanceBadge({ measurement, label, className = '' }: Provenan
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center font-mono text-[8.5px] tracking-[0.06em] px-1.5 py-0.5 rounded cursor-help"
+        className={
+          'inline-flex items-center font-mono text-[8.5px] tracking-[0.06em] py-0.5 rounded cursor-help '
+          + (abbreviated ? 'px-1' : 'px-1.5')
+        }
         style={{ backgroundColor: style.bg, border: style.border, color: style.text }}
       >
-        {cls}
+        {abbreviated ? SHORT_FACE[cls] : cls}
       </button>
 
       {open && (
         <span
           id={id}
           role="tooltip"
-          className="absolute left-0 top-full mt-1 z-50 block w-64 p-2.5"
+          className={'absolute top-full mt-1 z-50 block w-64 p-2.5 ' + (align === 'right' ? 'right-0' : 'left-0')}
           style={cardStyle}
         >
           <span
-            className="block font-mono text-[8.5px] tracking-[0.12em] pb-1.5 mb-1.5"
+            className="block font-mono text-[8.5px] uppercase tracking-[0.12em] pb-1.5 mb-1.5"
             style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line)' }}
           >
-            PROVENANCE
+            Provenance
           </span>
 
           <span className="block text-[11px] mb-1" style={{ color: style.text, fontFamily: 'var(--font-body)' }}>

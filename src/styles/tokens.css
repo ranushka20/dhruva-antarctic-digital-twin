@@ -43,12 +43,30 @@
   --r-card: 18px;
   --r-inner: 12px;
   --r-pill: 999px;
+  /* Top corner radius of the light-cone container (§5). Anything laid out
+     inside the cone has to clear this arc — see .glow-lightcone. */
+  --r-cone: 130px;
   --pad-page: 20px 24px;
   --pad-card: 16px 18px;
   --gap: 14px;
   --gap-inner: 9px;
 
-  /* ---- typography ---- */
+  /* ---- typography ----
+     Casing contract — the whole app obeys these five lines, because mixing
+     them is what made the UI read as two different products:
+
+       page title (h1)   Title Case      · var(--font-display)
+       card heading      Sentence case   · var(--font-body)
+       micro-label       UPPERCASE       · var(--font-mono), via the
+                                           `uppercase` class — never typed
+                                           as capitals in the JSX
+       status chip       UPPERCASE       · the data token itself
+                                           (LIVE / DARK / T0 / SYNTH)
+       button label      Sentence case   · var(--font-body), never all-caps
+
+     A capital-letter string typed straight into JSX cannot be restyled
+     later, so labels stay sentence case in source and the `uppercase`
+     class does the shouting. */
   --font-display: 'Space Grotesk', sans-serif;
   --font-body:    'IBM Plex Sans', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
@@ -106,9 +124,16 @@
   box-shadow: inset 0 18px 70px rgba(79,209,165,0.10);
 }
 
+/* The cone's 130px shoulders cut a long way in: at 6px below the top edge the
+   boundary is already ~68px inside the panel, and it does not come back to
+   within 20px until roughly 60px down. Any child with its own background —
+   the zone cells — must start below that point, or its top corners paint
+   outside the panel. `--cone-clear` is that safe starting height, and
+   StationZonesPanel pads down to it. */
 .glow-lightcone {
-  border-top-left-radius: 130px;
-  border-top-right-radius: 130px;
+  --cone-clear: 62px;
+  border-top-left-radius: var(--r-cone);
+  border-top-right-radius: var(--r-cone);
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
   background:

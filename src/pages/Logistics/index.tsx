@@ -300,10 +300,10 @@ function Tile({
         <button
           type="button"
           onClick={action.onClick}
-          className="flex items-center justify-center gap-1.5 mt-3 py-2 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[36px]"
-          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+          className="flex items-center justify-center gap-1.5 mt-3 py-2 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
         >
-          {action.label.toUpperCase()} {action.icon}
+          {action.label} {action.icon}
         </button>
       )}
     </section>

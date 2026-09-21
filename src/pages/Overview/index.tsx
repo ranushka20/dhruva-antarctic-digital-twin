@@ -9,9 +9,9 @@
 // Every other team leads with a big temperature readout because that is the
 // number they actually have; this page leads with the decision.
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Filter, FileText, Search } from 'lucide-react';
+import { Filter, FileText, Search, Box } from 'lucide-react';
 import { StationComparator } from './StationComparator';
 import { NeedsAttention } from './NeedsAttention';
 import { ResourceWatch } from './ResourceWatch';
@@ -27,7 +27,7 @@ import {
   outboxSummary, zoneAutonomyImpact, envSnapshot, STATION_PROFILES,
 } from '@/state/data';
 import { getDrainState } from '@/state/sync';
-import { formatClockIST } from '@/lib/time';
+import { formatClockIST, formatDuration } from '@/lib/time';
 
 export default function OverviewPage() {
   const navigate = useNavigate();
@@ -74,6 +74,16 @@ export default function OverviewPage() {
 
   const selectedZoneData = primary.zones.find((z) => z.code === selectedZone) ?? null;
 
+  // The 3D twin is the headline feature, so it gets one canonical entry point
+  // that every affordance on this page routes through: the title-row button,
+  // the "3D" button on each map chip, a double-click on a map marker, and the
+  // selection card's CTA. A selected zone rides along so the twin opens on it.
+  const openTwin = useCallback(
+    (id: string = primaryId) =>
+      navigate(`/stations/${id}/twin` + (selectedZone ? '?zone=' + selectedZone : '')),
+    [navigate, primaryId, selectedZone]
+  );
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row (FR-2) ---- */}
@@ -107,6 +117,18 @@ export default function OverviewPage() {
         <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
+
+        {/* Primary CTA — the product's headline feature belongs in the title
+            row, not buried at the bottom of the right rail. */}
+        <button
+          type="button"
+          onClick={() => openTwin()}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold shrink-0"
+          style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
+          title={`Open the ${primary.name} 3D digital twin`}
+        >
+          <Box size={13} /> Open 3D twin
+        </button>
 
         <button
           type="button"
@@ -156,7 +178,16 @@ export default function OverviewPage() {
                 stations={mapStations}
                 primaryId={primaryId}
                 onSelect={setPrimary}
+                onOpenTwin={openTwin}
               />
+              {/* Says out loud what the double-click does — the gesture is
+                  worthless if nobody knows it is there. */}
+              <p
+                className="absolute left-4 bottom-3 font-mono text-[9.5px] uppercase tracking-[0.10em] pointer-events-none"
+                style={{ color: 'var(--text-4)' }}
+              >
+                Click a station to select · double-click to open its 3D twin
+              </p>
             </section>
 
             {/* Map footer strip (FR-5.6) — the HQ view of both outboxes */}
@@ -169,7 +200,11 @@ export default function OverviewPage() {
 
           {/* RIGHT */}
           <div className="flex flex-col gap-3.5 w-full xl:w-[342px] xl:shrink-0 order-2 xl:order-3">
-            <DegradableSurface syncState={primary.sync.state}>
+            <DegradableSurface
+              syncState={primary.sync.state}
+              ageLabel={formatDuration(primary.sync.ageSeconds)}
+              surfaceRadius="var(--r-cone) var(--r-cone) 16px 16px"
+            >
               <StationZonesPanel
                 stationName={primary.name}
                 zones={primary.zones}
@@ -223,32 +258,19 @@ export default function OverviewPage() {
                 </p>
               )}
 
-              <div className="flex items-center gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      `/stations/${primary.id}/twin` + (selectedZone ? '?zone=' + selectedZone : '')
-                    )
-                  }
-                  className="flex-1 py-2.5 rounded-full text-[12.5px] font-medium"
-                  style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
-                >
-                  Open 3D twin
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      `/stations/${primary.id}/twin` + (selectedZone ? '?zone=' + selectedZone : '')
-                    )
-                  }
-                  className="px-4 py-2.5 rounded-full text-[12.5px] font-medium shrink-0"
-                  style={{ backgroundColor: 'var(--act)', color: 'var(--bg)' }}
-                >
-                  {primary.name} →
-                </button>
-              </div>
+              {/* One CTA, not two. The previous pair both navigated to the
+                  same route, and the orange half broke the colour contract —
+                  orange means "act on this", never "go here". */}
+              <button
+                type="button"
+                onClick={() => openTwin(primary.id)}
+                className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-full text-[12.5px] font-semibold"
+                style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
+              >
+                <Box size={14} />
+                Open {primary.name} 3D twin
+                {selectedZoneData ? ` · ${selectedZoneData.code}` : ''}
+              </button>
             </section>
           </div>
         </div>

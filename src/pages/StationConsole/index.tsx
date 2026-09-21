@@ -103,19 +103,19 @@ export default function StationConsolePage() {
       >
         <Snowflake size={18} style={{ color: 'var(--ok)' }} aria-hidden />
         <span className="text-[14px] font-semibold tracking-[0.1em]" style={{ fontFamily: 'var(--font-display)' }}>
-          STATION CONSOLE · {profile.name.toUpperCase()}
+          Station Console · {profile.name}
         </span>
         <span className="font-mono text-[11px] tabular-nums ml-3" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
         <span
-          className="font-mono text-[10px] tracking-[0.06em] px-2.5 py-1 rounded-full ml-auto"
+          className="font-mono text-[10px] uppercase tracking-[0.06em] px-2.5 py-1 rounded-full ml-auto"
           style={{
             border: '1px solid var(--line-strong)',
             color: queue.length > 0 ? 'var(--act-soft)' : 'var(--text-3)',
           }}
         >
-          OUTBOX {queue.length}
+          outbox {queue.length}
         </span>
         <Link
           to="/"
@@ -160,10 +160,10 @@ export default function StationConsolePage() {
             type="button"
             onClick={onDrain}
             disabled={busy}
-            className="ml-auto px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
-            style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', opacity: busy ? 0.5 : 1 }}
+            className="ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', fontFamily: 'var(--font-body)', opacity: busy ? 0.5 : 1 }}
           >
-            {drain.running ? 'DRAINING…' : 'SEND QUEUE'}
+            {drain.running ? 'Draining…' : 'Send queue'}
           </button>
         )}
       </div>
@@ -280,9 +280,9 @@ export default function StationConsolePage() {
                       <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
                         {a.state.replace('_', ' ')}
                       </span>
-                      <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded"
+                      <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        PENDING SYNC
+                        Pending sync
                       </span>
                     </li>
                   ))}
@@ -397,10 +397,10 @@ function LocalOutbox({
                       <button
                         type="button"
                         onClick={() => { setPromoting(r); setReason(''); setError(null); }}
-                        className="font-mono text-[9px] px-2 py-1 rounded min-h-[28px]"
-                        style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                        className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[28px]"
+                        style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                       >
-                        PROMOTE
+                        Promote
                       </button>
                     )}
                     <button
@@ -409,10 +409,10 @@ function LocalOutbox({
                         try { onRemove(r.id); setError(null); }
                         catch (e) { setError(e instanceof Error ? e.message : 'Remove failed'); }
                       }}
-                      className="font-mono text-[9px] px-2 py-1 rounded min-h-[28px]"
-                      style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                      className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[28px]"
+                      style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                     >
-                      REMOVE
+                      Remove
                     </button>
                   </span>
                 </div>
@@ -687,7 +687,7 @@ function StationForms({
         {/* The station sees the consequence of its own entry immediately */}
         {preview && (
           <p className="font-mono text-[12px] mb-3">
-            <span style={{ color: 'var(--text-4)' }}>AUTONOMY </span>
+            <span className="uppercase" style={{ color: 'var(--text-4)' }}>autonomy </span>
             <span style={{ color: 'var(--text-2)' }}>{Math.round(preview.before)}</span>
             <span style={{ color: 'var(--text-4)' }}> → </span>
             <span style={{ color: preview.after < preview.before ? 'var(--act-soft)' : 'var(--ok-soft)' }}>

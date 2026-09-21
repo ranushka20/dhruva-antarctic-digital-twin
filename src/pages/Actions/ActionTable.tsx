@@ -224,11 +224,11 @@ export function ActionTable({
           <button
             type="button"
             onClick={() => setWindowEnd((e) => e + WINDOW_SIZE)}
-            className="font-mono text-[10px] px-3 py-1.5 rounded-full"
-            style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+            className="text-[11.5px] font-medium px-3 py-1.5 rounded-full"
+            style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
           >
-            SHOW {Math.min(WINDOW_SIZE, sorted.length - windowed.length)} MORE ·{' '}
-            {sorted.length - windowed.length} REMAINING
+            Show {Math.min(WINDOW_SIZE, sorted.length - windowed.length)} more ·{' '}
+            {sorted.length - windowed.length} remaining
           </button>
         </div>
       )}
@@ -250,8 +250,9 @@ function RowActions({
       onClick={fn}
       disabled={!enabled || !canWrite}
       title={!canWrite ? 'Your role cannot change action state' : undefined}
-      className="font-mono text-[9px] tracking-[0.06em] px-2 py-1 rounded ml-1"
+      className="text-[11px] font-medium px-2.5 py-1 rounded ml-1"
       style={{
+        fontFamily: 'var(--font-body)',
         border: `1px solid ${primary ? 'var(--act)' : 'var(--line)'}`,
         color: primary ? 'var(--act-soft)' : 'var(--text-3)',
         opacity: enabled && canWrite ? 1 : 0.35,
@@ -265,10 +266,10 @@ function RowActions({
   const open = action.state !== 'RESOLVED';
   return (
     <>
-      {btn('ACK', () => onAck(action.id), action.state === 'RAISED', action.state === 'RAISED')}
-      {btn('ASSIGN', () => onAssign(action.id), open && action.state !== 'RESOLVED')}
-      {btn('DEFER', () => onDefer(action.id), open && action.state !== 'DEFERRED')}
-      {btn('RESOLVE', () => onResolve(action.id), action.state === 'ASSIGNED' || action.state === 'IN_PROGRESS')}
+      {btn('Acknowledge', () => onAck(action.id), action.state === 'RAISED', action.state === 'RAISED')}
+      {btn('Assign', () => onAssign(action.id), open && action.state !== 'RESOLVED')}
+      {btn('Defer', () => onDefer(action.id), open && action.state !== 'DEFERRED')}
+      {btn('Resolve', () => onResolve(action.id), action.state === 'ASSIGNED' || action.state === 'IN_PROGRESS')}
     </>
   );
 }

@@ -86,10 +86,10 @@ function SessionNotice() {
       <button
         type="button"
         onClick={() => renewSession()}
-        className="ml-auto font-mono text-[9.5px] tracking-[0.08em] px-2.5 py-1 rounded-full"
-        style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)' }}
+        className="ml-auto text-[11.5px] font-medium px-3 py-1 rounded-full"
+        style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)', fontFamily: 'var(--font-body)' }}
       >
-        RENEW
+        Renew
       </button>
     </div>
   );

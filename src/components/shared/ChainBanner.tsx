@@ -30,10 +30,10 @@ export function ChainBanner({ linkToAudit = true }: { linkToAudit?: boolean }) {
       {linkToAudit && (
         <Link
           to="/compliance?tab=audit"
-          className="ml-auto font-mono text-[9.5px] tracking-[0.08em] px-2.5 py-1 rounded-full shrink-0"
-          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
+          className="ml-auto text-[11.5px] font-medium px-3 py-1 rounded-full shrink-0"
+          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)' }}
         >
-          OPEN AUDIT LOG
+          Open audit log
         </Link>
       )}
     </div>

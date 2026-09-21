@@ -160,9 +160,9 @@ export default function HandoverPage() {
                         {section.title}
                       </h3>
                       {section.stale && (
-                        <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded"
+                        <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
                           style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                          STALE
+                          Stale
                         </span>
                       )}
                       <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
@@ -303,10 +303,10 @@ export default function HandoverPage() {
                         <button
                           type="button"
                           onClick={() => { setAckOpen(true); setIncomingLead(''); }}
-                          className="mt-1.5 font-mono text-[9px] px-2 py-1 rounded min-h-[30px]"
-                          style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                          className="mt-1.5 text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                          style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                         >
-                          MARK RECEIVED
+                          Mark received
                         </button>
                       )}
                     </li>
@@ -359,11 +359,11 @@ function ExportButton({ label, disabled, onClick }: { label: string; disabled: b
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[38px]"
-      style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: disabled ? 0.4 : 1 }}
+      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11.5px] font-medium min-h-[38px]"
+      style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)', opacity: disabled ? 0.4 : 1 }}
     >
       {label === 'Print / PDF' ? <FileText size={11} /> : <Download size={11} />}
-      {label.toUpperCase()}
+      {label}
     </button>
   );
 }

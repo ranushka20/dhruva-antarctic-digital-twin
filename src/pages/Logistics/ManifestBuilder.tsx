@@ -204,14 +204,15 @@ function CandidateRow({ candidate, rank, onToggle }: { candidate: Candidate; ran
       <button
         type="button"
         onClick={onToggle}
-        className="font-mono text-[9px] tracking-[0.06em] px-2 py-1 rounded shrink-0 min-h-[30px]"
+        className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
         style={{
+          fontFamily: 'var(--font-body)',
           border: `1px solid ${candidate.included ? 'var(--ok)' : 'var(--line)'}`,
           color: candidate.included ? 'var(--ok-soft)' : 'var(--text-3)',
         }}
         aria-pressed={candidate.included}
       >
-        {candidate.included ? 'CARRY' : 'DEFER'}
+        {candidate.included ? 'Carry' : 'Defer'}
       </button>
     </div>
   );

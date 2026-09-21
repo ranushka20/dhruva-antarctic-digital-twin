@@ -58,8 +58,8 @@ export function CausalTrace({ input, className = '' }: CausalTraceProps) {
         className="mt-3 pt-2 flex items-center gap-3"
         style={{ borderTop: '1px solid var(--line)' }}
       >
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
-          AUTONOMY
+        <span className="font-mono text-[10px] uppercase" style={{ color: 'var(--text-3)' }}>
+          Autonomy
         </span>
         <span className="font-mono text-[13px] font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
           {result.autonomyDays === Infinity ? '∞' : `${Math.round(result.autonomyDays)} ±${Math.round(result.autonomyBandDays)} d`}

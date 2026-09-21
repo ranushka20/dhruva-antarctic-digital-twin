@@ -21,7 +21,10 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
 
   return (
     <section
-      className="flex flex-col min-h-0 p-4"
+      // w-full + min-w-0: as a flex child this section would otherwise size to
+      // the table's max-content width and leave dead space to the right of the
+      // card, so it would not line up with the map above it.
+      className="flex flex-col min-h-0 w-full min-w-0 p-4"
       style={{
         backgroundColor: 'var(--panel)',
         border: '1px solid var(--line)',
@@ -74,10 +77,10 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
                       <span className="text-[12.5px]" style={{ color: 'var(--text)' }}>{r.name}</span>
                       {r.belowReorder && (
                         <span
-                          className="font-mono text-[8px] tracking-[0.06em] px-1 py-0.5 rounded"
+                          className="font-mono text-[8px] uppercase tracking-[0.06em] px-1 py-0.5 rounded"
                           style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.4)' }}
                         >
-                          REORDER
+                          Reorder
                         </span>
                       )}
                     </span>

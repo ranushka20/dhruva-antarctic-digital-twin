@@ -33,7 +33,9 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
 
   return (
     <section
-      className="flex flex-col min-h-0 p-4"
+      // w-full + min-w-0 so the card fills its flex track rather than shrinking
+      // to the width of its widest row.
+      className="flex flex-col min-h-0 w-full min-w-0 p-4"
       style={{
         backgroundColor: 'var(--panel)',
         border: '1px solid var(--line)',
@@ -47,10 +49,10 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
         </h2>
         <Link
           to="/actions"
-          className="ml-auto font-mono text-[9.5px] tracking-[0.08em]"
-          style={{ color: 'var(--text-3)' }}
+          className="ml-auto text-[11.5px] font-medium"
+          style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
         >
-          VIEW ALL →
+          View all →
         </Link>
       </div>
 
@@ -63,13 +65,17 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
       </div>
 
       <div
-        className="flex items-center gap-4 mt-3 pt-2.5 font-mono text-[9.5px] tracking-[0.06em]"
+        className="flex items-center gap-4 mt-3 pt-2.5"
         style={{ borderTop: '1px solid var(--line)', color: 'var(--text-3)' }}
       >
-        <span>{deferred} DEFERRED</span>
-        <span>{resolved} RESOLVED</span>
-        <Link to="/compliance?tab=audit" className="ml-auto" style={{ color: 'var(--text-3)' }}>
-          FULL LOG →
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.06em]">{deferred} deferred</span>
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.06em]">{resolved} resolved</span>
+        <Link
+          to="/compliance?tab=audit"
+          className="ml-auto text-[11.5px] font-medium"
+          style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
+        >
+          Full log →
         </Link>
       </div>
     </section>
@@ -148,7 +154,7 @@ function AttentionCard({ action }: { action: DerivedAction }) {
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {acked ? 'ACKNOWLEDGED' : busy ? 'RECORDING…' : 'ACK'}
+        {acked ? 'Acknowledged' : busy ? 'Recording…' : 'Acknowledge'}
       </button>
     </article>
   );

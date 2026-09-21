@@ -164,10 +164,10 @@ function Row({
             <span className="text-[12.5px] truncate" style={{ color: 'var(--text)' }}>{resource.name}</span>
             {resource.belowReorder && (
               <span
-                className="font-mono text-[8px] tracking-[0.06em] px-1 py-0.5 rounded shrink-0"
+                className="font-mono text-[8px] uppercase tracking-[0.06em] px-1 py-0.5 rounded shrink-0"
                 style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
               >
-                REORDER
+                Reorder
               </span>
             )}
           </span>
@@ -340,10 +340,10 @@ function RowDetail({
           type="button"
           disabled={!canRaise}
           onClick={onRaiseAction}
-          className="ml-auto font-mono text-[9.5px] tracking-[0.06em] px-3 py-1.5 rounded-full self-center min-h-[34px]"
-          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canRaise ? 1 : 0.4 }}
+          className="ml-auto text-[11.5px] font-medium px-3 py-1.5 rounded-full self-center min-h-[34px]"
+          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
         >
-          RAISE ACTION
+          Raise action
         </button>
       </div>
 

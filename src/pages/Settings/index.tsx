@@ -130,13 +130,14 @@ export default function SettingsPage() {
           type="button"
           onClick={() => setUnconfirmedOnly((v) => !v)}
           aria-pressed={unconfirmedOnly}
-          className="px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
+          className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
           style={{
             border: `1px solid ${unconfirmedOnly ? 'var(--watch)' : 'var(--line)'}`,
             color: unconfirmedOnly ? 'var(--watch-soft)' : 'var(--text-3)',
+            fontFamily: 'var(--font-body)',
           }}
         >
-          {unconfirmed.length} OF {all.length} UNCONFIRMED
+          {unconfirmed.length} of {all.length} unconfirmed
         </button>
 
         {dirty && (
@@ -148,10 +149,10 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => downloadText('antarasetu-parameters.json', exportParametersJSON(), 'application/json')}
-          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
-          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
         >
-          <Download size={11} /> EXPORT JSON
+          <Download size={11} /> Export JSON
         </button>
       </div>
 
@@ -355,10 +356,10 @@ function ParameterRow({
             disabled={!canWrite}
             onClick={onReset}
             title={`Shipped default: ${String(param.default)}`}
-            className="font-mono text-[9px] px-2 py-1 rounded min-h-[30px]"
-            style={{ border: '1px solid var(--line)', color: 'var(--text-3)', opacity: canWrite ? 1 : 0.4 }}
+            className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+            style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)', opacity: canWrite ? 1 : 0.4 }}
           >
-            RESET
+            Reset
           </button>
         )}
       </div>
@@ -376,9 +377,9 @@ function ParameterRow({
           </span>
         )}
         {param.overriddenFromGlobal && (
-          <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded"
+          <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
             style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)' }}>
-            OVERRIDDEN FOR {scope.toUpperCase()}
+            overridden for {scope}
           </span>
         )}
       </div>

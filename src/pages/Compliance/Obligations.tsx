@@ -127,15 +127,15 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
                           <button
                             type="button"
                             onClick={() => onOpenAction(o.linkedActionId!)}
-                            className="font-mono text-[9px] px-2 py-1 rounded min-h-[30px]"
-                            style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                            style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                           >
-                            OPEN ACTION
+                            Open action
                           </button>
                         ) : overdueNoAction ? (
-                          <span className="font-mono text-[9px]" style={{ color: 'var(--act-soft)' }}
+                          <span className="font-mono text-[9px] uppercase" style={{ color: 'var(--act-soft)' }}
                             title="An overdue obligation must carry a T2 action — a missing link is a data-integrity error">
-                            NO LINKED ACTION
+                            No linked action
                           </span>
                         ) : null}
                       </td>

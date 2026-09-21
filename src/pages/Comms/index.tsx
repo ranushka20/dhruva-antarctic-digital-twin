@@ -137,10 +137,10 @@ export default function CommsPage() {
           <button
             type="button"
             onClick={stopOutageScenario}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[34px]"
-            style={{ border: '1px solid var(--sim)', color: 'var(--sim-soft)' }}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            style={{ border: '1px solid var(--sim)', color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}
           >
-            <Square size={10} /> END SIMULATION
+            <Square size={10} /> End simulation
           </button>
         </div>
       )}
@@ -239,16 +239,17 @@ function LinkStateCard({
           onClick={() =>
             simulatedHere ? stopOutageScenario() : startOutageScenario(stationId, actorName)
           }
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[34px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
           style={{
             border: '1px dashed var(--sim)',
             color: 'var(--sim-soft)',
+            fontFamily: 'var(--font-body)',
             opacity: canSimulate ? 1 : 0.4,
           }}
           title="Demo affordance — writes only to the scenario store, never the operational record"
         >
           {simulatedHere ? <Square size={10} /> : <Play size={10} />}
-          {simulatedHere ? 'END OUTAGE SIM' : 'SIMULATE OUTAGE'}
+          {simulatedHere ? 'End outage sim' : 'Simulate outage'}
         </button>
       </div>
 

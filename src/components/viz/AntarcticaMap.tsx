@@ -73,10 +73,19 @@ interface AntarcticaMapProps {
   stations: MapStation[];
   primaryId: StationId;
   onSelect: (id: StationId) => void;
+  /**
+   * Open that station's 3D twin. Bound to double-click on the marker and on
+   * the chip, and to the explicit "3D" button on the chip — double-click
+   * alone is undiscoverable and unreachable from a keyboard, so it is the
+   * shortcut, never the only way in.
+   */
+  onOpenTwin?: (id: StationId) => void;
   className?: string;
 }
 
-export function AntarcticaMap({ stations, primaryId, onSelect, className = '' }: AntarcticaMapProps) {
+export function AntarcticaMap({
+  stations, primaryId, onSelect, onOpenTwin, className = '',
+}: AntarcticaMapProps) {
   const coast = useMemo(coastlinePath, []);
   const hq = { x: 892, y: 84 };
 
@@ -187,44 +196,67 @@ export function AntarcticaMap({ stations, primaryId, onSelect, className = '' }:
 
             {/* Floating chip (FR-5.5) — dashed border when LAGGING or DARK */}
             <foreignObject x={chipLeft} y={chipTop} width={chipW} height={62}>
-              <button
-                type="button"
-                onClick={() => onSelect(s.id)}
-                className="w-full text-left px-2.5 py-1.5"
+              <div
+                onDoubleClick={() => onOpenTwin?.(s.id)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5"
                 style={{
                   backgroundColor: 'var(--panel-alt)',
                   border: `1px ${s.syncState === 'LIVE' ? 'solid' : 'dashed'} var(--line-strong)`,
                   borderRadius: 'var(--r-inner)',
                 }}
               >
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="inline-block rounded-full"
-                    style={{ width: 6, height: 6, backgroundColor: TONE_COLOR[s.tone] }}
-                  />
-                  <span className="text-[12px] font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-display)' }}>
-                    {s.name}
+                <button
+                  type="button"
+                  onClick={() => onSelect(s.id)}
+                  className="flex-1 min-w-0 text-left"
+                  title={`Make ${s.name} primary — double-click to open its 3D twin`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block rounded-full shrink-0"
+                      style={{ width: 6, height: 6, backgroundColor: TONE_COLOR[s.tone] }}
+                    />
+                    <span className="text-[12px] font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-display)' }}>
+                      {s.name}
+                    </span>
+                    <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-3)' }}>
+                      {s.code}
+                    </span>
                   </span>
-                  <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-3)' }}>
-                    {s.code}
+                  <span className="block font-mono text-[9.5px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                    {s.syncState} · {formatDuration(s.ageSeconds)} ·{' '}
+                    <span style={{ color: s.warnings > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+                      {s.warnings} warning{s.warnings === 1 ? '' : 's'}
+                    </span>
                   </span>
-                </span>
-                <span className="block font-mono text-[9.5px] mt-0.5" style={{ color: 'var(--text-3)' }}>
-                  {s.syncState} · {formatDuration(s.ageSeconds)} ·{' '}
-                  <span style={{ color: s.warnings > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-                    {s.warnings} warning{s.warnings === 1 ? '' : 's'}
-                  </span>
-                </span>
-              </button>
+                </button>
+
+                {onOpenTwin && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenTwin(s.id)}
+                    className="shrink-0 px-2 py-1 rounded-full text-[10.5px] font-semibold"
+                    style={{ backgroundColor: 'var(--text)', color: 'var(--bg)', fontFamily: 'var(--font-body)' }}
+                    aria-label={`Open the ${s.name} 3D twin`}
+                    title={`Open the ${s.name} 3D twin`}
+                  >
+                    3D
+                  </button>
+                )}
+              </div>
             </foreignObject>
 
-            {/* Invisible, keyboard-reachable hit target on the marker itself */}
+            {/* Invisible hit target on the marker itself. Single click selects,
+                double click opens the twin — the same gesture pair as the chip. */}
             <circle
               cx={sx} cy={sy} r={22}
               fill="transparent"
               style={{ cursor: 'pointer' }}
               onClick={() => onSelect(s.id)}
-            />
+              onDoubleClick={() => onOpenTwin?.(s.id)}
+            >
+              <title>{`${s.name} — click to select, double-click to open the 3D twin`}</title>
+            </circle>
           </g>
         );
       })}

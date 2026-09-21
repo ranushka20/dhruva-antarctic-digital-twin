@@ -178,25 +178,26 @@ export default function CompliancePage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-[11px] tabular-nums">
-          <span style={{ color: 'var(--text-2)' }}>{counts.dueIn30} DUE IN 30 D</span>
+        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tabular-nums">
+          <span style={{ color: 'var(--text-2)' }}>{counts.dueIn30} due in 30 d</span>
           <span style={{ color: counts.overdue > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.overdue} OVERDUE
+            {counts.overdue} overdue
           </span>
-          <span style={{ color: 'var(--watch-soft)' }}>{counts.queued} QUEUED OFFLINE</span>
+          <span style={{ color: 'var(--watch-soft)' }}>{counts.queued} queued offline</span>
         </div>
 
         <button
           type="button"
           onClick={() => setTab('audit')}
-          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[36px]"
+          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
           style={{
             border: `1px solid ${status?.ok === false ? 'var(--act)' : 'var(--ok)'}`,
             color: status?.ok === false ? 'var(--act-soft)' : 'var(--ok-soft)',
+            fontFamily: 'var(--font-body)',
           }}
         >
           {status?.ok === false ? <ShieldAlert size={11} /> : <ShieldCheck size={11} />}
-          {status?.ok === false ? `CHAIN BROKEN AT ENTRY ${status.brokenAt}` : 'CHAIN VERIFIED'}
+          {status?.ok === false ? `Chain broken at entry ${status.brokenAt}` : 'Chain verified'}
         </button>
       </div>
 

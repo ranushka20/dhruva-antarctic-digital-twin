@@ -21,11 +21,37 @@ export function canDeriveDeadline(state: SyncState): boolean {
   return state === 'LIVE';
 }
 
+/**
+ * How far a stale row or surface is pushed back. §7.2 of FRONTEND.md
+ * tabulates 0.62 / 0.40; those are DELIBERATELY not the values here.
+ *
+ * At 0.40 a `--text-3` label lands near 1.6:1 against the page — a DARK
+ * station's rows stopped being readable rather than merely de-emphasised,
+ * which is what made Maitri look broken next to Bharati. Legibility is not
+ * the channel that should carry freshness, so the dim is now gentle and
+ * SYNC_SATURATION carries the weight instead: draining the colour out of a
+ * 31-hour-old reading says "do not trust this" without hiding it.
+ *
+ * Restore 0.62 / 0.40 here for the literal spec.
+ */
 export const SYNC_OPACITY: Record<SyncState, number> = {
   LIVE: 1,
-  LAGGING: 0.62,
-  DARK: 0.4,
+  LAGGING: 0.9,
+  DARK: 0.78,
 };
+
+/** Colour confidence, 1 = full, 0 = greyscale. Pairs with SYNC_OPACITY. */
+export const SYNC_SATURATION: Record<SyncState, number> = {
+  LIVE: 1,
+  LAGGING: 0.6,
+  DARK: 0.3,
+};
+
+/** `filter` value for a surface at this state, or undefined when LIVE. */
+export function syncFilter(state: SyncState): string | undefined {
+  const s = SYNC_SATURATION[state];
+  return s < 1 ? `saturate(${s})` : undefined;
+}
 
 export const SYNC_LABEL: Record<SyncState, string> = {
   LIVE: 'LIVE',

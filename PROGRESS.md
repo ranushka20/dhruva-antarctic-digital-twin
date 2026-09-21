@@ -49,6 +49,40 @@
   - Cargo capacity was 42–58 t, which could not hold one station's fuel order (120 t). It is now 260–300 t, which is the right order of magnitude for a combined resupply lift, and the manifest now splits 8 carried / 5 deferred with 3 at risk — a real cut line rather than one item and a long tail.
   - Manifest urgency falls back to days-of-cover when a station is unreachable and has no computable LSOD. Ranking those at zero urgency was quietly sending nothing to the station in the worst shape; rows say which basis was used.
 
+### [2026-09-21 02:05] Dev B — Typography contract, Overview layout bugs, 3D twin entry points
+- Status: done
+- Files changed: `src/styles/tokens.css`, `src/index.css`, `src/components/shared/{StatTile,ProvenanceBadge,ActionCard,ChainBanner}.tsx`, `src/components/shell/AppShell.tsx`, `src/components/viz/AntarcticaMap.tsx`, `src/pages/Overview/{index,ResourceWatch,NeedsAttention}.tsx`, `src/pages/Actions/{index,ActionTable,ActionDrawer}.tsx`, `src/pages/Comms/{index,OutboxPanel,Reconciliation}.tsx`, `src/pages/Compliance/{index,AuditLog,Obligations,Inspections,WasteLedger}.tsx`, `src/pages/{Handover,Settings,StationConsole}/index.tsx`, `src/pages/Logistics/{index,ResupplyTable,ManifestBuilder}.tsx`
+- Summary: Four fixes. (1) Typography was inconsistent app-wide — half the action buttons were mono ALL-CAPS, half were body-font sentence case, and `<html>` carried Tailwind's stock `font-sans` so unstyled text rendered in the OS UI font instead of IBM Plex Sans. Wrote the casing contract into `tokens.css`, pointed `--font-sans` at `--font-body`, and converted every action button to body-font sentence case; mono UPPERCASE is now reserved for micro-labels (applied with the `uppercase` class, not typed as capitals) and data/status tokens. (2) The Overview environment StatTiles overflowed their cards — three tiles across a 342 px rail cannot hold the word `MODELED`; the badge now has an abbreviated three-letter face and a right-anchored hover card, and the tile can shrink. (3) `ResourceWatch` and `NeedsAttention` sized to their content instead of their flex track, so the resource card sat narrower than the map above it. (4) The 3D twin had one entry point, at the bottom of the right rail, paired with a duplicate orange button going to the same route.
+- Touches shared contract? no — `ProvenanceBadge` gained two optional props (`abbreviated`, `align`), both defaulting to today's behaviour
+- Touchpoint completed? none
+- Notes for the other developer (Dev A):
+  - **Every 3D-twin entry point on `/` now lands on your `Coming soon` placeholder at `/stations/:id/twin`.** There are four of them: a primary "Open 3D twin" button in the Overview title row, a `3D` button on each station chip on the map, a double-click on a station marker, and the selection card's CTA. All pass `?zone=<code>` when a zone is selected, so the twin can open focused on that zone. The real viewer in `src/App.jsx` / `src/twin/` is still unwired — that page is yours and I did not touch it.
+  - `AntarcticaMap` gained `onOpenTwin?: (id: StationId) => void`. Double-click is the shortcut, never the only route in: the chip's `3D` button keeps it keyboard-reachable and a caption under the map states the gesture.
+  - The casing contract is written at the top of the typography block in `src/styles/tokens.css`. The short version: page titles Title Case, card headings sentence case, micro-labels uppercase **via the `uppercase` class**, status chips carry the data token, buttons sentence case. Please don't type capitals straight into JSX — a hard-coded capital cannot be restyled.
+
+### [2026-09-21 02:40] Dev B — Stale surfaces were unreadable, not just dimmed
+- Status: done
+- Files changed: `src/lib/freshness.ts`, `src/components/shared/DegradableSurface.tsx`, `src/pages/Overview/index.tsx`
+- Summary: Maitri seeds `DARK` (last sync 31 h), so its zone panel rendered through `<DegradableSurface>` at the spec's 40% opacity and could not be read at all next to Bharati's `LIVE` panel. Three separate bugs sat on top of the intended dimming: the "Station link down" note was **inside** the faded wrapper, so the one line explaining the fade was itself at 40% and was absolutely positioned **over** the bottom row of zone cells; and `borderStyle: 'dashed'` was set with no border width or colour, so the dashed-border half of the treatment never rendered at all. Reworked so freshness is carried by desaturation plus a dashed ring and a hatch, with only a light dim.
+- Touches shared contract? no — `DegradableSurface` gained two optional props (`ageLabel`, `surfaceRadius`); `lib/freshness` gained `SYNC_SATURATION` and `syncFilter()`
+- Touchpoint completed? none
+- Notes for the other developer (Dev A):
+  - **`SYNC_OPACITY` changed value: LAGGING 0.62 → 0.90, DARK 0.40 → 0.78.** This is a deliberate departure from the literal table in FRONTEND.md §7.2, documented at the constant. At 0.40 a `--text-3` label sits near 1.6:1 against the page — that is not de-emphasis, it is illegibility, and it is what made Maitri look broken. The lost signal is made up by `SYNC_SATURATION` (LAGGING 0.6, DARK 0.3): draining colour out of a 31-hour-old reading says "do not trust this" and costs no legibility, which also fits the rule that colour in this system always means something. Restore the two numbers in `lib/freshness.ts` if you want spec-exact.
+  - `SYNC_OPACITY` is shared, so the Action Centre table/board and the Logistics resupply table picked the correction up automatically — their Maitri rows had the same problem.
+  - Inside a degraded surface, `--text-3` and `--text-4` step up one rung so small labels survive the dim. The two re-points are declared on different elements on purpose; the comment in the component explains why putting them together collapses both rungs onto one colour.
+  - `<DegradableSurface surfaceRadius>` exists because the zones panel is the light-cone shape, not a plain card — pass the child's radius or the hatch traces a rectangle around a rounded panel.
+
+### [2026-09-21 03:05] Dev B — Zone cells were painting outside the light cone
+- Status: done
+- Files changed: `src/styles/tokens.css`, `src/pages/Overview/StationZonesPanel.tsx`, `src/pages/Overview/index.tsx`
+- Summary: The top row of zone cells (A1 Power / A2 Fuel / A3 Comms) overflowed the light-cone container. Pure geometry, not text: the cone's top corner radius is 130 px, so ~55 px down from the panel's top edge the curved boundary is still ~20 px inside the panel, while the cells started at only 16 px of horizontal padding — the outer two cells of that row hung ~3 px past the curve, and because a cell carries its own tinted background and border (orange on a warning zone) it read as a rendering fault. Fixed with `px-4 → px-5` plus a fixed-height header band so the grid starts below the shoulders; clearance is now ~6 px.
+- Touches shared contract? no
+- Touchpoint completed? none
+- Notes for the other developer:
+  - Two new tokens: `--r-cone` (130 px, the cone's top radius, now referenced by `.glow-lightcone` instead of being written out twice) and `--cone-clear` (62 px, declared on `.glow-lightcone`). **Anything with its own background placed inside a light-cone container must start at or below `--cone-clear`,** or it paints outside the curve. The arc depends on the radius, not the panel width, so the number holds at any width.
+  - The station chip now sits inside that band rather than straddling the top edge with a negative margin — at a 130 px radius the chip's ends were hanging over the curve too.
+  - Zone cells got `min-w-0 overflow-hidden` and their name/summary lines got `truncate`. FR-7.6 makes the zone set data-driven, so a longer name or unit than today's seed now clips inside the cell instead of widening the grid. The legend row wraps for the same reason.
+
 ---
 
 ## Integration & Review

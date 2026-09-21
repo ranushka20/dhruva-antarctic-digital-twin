@@ -74,32 +74,33 @@ export function AuditLog({
           </h3>
           {status && (
             <span
-              className="flex items-center gap-1.5 font-mono text-[9.5px] tracking-[0.06em] px-2 py-1 rounded-full"
+              className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
               style={{
                 border: `1px solid ${status.ok ? 'var(--ok)' : 'var(--act)'}`,
                 color: status.ok ? 'var(--ok-soft)' : 'var(--act-soft)',
+                fontFamily: 'var(--font-body)',
               }}
             >
               {status.ok ? <ShieldCheck size={11} /> : <ShieldAlert size={11} />}
-              {status.ok ? `CHAIN VERIFIED · ${status.verified}` : `CHAIN BROKEN AT ENTRY ${status.brokenAt}`}
+              {status.ok ? `Chain verified · ${status.verified}` : `Chain broken at entry ${status.brokenAt}`}
             </span>
           )}
           <button
             type="button"
             onClick={onVerify}
             disabled={verifying}
-            className="px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
-            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: verifying ? 0.5 : 1 }}
+            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)', opacity: verifying ? 0.5 : 1 }}
           >
-            {verifying ? 'VERIFYING…' : 'VERIFY CHAIN'}
+            {verifying ? 'Verifying…' : 'Verify chain'}
           </button>
           <button
             type="button"
             onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
-            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
           >
-            <Download size={11} /> EXPORT JSON
+            <Download size={11} /> Export JSON
           </button>
           {status && (
             <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
@@ -162,13 +163,14 @@ export function AuditLog({
           type="button"
           onClick={() => setOfflineOnly((v) => !v)}
           aria-pressed={offlineOnly}
-          className="px-2.5 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[34px]"
+          className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
           style={{
             border: `1px solid ${offlineOnly ? 'var(--watch)' : 'var(--line)'}`,
             color: offlineOnly ? 'var(--watch-soft)' : 'var(--text-3)',
+            fontFamily: 'var(--font-body)',
           }}
         >
-          WRITTEN OFFLINE
+          Written offline
         </button>
         <span className="font-mono text-[10px] ml-auto" style={{ color: 'var(--text-4)' }}>
           {filtered.length} of {chain.length} entries
@@ -217,15 +219,15 @@ export function AuditLog({
                     </span>
                     <span className="text-[10.5px] shrink-0" style={{ color: 'var(--text-3)' }}>{entry.actor}</span>
                     {entry.writtenOffline && (
-                      <span className="font-mono text-[8px] px-1 rounded shrink-0"
+                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        OFFLINE
+                        Offline
                       </span>
                     )}
                     {entry.superseded && (
-                      <span className="font-mono text-[8px] px-1 rounded shrink-0"
+                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
                         style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
-                        SUPERSEDED
+                        Superseded
                       </span>
                     )}
                     <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>
@@ -251,11 +253,11 @@ export function AuditLog({
                         <button
                           type="button"
                           onClick={() => onTamper(entry.seq)}
-                          className="mt-1.5 font-mono text-[9px] px-2 py-1 rounded min-h-[30px]"
-                          style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)' }}
+                          className="mt-1.5 text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                          style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}
                           title="Demo affordance: edits the payload without updating the hash, so Verify chain catches it"
                         >
-                          TAMPER WITH THIS ENTRY (DEMO)
+                          Tamper with this entry (demo)
                         </button>
                       )}
                     </div>

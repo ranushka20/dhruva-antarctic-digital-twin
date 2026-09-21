@@ -165,19 +165,20 @@ function ConflictCard({
             type="button"
             disabled={!canResolve}
             onClick={onApplyRule}
-            className="px-3 py-1.5 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[34px]"
-            style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', opacity: canResolve ? 1 : 0.4 }}
+            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', fontFamily: 'var(--font-body)', opacity: canResolve ? 1 : 0.4 }}
           >
-            APPLY RULE → {conflict.defaultResolution.toUpperCase()}
+            Apply rule →{' '}
+            <span className="font-mono text-[10.5px]">{conflict.defaultResolution.toUpperCase()}</span>
           </button>
           <button
             type="button"
             disabled={!canResolve}
             onClick={() => onOverride?.(conflict.defaultResolution === 'hq' ? 'station' : 'hq')}
-            className="px-3 py-1.5 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[34px]"
-            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)', opacity: canResolve ? 1 : 0.4 }}
+            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)', fontFamily: 'var(--font-body)', opacity: canResolve ? 1 : 0.4 }}
           >
-            OVERRIDE
+            Override
           </button>
         </div>
       )}
@@ -205,8 +206,8 @@ function VersionBlock({
       <div className="flex items-center gap-1.5 mb-1.5">
         <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: 'var(--text-3)' }}>{title}</span>
         {superseded && (
-          <span className="font-mono text-[8px] px-1 rounded" style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
-            SUPERSEDED
+          <span className="font-mono text-[8px] uppercase px-1 rounded" style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
+            Superseded
           </span>
         )}
       </div>

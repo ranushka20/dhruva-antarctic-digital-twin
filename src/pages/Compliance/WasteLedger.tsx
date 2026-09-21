@@ -97,10 +97,10 @@ export function WasteLedger({
                   type="button"
                   disabled={!canRaise}
                   onClick={() => onRaiseBalanceAction(row)}
-                  className="font-mono text-[9.5px] tracking-[0.06em] px-2.5 py-1.5 rounded min-h-[32px]"
-                  style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canRaise ? 1 : 0.4 }}
+                  className="text-[11px] font-medium px-2.5 py-1.5 rounded min-h-[32px]"
+                  style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
                 >
-                  RAISE T2 · {STATION_CODE[row.stationId]} {STREAM_LABEL[row.stream]} ·{' '}
+                  Raise T2 · {STATION_CODE[row.stationId]} {STREAM_LABEL[row.stream]} ·{' '}
                   {row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg
                 </button>
               ))}
@@ -127,19 +127,19 @@ export function WasteLedger({
               type="button"
               onClick={() => setView('chart')}
               aria-pressed={view === 'chart'}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full font-mono text-[10px]"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px]"
               style={{ backgroundColor: view === 'chart' ? 'var(--panel-raised)' : 'transparent', color: view === 'chart' ? 'var(--text)' : 'var(--text-3)' }}
             >
-              <BarChart3 size={11} /> CHART
+              <BarChart3 size={11} /> Chart
             </button>
             <button
               type="button"
               onClick={() => setView('table')}
               aria-pressed={view === 'table'}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full font-mono text-[10px]"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px]"
               style={{ backgroundColor: view === 'table' ? 'var(--panel-raised)' : 'transparent', color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
             >
-              <Table2 size={11} /> TABLE
+              <Table2 size={11} /> Table
             </button>
           </div>
         </div>
@@ -285,9 +285,9 @@ export function WasteLedger({
                   </td>
                   <td className="py-1.5 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
                     {e.pendingSync && (
-                      <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded"
+                      <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        PENDING SYNC
+                        Pending sync
                       </span>
                     )}
                   </td>

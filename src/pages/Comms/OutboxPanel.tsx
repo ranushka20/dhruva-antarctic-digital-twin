@@ -61,15 +61,16 @@ export function OutboxPanel({
           type="button"
           onClick={onDrain}
           disabled={!canDrain || drain.running || totalQueued === 0}
-          className="ml-auto px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[36px]"
+          className="ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
           style={{
             border: '1px solid var(--ok)',
             color: 'var(--ok-soft)',
+            fontFamily: 'var(--font-body)',
             opacity: canDrain && !drain.running && totalQueued > 0 ? 1 : 0.4,
           }}
           title={linkDown ? 'The link is down — nothing can transfer' : 'Drain the queue in strict tier order'}
         >
-          {drain.running ? 'DRAINING…' : 'DRAIN NOW'}
+          {drain.running ? 'Draining…' : 'Drain now'}
         </button>
       </div>
 

@@ -16,7 +16,7 @@ import {
 import { readStore, writeStore } from '@/lib/localStore';
 
 export type ParamScope = 'global' | 'bharati' | 'maitri';
-type ParamValue = number | string | boolean;
+export type ParamValue = number | string | boolean;
 
 const ASSUMPTION = 'assumption — pending NCPOR confirmation';
 const PUBLISHED = 'published formula / public standard';
@@ -100,6 +100,14 @@ export const PARAM_DEFS: Def[] = [
   }),
   def('energy.renewableMixPct', 'energy', 'Renewable mix', 12, {
     unit: '%', min: 0, max: 100, usedBy: ['computeEnergyDemand'],
+  }),
+  // The share of baseline load that scales with headcount — galley, hot
+  // water, lighting, accommodation heating. Without this there is no path
+  // at all from crew size to the engine, which is why the Sandbox's crew
+  // slider used to move nothing. SYNTH until NCPOR confirms a real figure.
+  def('energy.perPersonLoadKw', 'energy', 'Baseline load per crew member', 0.8, {
+    unit: 'kW/person', min: 0, max: 10, usedBy: ['computeEnergyDemand', 'sandbox'],
+    source: 'assumption — occupancy-driven share of baseline load, unconfirmed',
   }),
   def('energy.burnRateVariance', 'energy', 'Burn-rate variance (± band)', DEFAULT_ENGINE_CONFIG.burnRateVariance, {
     min: 0, max: 0.5, usedBy: ['computeAutonomy'],

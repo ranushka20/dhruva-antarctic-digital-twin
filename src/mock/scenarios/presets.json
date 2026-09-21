@@ -1,32 +1,44 @@
 [
   {
-    "id": "preset-blizzard", "name": "Three-day Blizzard", "stationId": "bharati",
-    "parameters": { "ambientTemp": -42, "windSpeed": 55, "stormDays": 3, "solarIrradiance": 0, "renewableMix": 0, "generatorEfficiency": 0.34, "insulationQuality": 0.35, "resupplyInterval": 365, "consumptionMultiplier": 1.4, "crewSize": 23 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-blizzard",
+    "name": "Three-day blizzard",
+    "note": "Sustained katabatic event: envelope loss up, vessel waits it out at anchor.",
+    "set": { "ambientC": -42, "windKt": 55, "stormDays": 3, "renewablePct": 0 },
+    "delta": {}
   },
   {
-    "id": "preset-winter-min", "name": "Winter Minimum", "stationId": "bharati",
-    "parameters": { "ambientTemp": -48, "windSpeed": 35, "stormDays": 0, "solarIrradiance": 0, "renewableMix": 0, "generatorEfficiency": 0.36, "insulationQuality": 0.35, "resupplyInterval": 365, "consumptionMultiplier": 1.2, "crewSize": 15 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-winter-min",
+    "name": "Winter minimum",
+    "note": "Coldest recorded month with the winter-over crew frame.",
+    "set": { "ambientC": -48, "windKt": 35, "renewablePct": 0, "crew": 15 },
+    "delta": {}
   },
   {
-    "id": "preset-gen-offline", "name": "Generator #2 Offline", "stationId": "bharati",
-    "parameters": { "ambientTemp": -28.4, "windSpeed": 18, "stormDays": 0, "solarIrradiance": 45, "renewableMix": 5, "generatorEfficiency": 0.32, "insulationQuality": 0.35, "resupplyInterval": 365, "consumptionMultiplier": 1.0, "crewSize": 23 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-gen-offline",
+    "name": "Generator #2 offline",
+    "note": "One set down: the remaining plant runs off its efficiency peak.",
+    "set": { "genEfficiencyPct": 30 },
+    "delta": {}
   },
   {
-    "id": "preset-resupply-delayed", "name": "Resupply Delayed 30 days", "stationId": "bharati",
-    "parameters": { "ambientTemp": -28.4, "windSpeed": 18, "stormDays": 0, "solarIrradiance": 45, "renewableMix": 5, "generatorEfficiency": 0.38, "insulationQuality": 0.35, "resupplyInterval": 395, "consumptionMultiplier": 1.0, "crewSize": 23 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-resupply-delayed",
+    "name": "Resupply delayed 30 days",
+    "note": "Vessel slips a month. Consumption unchanged, deadline moves.",
+    "set": { "resupplyDelayDays": 30 },
+    "delta": {}
   },
   {
-    "id": "preset-summer-crew", "name": "Crew +6 for Summer", "stationId": "bharati",
-    "parameters": { "ambientTemp": -8, "windSpeed": 12, "stormDays": 0, "solarIrradiance": 180, "renewableMix": 15, "generatorEfficiency": 0.38, "insulationQuality": 0.35, "resupplyInterval": 365, "consumptionMultiplier": 1.3, "crewSize": 29 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-summer-crew",
+    "name": "Crew +6 for summer",
+    "note": "Summer science party on top of the standing crew.",
+    "set": { "ambientC": -8 },
+    "delta": { "crew": 6 }
   },
   {
-    "id": "preset-renewables", "name": "Renewables Doubled", "stationId": "bharati",
-    "parameters": { "ambientTemp": -28.4, "windSpeed": 18, "stormDays": 0, "solarIrradiance": 45, "renewableMix": 30, "generatorEfficiency": 0.38, "insulationQuality": 0.35, "resupplyInterval": 365, "consumptionMultiplier": 0.85, "crewSize": 23 },
-    "createdBy": "system", "createdAt": "2026-09-01T00:00:00Z", "preset": true
+    "id": "preset-renewables",
+    "name": "Renewables doubled",
+    "note": "Wind and solar share doubled against the current mix.",
+    "set": {},
+    "delta": { "renewablePct": 12 }
   }
 ]

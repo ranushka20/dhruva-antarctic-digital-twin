@@ -1,6 +1,20 @@
-// OWNER: Dev B (created because src/engine/similarity.ts did not exist yet —
-// FRONTEND.md §12 places engine/ in Dev A's folder, so Dev A should adopt or
-// replace this; logged in PROGRESS.md under Contract changes.)
+// OWNER: Dev A (engine/ is Dev A's folder per FRONTEND.md §12).
+//
+// MERGE NOTE — dashboard-a × yash-dashboard, 2026-09-21.
+// Both branches shipped a TF-IDF implementation here. This file is the single
+// surviving one: Dev B's scoring core, with Dev A's fault-record API and
+// disclosure string layered on top as a thin adapter. Nothing calls a second
+// implementation any more, which is what the integration checklist requires
+// ("both sides call the SAME function — no local reimplementation").
+//
+// Dev B's core was kept for one substantive reason: Dev A's IDF was
+// `log(N / (1 + docsWithTerm))`, which goes NEGATIVE for any term appearing
+// in most of the corpus. Over a few dozen local fault records that is most of
+// the vocabulary, and a negative weight flips the sign of a term's
+// contribution to the cosine. The smoothed form below, `log((n+1)/(df+1)) + 1`,
+// is the standard fix and stays positive at every corpus size. Dev A's
+// tokeniser also dropped hyphens, splitting "sub-zero" into two tokens, and
+// carried no stopword list.
 //
 // Fault similarity: TF-IDF cosine over {symptom + diagnosis + asset category},
 // top 5, minimum score 0.35, over THIS PLATFORM'S OWN RECORDS ONLY.
@@ -8,6 +22,8 @@
 // No external model, no embeddings service, no training claim. It is a
 // classic information-retrieval method over a few hundred local records, and
 // describing it as anything more would be a lie an examiner can check.
+
+import { type Fault } from '@/shared/contracts';
 
 export interface SimilarityDoc {
   id: string;
@@ -49,6 +65,7 @@ function inverseDocumentFrequency(corpus: string[][]): Map<string, number> {
   }
   const n = corpus.length || 1;
   const idf = new Map<string, number>();
+  // Smoothed and offset: never zero, never negative, at any corpus size.
   for (const [term, count] of df) idf.set(term, Math.log((n + 1) / (count + 1)) + 1);
   return idf;
 }
@@ -120,3 +137,56 @@ export function groupRecurring(
 
   return groups.sort((a, b) => b.members.length - a.members.length);
 }
+
+// ---------------------------------------------------------------------------
+// Fault-record API (Dev A's signature, kept verbatim so /assets is unchanged)
+// ---------------------------------------------------------------------------
+
+export interface SimilarFaultResult {
+  fault: Fault;
+  score: number;
+}
+
+/** The text a fault contributes to the index: symptom + diagnosis + category. */
+function faultText(fault: Fault, category: string): string {
+  return [fault.symptom, fault.diagnosis ?? '', category].join(' ');
+}
+
+/**
+ * Find similar past faults. A thin projection of `findSimilar` onto Fault
+ * records — the scoring is the shared core above, not a second copy.
+ *
+ * @param query             the fault to find similar records for
+ * @param queryCategory     asset category for the query fault
+ * @param corpus            all fault records to search over
+ * @param corpusCategories  fault id → asset category
+ * @param topN              results to return (default 5)
+ * @param minScore          minimum cosine score (default 0.35)
+ */
+export function findSimilarFaults(
+  query: Fault,
+  queryCategory: string,
+  corpus: Fault[],
+  corpusCategories: Map<string, string>,
+  topN = MAX_SIMILAR,
+  minScore = MIN_SIMILARITY,
+): SimilarFaultResult[] {
+  if (corpus.length === 0) return [];
+
+  const byId = new Map(corpus.map((f) => [f.id, f]));
+  const docs: SimilarityDoc[] = corpus.map((f) => ({
+    id: f.id,
+    text: faultText(f, corpusCategories.get(f.id) ?? ''),
+  }));
+
+  return findSimilar(
+    { id: query.id, text: faultText(query, queryCategory) },
+    docs,
+    topN,
+    minScore,
+  ).map((hit) => ({ fault: byId.get(hit.id)!, score: hit.score }));
+}
+
+/** The disclosure string required wherever similar-fault results appear. */
+export const SIMILARITY_METHOD_DISCLOSURE =
+  'TF-IDF similarity over this platform\'s own records — no external model, no training';

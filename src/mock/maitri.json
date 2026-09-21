@@ -1,0 +1,141 @@
+{
+  "id": "maitri",
+  "code": "MTR",
+  "name": "Maitri",
+  "lat": -70.7667,
+  "lon": 11.7333,
+  "crew": 25,
+  "sync": { "state": "LAGGING", "lastSyncAt": "2026-09-19T12:42:00Z", "ageSeconds": 5760 },
+  "domains": {
+    "infrastructure": { "status": "ok", "summary": "All systems nominal" },
+    "energy": { "status": "ok", "summary": "54 kW load, 36% efficiency" },
+    "logistics": { "status": "watch", "summary": "168 ±22 d fuel autonomy" },
+    "environment": { "status": "ok", "summary": "-34.1 °C, 24 kt wind" }
+  },
+  "zones": [
+    {
+      "code": "A1", "name": "Power Plant",
+      "grid": { "gx": 0, "gy": 0 }, "height": 64,
+      "status": "ok",
+      "topLabel": "GEN LOAD",
+      "topValue": { "value": 54.1, "unit": "kW", "timestamp": "2026-09-19T12:42:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 54.1, "unit": "kW", "timestamp": "2026-09-19T12:42:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "openActionCount": 0,
+      "assets": [
+        { "id": "mtr-gen-1", "name": "Generator #1", "status": "ok", "current": { "value": 32.0, "unit": "kW", "timestamp": "2026-09-19T12:42:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" }, "threshold": { "value": 50, "unit": "kW", "label": "RATED LOAD" }, "series24h": [{"t":"2026-09-18T12:00Z","v":30.2},{"t":"2026-09-18T16:00Z","v":31.1},{"t":"2026-09-18T20:00Z","v":33.5},{"t":"2026-09-19T00:00Z","v":34.2},{"t":"2026-09-19T04:00Z","v":33.0},{"t":"2026-09-19T08:00Z","v":31.8},{"t":"2026-09-19T12:00Z","v":32.0}], "provenance": "SYNTH" },
+        { "id": "mtr-gen-2", "name": "Generator #2", "status": "ok", "current": { "value": 22.1, "unit": "kW", "timestamp": "2026-09-19T12:42:00Z", "source": "station SCADA adapter", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" }, "series24h": [{"t":"2026-09-18T12:00Z","v":21.0},{"t":"2026-09-18T16:00Z","v":21.5},{"t":"2026-09-18T20:00Z","v":22.8},{"t":"2026-09-19T00:00Z","v":23.1},{"t":"2026-09-19T04:00Z","v":22.4},{"t":"2026-09-19T08:00Z","v":21.9},{"t":"2026-09-19T12:00Z","v":22.1}], "provenance": "SYNTH" }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "A2", "name": "Fuel Depot",
+      "grid": { "gx": 1, "gy": 0 }, "height": 44,
+      "status": "watch",
+      "topLabel": "DIESEL",
+      "topValue": { "value": 31200, "unit": "L", "timestamp": "2026-09-19T12:42:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station fuel telemetry" },
+      "feature": "tank",
+      "summary": { "value": 31200, "unit": "L", "timestamp": "2026-09-19T12:42:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station fuel telemetry" },
+      "openActionCount": 0,
+      "assets": [
+        { "id": "mtr-fuel-main", "name": "Main Fuel Tank", "status": "watch", "current": { "value": 31200, "unit": "L", "timestamp": "2026-09-19T12:42:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station fuel telemetry" }, "threshold": { "value": 12000, "unit": "L", "label": "MIN RESERVE" }, "series24h": [{"t":"2026-09-18T12:00Z","v":31480},{"t":"2026-09-18T16:00Z","v":31420},{"t":"2026-09-18T20:00Z","v":31370},{"t":"2026-09-19T00:00Z","v":31320},{"t":"2026-09-19T04:00Z","v":31280},{"t":"2026-09-19T08:00Z","v":31240},{"t":"2026-09-19T12:00Z","v":31200}], "provenance": "SYNTH" }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "A3", "name": "Comms Shelter",
+      "grid": { "gx": 2, "gy": 0 }, "height": 48,
+      "status": "ok",
+      "topLabel": "LINK",
+      "topValue": { "value": "LAGGING", "unit": "", "timestamp": "2026-09-19T12:42:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station comms adapter" },
+      "feature": "mast",
+      "summary": { "value": "LAGGING", "unit": "", "timestamp": "2026-09-19T12:42:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station comms adapter" },
+      "openActionCount": 0,
+      "assets": [
+        { "id": "mtr-hf-radio", "name": "HF Radio", "status": "ok", "current": { "value": 1.2, "unit": "Mbps", "timestamp": "2026-09-19T12:42:00Z", "source": "station comms", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station comms adapter" }, "series24h": [], "provenance": "SYNTH" }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "B1", "name": "Accommodation",
+      "grid": { "gx": 0, "gy": 1 }, "height": 58,
+      "status": "ok",
+      "topLabel": "TEMP",
+      "topValue": { "value": 20.4, "unit": "°C", "timestamp": "2026-09-19T12:42:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 20.4, "unit": "°C", "timestamp": "2026-09-19T12:42:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "openActionCount": 0,
+      "assets": [
+        { "id": "mtr-hvac-1", "name": "Heating System", "status": "ok", "current": { "value": 20.4, "unit": "°C", "timestamp": "2026-09-19T12:42:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" }, "series24h": [{"t":"2026-09-18T12:00Z","v":19.8},{"t":"2026-09-18T16:00Z","v":20.0},{"t":"2026-09-18T20:00Z","v":19.6},{"t":"2026-09-19T00:00Z","v":19.2},{"t":"2026-09-19T04:00Z","v":19.5},{"t":"2026-09-19T08:00Z","v":20.1},{"t":"2026-09-19T12:00Z","v":20.4}], "provenance": "SYNTH" }
+      ],
+      "openActions": []
+    },
+    {
+      "code": "B2", "name": "Research Labs",
+      "grid": { "gx": 1, "gy": 1 }, "height": 52,
+      "status": "ok",
+      "topLabel": "TEMP",
+      "topValue": { "value": 19.8, "unit": "°C", "timestamp": "2026-09-19T12:42:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "feature": "none",
+      "summary": { "value": 19.8, "unit": "°C", "timestamp": "2026-09-19T12:42:00Z", "source": "station HVAC", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station SCADA adapter" },
+      "openActionCount": 0,
+      "assets": [],
+      "openActions": []
+    },
+    {
+      "code": "B3", "name": "Stores & Garage",
+      "grid": { "gx": 2, "gy": 1 }, "height": 42,
+      "status": "ok",
+      "topLabel": "SPARES",
+      "topValue": { "value": 84, "unit": "%", "timestamp": "2026-09-19T12:42:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station inventory system" },
+      "feature": "none",
+      "summary": { "value": 84, "unit": "%", "timestamp": "2026-09-19T12:42:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station inventory system" },
+      "openActionCount": 0,
+      "assets": [],
+      "openActions": []
+    }
+  ],
+  "resources": [
+    {
+      "id": "mtr-diesel", "name": "Diesel (ANP)", "stationId": "maitri", "category": "fuel",
+      "stock": { "value": 31200, "unit": "L", "timestamp": "2026-09-19T12:42:00Z", "source": "station fuel telemetry", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station fuel telemetry" },
+      "burnRate": { "value": 186, "unit": "L/day", "timestamp": "2026-09-19T12:42:00Z", "source": "coupling engine", "provenance": "MODELED", "freshnessSeconds": 0, "model": "burnRate = demand / generatorEfficiency" },
+      "autonomyDays": 168, "autonomyBandDays": 22,
+      "shipWindow": { "earliestDay": 240, "latestDay": 280 },
+      "marginDays": { "min": 50, "max": 134 },
+      "lsodDays": 125, "risk": "ok", "provenance": "MODELED"
+    },
+    {
+      "id": "mtr-provisions", "name": "Provisions", "stationId": "maitri", "category": "provisions",
+      "stock": { "value": 3750, "unit": "person-days", "timestamp": "2026-09-19T12:42:00Z", "source": "station inventory system", "provenance": "SYNTH", "freshnessSeconds": 5760, "awaiting": "station inventory system" },
+      "burnRate": { "value": 25, "unit": "person-days/day", "timestamp": "2026-09-19T12:42:00Z", "source": "crew count", "provenance": "MODELED", "freshnessSeconds": 0, "model": "burnRate = crew" },
+      "autonomyDays": 150, "autonomyBandDays": 12,
+      "shipWindow": { "earliestDay": 240, "latestDay": 280 },
+      "marginDays": { "min": 78, "max": 142 },
+      "lsodDays": 107, "risk": "ok", "provenance": "MODELED"
+    }
+  ],
+  "openActions": [],
+  "outbox": [
+    { "tier": "T0", "queued": 0, "sent": 0 },
+    { "tier": "T1", "queued": 0, "sent": 0 },
+    { "tier": "T2", "queued": 5, "sent": 0 },
+    { "tier": "T3", "queued": 12, "sent": 0 }
+  ],
+  "environment": {
+    "temperature": { "value": -34.1, "unit": "°C", "timestamp": "2026-09-19T12:00:00Z", "source": "SCAR READER", "provenance": "LIVE", "freshnessSeconds": 9720 },
+    "wind": { "value": 24, "unit": "kt", "timestamp": "2026-09-19T12:00:00Z", "source": "AMRC AWS", "provenance": "LIVE", "freshnessSeconds": 9720 },
+    "windDir": { "value": 190, "unit": "°", "timestamp": "2026-09-19T12:00:00Z", "source": "AMRC AWS", "provenance": "LIVE", "freshnessSeconds": 9720 },
+    "pressure": { "value": 968.7, "unit": "hPa", "timestamp": "2026-09-19T12:00:00Z", "source": "ERA5", "provenance": "LIVE", "freshnessSeconds": 9720 },
+    "humidity": { "value": 48, "unit": "%", "timestamp": "2026-09-19T12:00:00Z", "source": "ERA5", "provenance": "LIVE", "freshnessSeconds": 9720 },
+    "windChill": { "value": -57.3, "unit": "°C", "timestamp": "2026-09-19T12:00:00Z", "source": "coupling-engine", "provenance": "MODELED", "freshnessSeconds": 0, "model": "NWS/EC wind chill formula", "parents": [{"name": "temperature", "provenance": "LIVE"}, {"name": "wind", "provenance": "LIVE"}] }
+  },
+  "engineInputs": {
+    "ambientTempC": -34.1,
+    "windKmh": 44.45,
+    "uValue": 0.42,
+    "areaM2": 720,
+    "stockUnits": 31200,
+    "shipWindow": { "earliestDay": 240, "latestDay": 280 }
+  }
+}

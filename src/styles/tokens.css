@@ -1,0 +1,150 @@
+/* ==========================================================================
+   ANTARASETU — DESIGN TOKENS
+   Source of truth: FRONTEND.md §2–5.
+   No component may contain a hard-coded hex value — including inside SVG.
+   Google Fonts import is in index.css (must be first @import per CSS spec).
+   ========================================================================== */
+
+:root {
+  /* ---- surfaces : near-black with a green cast ---- */
+  --bg:            #0A0D0C;   /* page background */
+  --panel:         #111614;   /* primary card */
+  --panel-raised:  #161D1A;   /* card inside a card, list rows */
+  --panel-deep:    #0F1413;   /* map / 3D / chart wells */
+  --panel-alt:     #1A221F;   /* hover, tooltips, popovers */
+  --track:         #1C2422;   /* progress-bar trough */
+
+  /* ---- hairlines ---- */
+  --line:          rgba(255,255,255,0.07);
+  --line-strong:   rgba(255,255,255,0.12);
+
+  /* ---- text ---- */
+  --text:          #EEF2F0;   /* primary */
+  --text-2:        #B4C1BC;   /* secondary */
+  --text-3:        #8B9A94;   /* muted labels — minimum permitted, passes 4.5:1 */
+  --text-4:        #6E7C77;   /* axis ticks only */
+
+  /* ---- semantic status ---- */
+  --act:           #F26B21;   /* ORANGE — action required */
+  --act-soft:      #F5915A;   /* orange text on dark */
+  --ok:            #4FAE85;   /* MINT — healthy */
+  --ok-soft:       #6FC6A2;   /* mint text on dark */
+  --watch:         #D9A441;   /* AMBER — watch / degrading */
+  --watch-soft:    #E0B564;   /* amber text on dark */
+  --unknown:       #8B9A94;   /* GREY — no data / not ours */
+  --sim:           #9B84C4;   /* VIOLET — sandbox simulation only */
+  --sim-soft:      #B79BE0;
+
+  /* ---- ambient glow : DECORATION ONLY ---- */
+  --glow:          #4FD1A5;
+
+  /* ---- geometry ---- */
+  --r-nav: 15px;
+  --r-card: 18px;
+  --r-inner: 12px;
+  --r-pill: 999px;
+  /* Top corner radius of the light-cone container (§5). Anything laid out
+     inside the cone has to clear this arc — see .glow-lightcone. */
+  --r-cone: 130px;
+  --pad-page: 20px 24px;
+  --pad-card: 16px 18px;
+  --gap: 14px;
+  --gap-inner: 9px;
+
+  /* ---- typography ----
+     Casing contract — the whole app obeys these five lines, because mixing
+     them is what made the UI read as two different products:
+
+       page title (h1)   Title Case      · var(--font-display)
+       card heading      Sentence case   · var(--font-body)
+       micro-label       UPPERCASE       · var(--font-mono), via the
+                                           `uppercase` class — never typed
+                                           as capitals in the JSX
+       status chip       UPPERCASE       · the data token itself
+                                           (LIVE / DARK / T0 / SYNTH)
+       button label      Sentence case   · var(--font-body), never all-caps
+
+     A capital-letter string typed straight into JSX cannot be restyled
+     later, so labels stay sentence case in source and the `uppercase`
+     class does the shouting. */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* ---- 3D-specific surface colours (Page 2) ---- */
+
+  /* nominal zone block */
+  --face-top-ok:    linear-gradient(135deg, #2A3833 0%, #1E2A26 100%);
+  --face-left-ok:   #161F1C;
+  --face-right-ok:  #1B2521;
+  --edge-ok:        rgba(79,174,133,0.50);
+
+  /* warning zone block */
+  --face-top-warn:  linear-gradient(135deg, #4A2E19 0%, #37220F 100%);
+  --face-left-warn: #2B1C10;
+  --face-right-warn:#38240F;
+  --edge-warn:      #F26B21;
+
+  /* watch zone — nominal faces, amber edge */
+  --edge-watch:     rgba(217,164,65,0.60);
+
+  /* selection — independent channel from status */
+  --edge-selected:  #EEF2F0;
+
+  /* ground plane */
+  --grid-line:      rgba(79,209,165,0.16);
+}
+
+/* ==========================================================================
+   AMBIENT GLOW RECIPES — FRONTEND.md §5
+   These are reusable utility classes for the signature glow treatments.
+   ========================================================================== */
+
+.glow-page {
+  background:
+    radial-gradient(ellipse 60% 44% at 80% 0%,
+      rgba(79,209,165,0.10) 0%, rgba(79,209,165,0.03) 45%, rgba(10,13,12,0) 75%),
+    var(--bg);
+}
+
+.glow-nav {
+  background:
+    radial-gradient(ellipse 46% 320% at 71% 0%,
+      rgba(79,209,165,0.20) 0%, rgba(79,209,165,0.06) 42%, rgba(17,22,20,0) 72%),
+    var(--panel);
+}
+
+.glow-hero {
+  background:
+    radial-gradient(ellipse 74% 58% at 50% 6%,
+      rgba(79,209,165,0.24) 0%, rgba(79,209,165,0.09) 34%,
+      rgba(79,209,165,0.02) 62%, rgba(15,20,19,0) 82%),
+    var(--panel-deep);
+  border: 1px solid rgba(79,209,165,0.14);
+  box-shadow: inset 0 18px 70px rgba(79,209,165,0.10);
+}
+
+/* The cone's 130px shoulders cut a long way in: at 6px below the top edge the
+   boundary is already ~68px inside the panel, and it does not come back to
+   within 20px until roughly 60px down. Any child with its own background —
+   the zone cells — must start below that point, or its top corners paint
+   outside the panel. `--cone-clear` is that safe starting height, and
+   StationZonesPanel pads down to it. */
+.glow-lightcone {
+  --cone-clear: 62px;
+  border-top-left-radius: var(--r-cone);
+  border-top-right-radius: var(--r-cone);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  background:
+    radial-gradient(ellipse 88% 76% at 50% -4%,
+      rgba(79,209,165,0.34) 0%, rgba(79,209,165,0.16) 26%,
+      rgba(79,209,165,0.05) 52%, rgba(18,25,23,0) 76%),
+    linear-gradient(180deg, #16201C 0%, #121917 100%);
+  border: 1px solid rgba(79,209,165,0.16);
+  box-shadow: inset 0 22px 60px rgba(79,209,165,0.14);
+}
+
+.glow-map {
+  box-shadow: inset 0 0 90px rgba(79,209,165,0.10);
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "preset-blizzard",
+    "name": "Three-day blizzard",
+    "note": "Sustained katabatic event: envelope loss up, vessel waits it out at anchor.",
+    "set": { "ambientC": -42, "windKt": 55, "stormDays": 3, "renewablePct": 0 },
+    "delta": {}
+  },
+  {
+    "id": "preset-winter-min",
+    "name": "Winter minimum",
+    "note": "Coldest recorded month with the winter-over crew frame.",
+    "set": { "ambientC": -48, "windKt": 35, "renewablePct": 0, "crew": 15 },
+    "delta": {}
+  },
+  {
+    "id": "preset-gen-offline",
+    "name": "Generator #2 offline",
+    "note": "One set down: the remaining plant runs off its efficiency peak.",
+    "set": { "genEfficiencyPct": 30 },
+    "delta": {}
+  },
+  {
+    "id": "preset-resupply-delayed",
+    "name": "Resupply delayed 30 days",
+    "note": "Vessel slips a month. Consumption unchanged, deadline moves.",
+    "set": { "resupplyDelayDays": 30 },
+    "delta": {}
+  },
+  {
+    "id": "preset-summer-crew",
+    "name": "Crew +6 for summer",
+    "note": "Summer science party on top of the standing crew.",
+    "set": { "ambientC": -8 },
+    "delta": { "crew": 6 }
+  },
+  {
+    "id": "preset-renewables",
+    "name": "Renewables doubled",
+    "note": "Wind and solar share doubled against the current mix.",
+    "set": {},
+    "delta": { "renewablePct": 12 }
+  }
+]

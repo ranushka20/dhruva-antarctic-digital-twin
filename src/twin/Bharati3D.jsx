@@ -115,9 +115,9 @@ function Scene({ floor, selectedRoom, onSelectRoom }) {
 
 export default function Bharati3D({
   floor = "ground",
-  onSelectAsset,
-  selectedAsset,
-  zoneStatus,
+  onSelectAsset = () => {},
+  selectedAsset = null,
+  zoneStatus = {},
   sync = { state: "live", staleness: 0, label: "just now" },
 }) {
   const caption = VIEW_CAPTIONS[floor];

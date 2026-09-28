@@ -89,11 +89,11 @@ export default function EnvironmentPage() {
              <div>
                <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-3 tracking-widest">Current Conditions</h3>
                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                 <StatTile label="TEMP" measurement={currentConditions.temperature} />
-                 <StatTile label="WIND" measurement={currentConditions.wind} />
-                 <StatTile label="WIND CHILL" measurement={currentConditions.windChill} />
-                 <StatTile label="PRESSURE" measurement={currentConditions.pressure} />
-                 <StatTile label="HUMIDITY" measurement={currentConditions.humidity} />
+                 <StatTile label="TEMP" value={currentConditions.temperature.value} unit={currentConditions.temperature.unit} measurement={currentConditions.temperature} />
+                 <StatTile label="WIND" value={currentConditions.wind.value} unit={currentConditions.wind.unit} measurement={currentConditions.wind} />
+                 <StatTile label="WIND CHILL" value={currentConditions.windChill.value} unit={currentConditions.windChill.unit} measurement={currentConditions.windChill} />
+                 <StatTile label="PRESSURE" value={currentConditions.pressure.value} unit={currentConditions.pressure.unit} measurement={currentConditions.pressure} />
+                 <StatTile label="HUMIDITY" value={currentConditions.humidity.value} unit={currentConditions.humidity.unit} measurement={currentConditions.humidity} />
                </div>
              </div>
 
@@ -106,17 +106,17 @@ export default function EnvironmentPage() {
                <div className="space-y-4">
                  {tempSeries && (
                    <div className="h-32">
-                     <TimeSeriesChart series={[{ id: 't', name: 'Temperature', data: tempSeries.points, color: 'var(--text)' }]} />
+                     <TimeSeriesChart series={tempSeries.points} gaps={tempSeries.gaps} unit={tempSeries.unit} />
                    </div>
                  )}
                  {windSeries && (
                    <div className="h-32">
-                     <TimeSeriesChart series={[{ id: 'w', name: 'Wind Speed', data: windSeries.points, color: 'var(--brand)' }]} />
+                     <TimeSeriesChart series={windSeries.points} gaps={windSeries.gaps} unit={windSeries.unit} />
                    </div>
                  )}
                  {pressSeries && (
                    <div className="h-32">
-                     <TimeSeriesChart series={[{ id: 'p', name: 'Pressure', data: pressSeries.points, color: 'var(--text-3)' }]} />
+                     <TimeSeriesChart series={pressSeries.points} gaps={pressSeries.gaps} unit={pressSeries.unit} />
                    </div>
                  )}
                  {heatSeries && (
@@ -125,7 +125,7 @@ export default function EnvironmentPage() {
                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                        Derived: Heating Demand (MODELED)
                      </div>
-                     <TimeSeriesChart series={[{ id: 'h', name: 'Heating Demand', data: heatSeries.points, color: 'var(--watch)' }]} />
+                     <TimeSeriesChart series={heatSeries.points} gaps={heatSeries.gaps} unit={heatSeries.unit} />
                    </div>
                  )}
                </div>

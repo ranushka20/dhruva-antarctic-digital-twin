@@ -150,9 +150,9 @@ export default function TwinPage() {
                     <span className="font-mono text-[11px] text-[var(--text)] font-semibold">{zone.code}</span>
                     <span className="font-mono text-[11px] text-[var(--text-3)] truncate">{zone.name}</span>
                   </div>
-                  {zone.openActionCount > 0 && (
+                  {zone.openActions.length > 0 && (
                     <span className="bg-[var(--act-soft)] text-[var(--act)] font-mono text-[9px] px-1.5 py-0.5 rounded-full">
-                      {zone.openActionCount}
+                      {zone.openActions.length}
                     </span>
                   )}
                 </button>
@@ -274,7 +274,7 @@ export default function TwinPage() {
                   )}
                   {activeZone.openActions.map((action: any) => (
                     <div key={action.id} className="bg-[var(--panel)] border border-[var(--line)] rounded-lg overflow-hidden">
-                      <ActionCard action={action} compact />
+                      <ActionCard action={action} />
                       <div className="bg-[var(--bg)] p-2 flex justify-end gap-2 border-t border-[var(--line)]">
                         <button className="px-3 py-1 font-mono text-[9px] text-[var(--text-4)] border border-[var(--line)] rounded hover:bg-[var(--panel-raised)]" onClick={() => alert('Defer action dispatched')}>DEFER</button>
                         <button className="px-3 py-1 font-mono text-[9px] text-[var(--text-3)] border border-[var(--line)] rounded hover:bg-[var(--panel-raised)]" onClick={() => alert('Assign action dispatched')}>ASSIGN</button>

@@ -141,10 +141,11 @@ export default function AssetsPage() {
               <div className="bg-[var(--panel)] rounded-xl border border-[var(--line)] p-5">
                 <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-4 tracking-widest">Live Telemetry</h3>
                 <div className="grid grid-cols-2 gap-4 mb-5">
-                  <StatTile 
-                    label={asset.threshold ? asset.threshold.label : "CURRENT"} 
+                  <StatTile
+                    label={asset.threshold ? asset.threshold.label : "CURRENT"}
+                    value={asset.current.value}
+                    unit={asset.current.unit}
                     measurement={asset.current}
-                    trend={asset.series24h?.length > 1 ? (asset.series24h[asset.series24h.length-1].v - asset.series24h[0].v) / asset.series24h[0].v : undefined}
                   />
                   {asset.threshold && (
                     <div className="p-3 rounded-lg border border-[var(--line)] flex flex-col justify-center">
@@ -159,9 +160,9 @@ export default function AssetsPage() {
                 
                 {asset.series24h && asset.series24h.length > 0 && (
                   <div className="h-48 mt-2">
-                    <TimeSeriesChart 
-                      series={[{ id: 's1', name: asset.name, data: asset.series24h, color: 'var(--brand)' }]} 
-                      threshold={asset.threshold?.value}
+                    <TimeSeriesChart
+                      series={asset.series24h}
+                      threshold={asset.threshold}
                     />
                   </div>
                 )}
@@ -204,7 +205,7 @@ export default function AssetsPage() {
                   </h3>
                   <div className="space-y-3">
                     {actions.map((action: any) => (
-                      <ActionCard key={action.id} action={action} compact />
+                      <ActionCard key={action.id} action={action} />
                     ))}
                   </div>
                 </div>

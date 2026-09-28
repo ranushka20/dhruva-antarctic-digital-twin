@@ -56,15 +56,15 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
               className="w-full flex items-center gap-2.5 px-4 py-3 text-left flex-wrap"
               aria-expanded={expanded}
             >
-              <span className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>{record.type}</span>
-              <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+              <span className="text-body font-semibold" style={{ color: 'var(--text)' }}>{record.type}</span>
+              <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
                 {STATION_CODE[record.stationId as 'bharati' | 'maitri']} · {formatDateIST(record.at)} · {record.inspector}
               </span>
-              <span className="font-mono text-[8.5px] tracking-[0.06em] px-1.5 py-0.5 rounded"
+              <span className="font-mono text-micro tracking-[0.06em] px-1.5 py-0.5 rounded"
                 style={{ border: `1px solid ${style.color}`, color: style.color }}>
                 {style.label}
               </span>
-              <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
+              <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
                 template v{record.templateVersion} · {failures.length} finding{failures.length === 1 ? '' : 's'} · {shortHash(record.auditHash || '—')}
               </span>
             </button>
@@ -72,7 +72,7 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
             {expanded && (
               <div className="px-4 pb-3">
                 {unlinked.length > 0 && (
-                  <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>
+                  <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>
                     {unlinked.length} failed item{unlinked.length === 1 ? '' : 's'} with no linked action.
                   </p>
                 )}
@@ -85,13 +85,13 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
                           size={7}
                         />
                       </span>
-                      <span className="font-mono text-[9px] w-8 shrink-0 mt-0.5" style={{ color: 'var(--text-4)' }}>
+                      <span className="font-mono text-micro w-8 shrink-0 mt-0.5" style={{ color: 'var(--text-4)' }}>
                         {item.result.toUpperCase()}
                       </span>
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[11.5px]" style={{ color: 'var(--text-2)' }}>{item.label}</span>
+                        <span className="block text-body-sm" style={{ color: 'var(--text-2)' }}>{item.label}</span>
                         {item.note && (
-                          <span className="block text-[10.5px]" style={{ color: 'var(--text-4)' }}>{item.note}</span>
+                          <span className="block text-caption" style={{ color: 'var(--text-4)' }}>{item.note}</span>
                         )}
                       </span>
                       {item.result === 'fail' && (
@@ -99,7 +99,7 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
                           <button
                             type="button"
                             onClick={() => onOpenAction(item.linkedActionId!)}
-                            className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
+                            className="text-body-sm font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
                             style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                           >
                             Open action
@@ -109,7 +109,7 @@ export function Inspections({ records, onRaiseForFinding, onOpenAction, canRaise
                             type="button"
                             disabled={!canRaise}
                             onClick={() => onRaiseForFinding(record, item.id, item.label)}
-                            className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
+                            className="text-body-sm font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
                             style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
                           >
                             Raise action

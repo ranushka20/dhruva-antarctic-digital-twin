@@ -44,12 +44,12 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
       aria-label="Needs attention"
     >
       <div className="flex items-center mb-3">
-        <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
           Needs attention
         </h2>
         <Link
           to="/actions"
-          className="ml-auto text-[11.5px] font-medium"
+          className="ml-auto text-body-sm font-medium"
           style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
         >
           View all →
@@ -68,11 +68,11 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
         className="flex items-center gap-4 mt-3 pt-2.5"
         style={{ borderTop: '1px solid var(--line)', color: 'var(--text-3)' }}
       >
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.06em]">{deferred} deferred</span>
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.06em]">{resolved} resolved</span>
+        <span className="font-mono text-micro uppercase tracking-[0.06em]">{deferred} deferred</span>
+        <span className="font-mono text-micro uppercase tracking-[0.06em]">{resolved} resolved</span>
         <Link
           to="/compliance?tab=audit"
-          className="ml-auto text-[11.5px] font-medium"
+          className="ml-auto text-body-sm font-medium"
           style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
         >
           Full log →
@@ -114,30 +114,30 @@ function AttentionCard({ action }: { action: DerivedAction }) {
     >
       <div className="flex items-center gap-2 mb-1.5">
         <TierChip tier={action.tier} />
-        <span className="font-mono text-[9.5px] tracking-[0.06em]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-3)' }}>
           {STATION_CODE[action.stationId]} · {formatDuration(action.ageSeconds)}
         </span>
         <span className="ml-auto flex items-center gap-1.5">
           <StatusDot status={STATE_DOT[action.state] ?? 'unknown'} size={6} />
-          <span className="font-mono text-[8.5px]" style={{ color: 'var(--text-3)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--text-3)' }}>
             {action.state}
           </span>
         </span>
       </div>
 
       <Link to={'/actions/' + action.id} className="block">
-        <p className="text-[12.5px] font-medium mb-1" style={{ color: 'var(--text)' }}>
+        <p className="text-body font-medium mb-1" style={{ color: 'var(--text)' }}>
           {action.title}
         </p>
       </Link>
 
-      <p className="text-[11px] mb-2" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm mb-2" style={{ color: 'var(--text-3)' }}>
         {action.consequenceLabel ?? action.reason}
         {action.assignee ? ' · ' + action.assignee.name : ''}
       </p>
 
       {error && (
-        <p className="font-mono text-[9.5px] mb-1.5" style={{ color: 'var(--act-soft)' }}>{error}</p>
+        <p className="font-mono text-micro mb-1.5" style={{ color: 'var(--act-soft)' }}>{error}</p>
       )}
 
       <button
@@ -145,7 +145,7 @@ function AttentionCard({ action }: { action: DerivedAction }) {
         onClick={onAck}
         disabled={acked || busy}
         title={acked ? 'Already acknowledged — the timeline records who and when' : 'Acknowledge this action'}
-        className="px-3 py-1.5 rounded-full text-[11px] font-medium min-h-[32px]"
+        className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[32px]"
         style={{
           backgroundColor: acked ? 'transparent' : 'var(--act)',
           color: acked ? 'var(--text-3)' : 'var(--bg)',

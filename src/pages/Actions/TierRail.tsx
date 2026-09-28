@@ -62,14 +62,14 @@ export function TierRail({
               aria-hidden
             />
             <span className="min-w-0 lg:flex-1">
-              <span className="font-mono text-[10.5px] tracking-[0.06em] block" style={{ color: 'var(--text)' }}>
+              <span className="font-mono text-caption tracking-[0.06em] block" style={{ color: 'var(--text)' }}>
                 {tier}
               </span>
-              <span className="text-[10px] hidden lg:block truncate" style={{ color: 'var(--text-3)' }}>
+              <span className="text-caption hidden lg:block truncate" style={{ color: 'var(--text-3)' }}>
                 {meta.label}
               </span>
             </span>
-            <span className="font-mono text-[12px] tabular-nums ml-2" style={{ color: 'var(--text-2)' }}>
+            <span className="font-mono text-body tabular-nums ml-2" style={{ color: 'var(--text-2)' }}>
               {counts.byTier[tier]}
             </span>
           </button>
@@ -78,7 +78,7 @@ export function TierRail({
 
       <div className="hidden lg:block h-px my-2" style={{ backgroundColor: 'var(--line)' }} />
 
-      <p className="hidden lg:block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+      <p className="hidden lg:block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
         State
       </p>
 
@@ -97,10 +97,10 @@ export function TierRail({
               borderRadius: 'var(--r-inner)',
             }}
           >
-            <span className="font-mono text-[10px] flex-1" style={{ color: active ? 'var(--text)' : 'var(--text-3)' }}>
+            <span className="font-mono text-caption flex-1" style={{ color: active ? 'var(--text)' : 'var(--text-3)' }}>
               {state.replace('_', ' ')}
             </span>
-            <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-3)' }}>
               {counts.byState[state]}
             </span>
           </button>
@@ -118,10 +118,10 @@ export function TierRail({
           borderRadius: 'var(--r-inner)',
         }}
       >
-        <span className="font-mono text-[10px] uppercase tracking-[0.06em] flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+        <span className="font-mono text-caption uppercase tracking-[0.06em] flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
           SLA breach
         </span>
-        <span className="font-mono text-[12px] tabular-nums" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+        <span className="font-mono text-body tabular-nums" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
           {counts.breaching}
         </span>
       </button>

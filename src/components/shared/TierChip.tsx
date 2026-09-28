@@ -20,7 +20,7 @@ export function TierChip({ tier, className = '' }: TierChipProps) {
 
   return (
     <span
-      className={`inline-flex items-center font-mono text-[8.5px] tracking-[0.06em] font-medium px-1.5 py-0.5 rounded ${className}`}
+      className={`inline-flex items-center font-mono text-micro tracking-[0.06em] font-medium px-1.5 py-0.5 rounded ${className}`}
       style={{
         backgroundColor: style.bg,
         color: style.text,

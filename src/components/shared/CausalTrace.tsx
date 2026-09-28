@@ -24,7 +24,7 @@ export function CausalTrace({ input, className = '' }: CausalTraceProps) {
       }}
     >
       <h4
-        className="font-mono text-[9.5px] uppercase tracking-[0.12em] mb-3"
+        className="font-mono text-micro uppercase tracking-label mb-3"
         style={{ color: 'var(--ok-soft)' }}
       >
         Why this matters
@@ -34,13 +34,13 @@ export function CausalTrace({ input, className = '' }: CausalTraceProps) {
         {result.steps.map((step: CausalTraceStep, i: number) => (
           <div key={i} className="flex items-center gap-2">
             <span
-              className="font-mono text-[10px] w-24 shrink-0"
+              className="font-mono text-caption w-24 shrink-0"
               style={{ color: 'var(--text-3)' }}
             >
               {step.label}
             </span>
             <span
-              className="font-mono text-[12px] tabular-nums"
+              className="font-mono text-body tabular-nums"
               style={{ color: 'var(--text)' }}
               title={step.formula}
             >
@@ -58,19 +58,19 @@ export function CausalTrace({ input, className = '' }: CausalTraceProps) {
         className="mt-3 pt-2 flex items-center gap-3"
         style={{ borderTop: '1px solid var(--line)' }}
       >
-        <span className="font-mono text-[10px] uppercase" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption uppercase" style={{ color: 'var(--text-3)' }}>
           Autonomy
         </span>
-        <span className="font-mono text-[13px] font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
+        <span className="font-mono text-body font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
           {result.autonomyDays === Infinity ? '∞' : `${Math.round(result.autonomyDays)} ±${Math.round(result.autonomyBandDays)} d`}
         </span>
         {result.lsodDays !== null && (
           <>
-            <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
               LSOD
             </span>
             <span
-              className="font-mono text-[13px] font-semibold tabular-nums"
+              className="font-mono text-body font-semibold tabular-nums"
               style={{ color: result.lsodDays <= 14 ? 'var(--act-soft)' : result.lsodDays <= 45 ? 'var(--watch-soft)' : 'var(--text)' }}
             >
               {Math.round(result.lsodDays)} d

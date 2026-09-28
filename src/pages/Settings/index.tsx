@@ -27,6 +27,8 @@ import { appendAudit, refreshChainStatus } from '@/lib/hashChain';
 import { useStoreValue } from '@/state/useStore';
 import { currentActor, useCan, DEMO_ACCOUNTS, ROLE_LABEL } from '@/state/auth';
 import { formatShortIST } from '@/lib/time';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
+import { AsyncButton } from '@/components/shared/AsyncButton';
 
 type Group = Parameter['group'];
 
@@ -105,32 +107,33 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Settings &amp; Parameters
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {SCOPES.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setScope(s.id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={scope === s.id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: scope === s.id ? 'var(--text)' : 'transparent',
                 color: scope === s.id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {s.label}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <button
           type="button"
           onClick={() => setUnconfirmedOnly((v) => !v)}
           aria-pressed={unconfirmedOnly}
-          className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
           style={{
             border: `1px solid ${unconfirmedOnly ? 'var(--watch)' : 'var(--line)'}`,
             color: unconfirmedOnly ? 'var(--watch-soft)' : 'var(--text-3)',
@@ -141,7 +144,7 @@ export default function SettingsPage() {
         </button>
 
         {dirty && (
-          <span className="font-mono text-[10px]" style={{ color: 'var(--watch-soft)' }}>
+          <span className="font-mono text-caption" style={{ color: 'var(--watch-soft)' }}>
             unsaved changes
           </span>
         )}
@@ -149,7 +152,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => downloadText('antarasetu-parameters.json', exportParametersJSON(), 'application/json')}
-          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
         >
           <Download size={11} /> Export JSON
@@ -157,25 +160,24 @@ export default function SettingsPage() {
       </div>
 
       {toast && (
-        <div className="px-6 py-2 shrink-0" role="status"
+        <div key={toast} className="m-toast px-6 py-2 shrink-0" role="status"
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}>
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
+          <span className="font-mono text-caption" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
         </div>
       )}
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-5">
         {/* ---- Section rail ---- */}
-        <nav className="flex lg:flex-col gap-1 lg:w-[170px] lg:shrink-0 overflow-x-auto" aria-label="Parameter groups">
+        <nav data-segmented className="relative isolate flex lg:flex-col gap-1 lg:w-[170px] lg:shrink-0 overflow-x-auto" aria-label="Parameter groups">
           {GROUPS.map((g) => (
             <button
               key={g.id}
               type="button"
               onClick={() => setGroup(g.id)}
               aria-pressed={group === g.id}
-              className="px-3 py-2 text-left text-[12px] shrink-0 min-h-[38px]"
+              className="px-3 py-2 text-left text-body shrink-0 min-h-[38px]"
               style={{
-                backgroundColor: group === g.id ? 'var(--panel-raised)' : 'transparent',
-                border: `1px solid ${group === g.id ? 'var(--line-strong)' : 'transparent'}`,
+                border: '1px solid transparent',
                 borderRadius: 'var(--r-inner)',
                 color: group === g.id ? 'var(--text)' : 'var(--text-3)',
               }}
@@ -183,10 +185,13 @@ export default function SettingsPage() {
               {g.label}
             </button>
           ))}
+          <ActiveIndicator
+            style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line-strong)', borderRadius: 'var(--r-inner)' }}
+          />
           <button
             type="button"
             onClick={() => setResetOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 mt-2 text-left text-[11.5px] shrink-0 min-h-[38px]"
+            className="flex items-center gap-1.5 px-3 py-2 mt-2 text-left text-body-sm shrink-0 min-h-[38px]"
             style={{ border: '1px dashed var(--line-strong)', borderRadius: 'var(--r-inner)', color: 'var(--text-3)' }}
           >
             <RotateCcw size={11} /> Reset demo data
@@ -198,6 +203,7 @@ export default function SettingsPage() {
           className="flex-1 min-w-0 min-h-0 overflow-y-auto p-4"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
         >
+          <div key={group} className="m-panel">
           {group === 'users' ? (
             <UsersGroup />
           ) : rows.length === 0 ? (
@@ -225,6 +231,7 @@ export default function SettingsPage() {
               ))}
             </ul>
           )}
+          </div>
         </section>
       </div>
 
@@ -236,13 +243,12 @@ export default function SettingsPage() {
       />
 
       <Modal open={resetOpen} onClose={() => setResetOpen(false)} title="Reset demo data">
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           This rebuilds both local stores — actions, resources, outbox, waste ledger and the audit
           chain — from the seed. Your parameter overrides and your sign-in are kept. Anything you
           recorded during this session is discarded.
         </p>
-        <button
-          type="button"
+        <AsyncButton
           onClick={async () => {
             await reseed();
             await refreshChainStatus('hq');
@@ -250,11 +256,13 @@ export default function SettingsPage() {
             setToast('Demo data rebuilt and the chain re-verified.');
             setTimeout(() => setToast(null), 4000);
           }}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+          pendingLabel="Rebuilding…"
+          doneLabel={null}
+          className="w-full inline-flex justify-center py-2.5 rounded-full text-body font-medium min-h-[44px]"
           style={{ backgroundColor: 'var(--act)', color: 'var(--bg)' }}
         >
           Rebuild demo data
-        </button>
+        </AsyncButton>
       </Modal>
     </div>
   );
@@ -294,8 +302,8 @@ function ParameterRow({
     >
       <div className="flex items-center gap-2.5 flex-wrap">
         <span className="min-w-0 flex-1">
-          <span className="block text-[12.5px]" style={{ color: 'var(--text)' }}>{param.label}</span>
-          <span className="block font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+          <span className="block text-body" style={{ color: 'var(--text)' }}>{param.label}</span>
+          <span className="block font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             {param.key}
             {param.usedBy.length > 0 && ' · used by ' + param.usedBy.join(', ')}
           </span>
@@ -306,7 +314,7 @@ function ParameterRow({
             type="button"
             disabled={!canWrite}
             onClick={() => onCommit(!param.value)}
-            className="px-3 py-1.5 rounded-full font-mono text-[10px] tracking-[0.06em] min-h-[34px]"
+            className="px-3 py-1.5 rounded-full font-mono text-caption tracking-[0.06em] min-h-[34px]"
             style={{
               border: `1px solid ${param.value ? 'var(--ok)' : 'var(--line)'}`,
               color: param.value ? 'var(--ok-soft)' : 'var(--text-3)',
@@ -326,7 +334,7 @@ function ParameterRow({
               if (affectsEngine && isNumber) onPreview(Number(draft));
               else onCommit(draft);
             }}
-            className="w-28 px-2.5 py-1.5 font-mono text-[11.5px] tabular-nums outline-none"
+            className="w-28 px-2.5 py-1.5 font-mono text-body-sm tabular-nums outline-none"
             style={{
               backgroundColor: 'var(--panel)', border: `1px solid ${error ? 'var(--act)' : 'var(--line)'}`,
               borderRadius: 'var(--r-inner)', color: 'var(--text)', opacity: canWrite ? 1 : 0.5,
@@ -335,7 +343,7 @@ function ParameterRow({
           />
         )}
 
-        <span className="font-mono text-[9.5px] w-14" style={{ color: 'var(--text-4)' }}>{param.unit ?? ''}</span>
+        <span className="font-mono text-micro w-14" style={{ color: 'var(--text-4)' }}>{param.unit ?? ''}</span>
 
         <ProvenanceBadge
           measurement={{
@@ -356,7 +364,7 @@ function ParameterRow({
             disabled={!canWrite}
             onClick={onReset}
             title={`Shipped default: ${String(param.default)}`}
-            className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+            className="text-body-sm font-medium px-2.5 py-1 rounded min-h-[30px]"
             style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)', opacity: canWrite ? 1 : 0.4 }}
           >
             Reset
@@ -365,19 +373,19 @@ function ParameterRow({
       </div>
 
       <div className="flex items-center gap-2 mt-1 flex-wrap">
-        <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
           source: {param.source}
         </span>
-        <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
           · default {String(param.default)}
         </span>
         {param.lastChangedBy && (
-          <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             · last changed by {param.lastChangedBy} {param.lastChangedAt ? formatShortIST(param.lastChangedAt) : ''}
           </span>
         )}
         {param.overriddenFromGlobal && (
-          <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
+          <span className="font-mono text-micro uppercase px-1.5 py-0.5 rounded"
             style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)' }}>
             overridden for {scope}
           </span>
@@ -385,7 +393,7 @@ function ParameterRow({
       </div>
 
       {error && (
-        <p className="font-mono text-[10px] mt-1.5" style={{ color: 'var(--act-soft)' }} role="alert">
+        <p className="font-mono text-caption mt-1.5" style={{ color: 'var(--act-soft)' }} role="alert">
           {error}
         </p>
       )}
@@ -434,7 +442,7 @@ function ImpactPreview({
 
   return (
     <Modal open onClose={onCancel} title={'Impact — ' + preview.param.label}>
-      <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
         Changing <span className="font-mono">{preview.param.label}</span> from{' '}
         <span className="font-mono">{String(preview.param.value)}</span> to{' '}
         <span className="font-mono">{String(preview.next)}</span> changes the Last Safe Order Date
@@ -443,7 +451,7 @@ function ImpactPreview({
       </p>
 
       {changes.length === 0 ? (
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-4)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-4)' }}>
           No LSOD moves by a whole day. The parameter still changes the underlying figures — this
           preview reports only whole-day deadline shifts.
         </p>
@@ -452,15 +460,15 @@ function ImpactPreview({
           {changes.map((change) => (
             <li key={change.id} className="flex items-center gap-2 px-2.5 py-1.5"
               style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}>
-              <span className="text-[11.5px] flex-1 truncate" style={{ color: 'var(--text-2)' }}>
+              <span className="text-body-sm flex-1 truncate" style={{ color: 'var(--text-2)' }}>
                 {change.name}
               </span>
-              <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-3)' }}>
+              <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-3)' }}>
                 {change.beforeLsod === null ? '—' : Math.round(change.beforeLsod)}
               </span>
               <span style={{ color: 'var(--text-4)' }}>→</span>
               <span
-                className="font-mono text-[11px] tabular-nums"
+                className="font-mono text-body-sm tabular-nums"
                 style={{
                   color: (change.afterLsod ?? 0) < (change.beforeLsod ?? 0) ? 'var(--act-soft)' : 'var(--ok-soft)',
                 }}
@@ -476,7 +484,7 @@ function ImpactPreview({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-2.5 rounded-full text-[12px] min-h-[44px]"
+          className="flex-1 py-2.5 rounded-full text-body min-h-[44px]"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
         >
           Cancel
@@ -484,7 +492,7 @@ function ImpactPreview({
         <button
           type="button"
           onClick={onConfirm}
-          className="flex-1 py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+          className="flex-1 py-2.5 rounded-full text-body font-medium min-h-[44px]"
           style={{ backgroundColor: 'var(--act)', color: 'var(--bg)' }}
         >
           Save and record
@@ -501,7 +509,7 @@ function UsersGroup() {
       <div className="flex items-start gap-2 px-3 py-2.5 mb-3"
         style={{ backgroundColor: 'rgba(217,164,65,0.10)', borderRadius: 'var(--r-inner)' }}>
         <AlertTriangle size={13} style={{ color: 'var(--watch)' }} className="mt-0.5 shrink-0" aria-hidden />
-        <p className="text-[11.5px]" style={{ color: 'var(--watch-soft)' }}>
+        <p className="text-body-sm" style={{ color: 'var(--watch-soft)' }}>
           This build is frontend-only: the token is issued and verified in the browser and
           role-gating is UI-level. Accounts are provisioned here, not registered, and nothing
           below is a security boundary.
@@ -511,9 +519,9 @@ function UsersGroup() {
         {DEMO_ACCOUNTS.map((a) => (
           <li key={a.username} className="flex items-center gap-2.5 px-3 py-2.5"
             style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}>
-            <span className="text-[12.5px] flex-1" style={{ color: 'var(--text)' }}>{a.name}</span>
-            <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>@{a.username}</span>
-            <span className="font-mono text-[9.5px] px-2 py-0.5 rounded"
+            <span className="text-body flex-1" style={{ color: 'var(--text)' }}>{a.name}</span>
+            <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>@{a.username}</span>
+            <span className="font-mono text-micro px-2 py-0.5 rounded"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}>
               {ROLE_LABEL[a.role]}
             </span>

@@ -21,6 +21,8 @@ import { useStoreValue, useTick } from '@/state/useStore';
 import { STATION_LABEL, type StationFilter } from '@/state/stationScope';
 import { currentActor, useCan } from '@/state/auth';
 import { addDays } from '@/lib/time';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
+import { usePresence, useLastWhileOpen } from '@/hooks/usePresence';
 
 const STATION_TABS: { id: StationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -75,6 +77,12 @@ export default function ActionsPage() {
   }, [allActions, tiers, states, breachOnly, query]);
 
   const open = actionId ? allActions.find((a) => a.id === actionId) : undefined;
+  // Keep the drawer mounted through its exit, still showing the action it
+  // was opened on. Tracked by id, not object, because store reads return
+  // fresh objects.
+  const drawer = usePresence(!!open, 160);
+  const drawerId = useLastWhileOpen(!!open, open?.id);
+  const drawerAction = drawerId ? allActions.find((a) => a.id === drawerId) : undefined;
 
   // ---- Keyboard (NFR-3.6): j/k move, a acknowledge, Enter open, Esc close ---
   useEffect(() => {
@@ -140,25 +148,26 @@ export default function ActionsPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Action Centre
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {STATION_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => applyScope(tab.id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={scope === tab.id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: scope === tab.id ? 'var(--text)' : 'transparent',
                 color: scope === tab.id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {tab.label}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <label className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-1 min-w-[180px] max-w-xs"
@@ -169,12 +178,12 @@ export default function ActionsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Title, asset, zone, assignee"
-            className="flex-1 bg-transparent outline-none text-[12px] min-w-0"
+            className="flex-1 bg-transparent outline-none text-body min-w-0"
             style={{ color: 'var(--text)' }}
           />
         </label>
 
-        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tabular-nums">
+        <div className="flex items-center gap-3 font-mono text-body-sm uppercase tabular-nums">
           <span style={{ color: 'var(--text-2)' }}>{counts.open} open</span>
           <span style={{ color: counts.unacked > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
             {counts.unacked} unacked
@@ -184,13 +193,13 @@ export default function ActionsPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-0.5 p-0.5 rounded-full ml-auto" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-0.5 p-0.5 rounded-full ml-auto" style={{ border: '1px solid var(--line)' }}>
           <button
             type="button"
             onClick={() => setView('table')}
             aria-pressed={view === 'table'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
-            style={{ backgroundColor: view === 'table' ? 'var(--panel-raised)' : 'transparent', color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
+            style={{ color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
           >
             <Rows3 size={12} /> Table
           </button>
@@ -198,11 +207,12 @@ export default function ActionsPage() {
             type="button"
             onClick={() => setView('board')}
             aria-pressed={view === 'board'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
-            style={{ backgroundColor: view === 'board' ? 'var(--panel-raised)' : 'transparent', color: view === 'board' ? 'var(--text)' : 'var(--text-3)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
+            style={{ color: view === 'board' ? 'var(--text)' : 'var(--text-3)' }}
           >
             <LayoutGrid size={12} /> Board
           </button>
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
         </div>
       </div>
 
@@ -210,30 +220,30 @@ export default function ActionsPage() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 px-6 py-2 shrink-0"
           style={{ backgroundColor: 'var(--panel-raised)', borderBottom: '1px solid var(--line)' }}>
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-caption" style={{ color: 'var(--text-2)' }}>
             {selectedIds.size} selected
           </span>
           <button
             type="button"
             disabled={!canBulk || chainBroken}
             onClick={bulkAck}
-            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+            className="px-3 py-1.5 rounded-full text-body-sm font-medium"
             style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
           >
             Bulk acknowledge
           </button>
-          <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             Bulk resolve is deliberately unavailable — a resolution needs per-action evidence.
           </span>
           {chainBroken && (
-            <span className="font-mono text-[9.5px]" style={{ color: 'var(--act-soft)' }}>
+            <span className="font-mono text-micro" style={{ color: 'var(--act-soft)' }}>
               Bulk operations disabled while the audit chain is broken.
             </span>
           )}
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="ml-auto text-[11.5px] font-medium"
+            className="ml-auto text-body-sm font-medium"
             style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
           >
             Clear
@@ -242,9 +252,9 @@ export default function ActionsPage() {
       )}
 
       {toast && (
-        <div className="px-6 py-2 shrink-0" role="alert"
+        <div key={toast} data-tone="error" className="m-toast px-6 py-2 shrink-0" role="alert"
           style={{ backgroundColor: 'rgba(242,107,33,0.10)', borderBottom: '1px solid var(--act)' }}>
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--act-soft)' }}>{toast}</span>
+          <span className="font-mono text-caption" style={{ color: 'var(--act-soft)' }}>{toast}</span>
         </div>
       )}
 
@@ -264,6 +274,7 @@ export default function ActionsPage() {
           className="flex-1 min-w-0 min-h-0 p-3"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
         >
+          <div key={view} className="m-panel h-full">
           {view === 'table' ? (
             <ActionTable
               actions={filtered}
@@ -288,10 +299,13 @@ export default function ActionsPage() {
               onMove={(id, to) => transitions.transitionTo(id, to).then(() => undefined)}
             />
           )}
+          </div>
         </section>
       </div>
 
-      {open && <ActionDrawer action={open} onClose={() => navigate('/actions')} />}
+      {drawer.mounted && drawerAction && (
+        <ActionDrawer action={drawerAction} state={drawer.state} onClose={() => navigate('/actions')} />
+      )}
 
       <QuickDialog
         dialog={dialog}
@@ -330,7 +344,7 @@ function QuickDialog({
     const roster = ROSTER.filter((r) => r.stationId === action.stationId);
     return (
       <Modal open onClose={onClose} title={'Assign — ' + action.title}>
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           {STATION_LABEL[action.stationId]} roster
         </p>
         <ul className="space-y-1.5">
@@ -342,8 +356,8 @@ function QuickDialog({
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-left rounded-lg min-h-[44px]"
                 style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
               >
-                <span className="text-[12.5px]" style={{ color: 'var(--text)' }}>{m.name}</span>
-                <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-3)' }}>{m.role}</span>
+                <span className="text-body" style={{ color: 'var(--text)' }}>{m.name}</span>
+                <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-3)' }}>{m.role}</span>
               </button>
             </li>
           ))}
@@ -356,7 +370,7 @@ function QuickDialog({
     const invalid = !reason.trim() || !reviewDate;
     return (
       <Modal open onClose={onClose} title={'Defer — ' + action.title}>
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           A deferral without a reason and a review date is rejected — it would vanish from the
           next crew's handover.
         </p>
@@ -365,21 +379,21 @@ function QuickDialog({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Why is this safe to defer?"
-          className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+          className="w-full px-3 py-2 text-body outline-none mb-3"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
         <input
           type="date"
           value={reviewDate}
           onChange={(e) => setReviewDate(e.target.value)}
-          className="w-full px-3 py-2 text-[12px] font-mono outline-none mb-3"
+          className="w-full px-3 py-2 text-body font-mono outline-none mb-3"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
         <button
           type="button"
           disabled={invalid}
           onClick={() => onDefer(action.id, reason, new Date(reviewDate).toISOString())}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+          className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
           style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-4)' : 'var(--bg)' }}
         >
           Defer and record
@@ -396,11 +410,11 @@ function QuickDialog({
         onChange={(e) => setNote(e.target.value)}
         rows={4}
         placeholder="What was done, and how it was confirmed"
-        className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+        className="w-full px-3 py-2 text-body outline-none mb-3"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
       {needsEvidence && (
-        <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>
+        <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>
           {action.tier} needs evidence — open the action and attach one first.
         </p>
       )}
@@ -408,7 +422,7 @@ function QuickDialog({
         type="button"
         disabled={!note.trim() || needsEvidence}
         onClick={() => onResolve(action.id, note, action.evidence.map((e) => e.id))}
-        className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
         style={{
           backgroundColor: !note.trim() || needsEvidence ? 'var(--panel-raised)' : 'var(--act)',
           color: !note.trim() || needsEvidence ? 'var(--text-4)' : 'var(--bg)',

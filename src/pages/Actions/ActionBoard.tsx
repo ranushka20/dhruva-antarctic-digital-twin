@@ -69,17 +69,17 @@ export function ActionBoard({ actions, canWrite, onOpen, onMove }: Props) {
             aria-label={column + ' column'}
           >
             <header className="flex items-center gap-2 px-1 pb-2">
-              <span className="font-mono text-[9.5px] tracking-[0.08em]" style={{ color: 'var(--text-2)' }}>
+              <span className="font-mono text-micro tracking-label" style={{ color: 'var(--text-2)' }}>
                 {column.replace('_', ' ')}
               </span>
-              <span className="font-mono text-[10px] tabular-nums ml-auto" style={{ color: 'var(--text-4)' }}>
+              <span className="font-mono text-caption tabular-nums ml-auto" style={{ color: 'var(--text-4)' }}>
                 {cards.length}
               </span>
             </header>
 
             {rejected && (
               <p
-                className="mb-2 px-2 py-1.5 text-[10.5px]"
+                className="mb-2 px-2 py-1.5 text-caption"
                 style={{
                   color: 'var(--act-soft)',
                   backgroundColor: 'rgba(242,107,33,0.10)',
@@ -93,7 +93,7 @@ export function ActionBoard({ actions, canWrite, onOpen, onMove }: Props) {
 
             <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
               {cards.length === 0 && (
-                <p className="px-1 py-3 text-[10.5px]" style={{ color: 'var(--text-4)' }}>
+                <p className="px-1 py-3 text-caption" style={{ color: 'var(--text-4)' }}>
                   Nothing in {column.replace('_', ' ').toLowerCase()}.
                 </p>
               )}
@@ -114,20 +114,20 @@ export function ActionBoard({ actions, canWrite, onOpen, onMove }: Props) {
                 >
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <TierChip tier={a.tier} />
-                    <span className="font-mono text-[9px]" style={{ color: 'var(--text-3)' }}>
+                    <span className="font-mono text-micro" style={{ color: 'var(--text-3)' }}>
                       {STATION_CODE[a.stationId]}
                     </span>
-                    <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-4)' }}>
+                    <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
                       {formatDuration(a.ageSeconds)}
                     </span>
                   </div>
-                  <p className="text-[12px] mb-1.5" style={{ color: 'var(--text)' }}>{a.title}</p>
+                  <p className="text-body mb-1.5" style={{ color: 'var(--text)' }}>{a.title}</p>
                   {a.consequenceLabel && (
-                    <p className="font-mono text-[9.5px] mb-1" style={{ color: 'var(--watch-soft)' }}>
+                    <p className="font-mono text-micro mb-1" style={{ color: 'var(--watch-soft)' }}>
                       {a.consequenceLabel}
                     </p>
                   )}
-                  <p className="text-[10.5px]" style={{ color: 'var(--text-4)' }}>
+                  <p className="text-caption" style={{ color: 'var(--text-4)' }}>
                     {a.assignee?.name ?? 'unassigned'}
                   </p>
                 </article>

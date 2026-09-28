@@ -32,7 +32,7 @@ export function TimeSeriesChart({
         className={`flex items-center justify-center h-32 rounded-lg ${className}`}
         style={{ backgroundColor: 'var(--panel-deep)', border: '1px solid var(--line)' }}
       >
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
           No series data available
         </span>
       </div>
@@ -80,7 +80,7 @@ export function TimeSeriesChart({
       </svg>
       {threshold && (
         <div className="flex justify-end">
-          <span className="font-mono text-[8.5px]" style={{ color: 'var(--act-soft)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--act-soft)' }}>
             {threshold.label} {threshold.value} {threshold.unit}
           </span>
         </div>

@@ -92,7 +92,7 @@ function StationOverview({ onEnterControlRoom }) {
                 Bharati AWS
                 <StatusDot pulse tone="online" />
               </span>
-              <span className="text-[0.6875rem] text-muted-foreground leading-relaxed">
+              <span className="text-caption text-muted-foreground leading-relaxed">
                 IMD-owned, served by NCPOR. 1-minute temperature, pressure,
                 wind and humidity. No authentication, 100,000-row cap, −999.0
                 sentinel.
@@ -128,13 +128,13 @@ function StationOverview({ onEnterControlRoom }) {
                 >
                   {tier.label}
                 </Badge>
-                <span className="text-[0.6875rem] text-muted-foreground leading-relaxed">
+                <span className="text-caption text-muted-foreground leading-relaxed">
                   {tier.description}
                 </span>
               </div>
             ))}
           </div>
-          <p className="mt-2.5 text-[0.6875rem] text-muted-foreground leading-relaxed">
+          <p className="mt-2.5 text-caption text-muted-foreground leading-relaxed">
             Hover any badge for the underlying evidence class and its source.
           </p>
         </div>
@@ -173,7 +173,7 @@ function ZoneStatusRow({ zone, detail }) {
         </Badge>
       </div>
       {detail?.note && (
-        <p className="text-[0.6875rem] text-muted-foreground leading-relaxed">
+        <p className="text-caption text-muted-foreground leading-relaxed">
           {detail.note}
         </p>
       )}

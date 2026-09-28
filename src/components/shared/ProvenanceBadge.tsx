@@ -102,7 +102,7 @@ export function ProvenanceBadge({
         onBlur={() => setOpen(false)}
         onClick={() => setOpen((v) => !v)}
         className={
-          'inline-flex items-center font-mono text-[8.5px] tracking-[0.06em] py-0.5 rounded cursor-help '
+          'inline-flex items-center font-mono text-micro tracking-[0.06em] py-0.5 rounded cursor-help '
           + (abbreviated ? 'px-1' : 'px-1.5')
         }
         style={{ backgroundColor: style.bg, border: style.border, color: style.text }}
@@ -118,54 +118,54 @@ export function ProvenanceBadge({
           style={cardStyle}
         >
           <span
-            className="block font-mono text-[8.5px] uppercase tracking-[0.12em] pb-1.5 mb-1.5"
+            className="block font-mono text-micro uppercase tracking-label pb-1.5 mb-1.5"
             style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line)' }}
           >
             Provenance
           </span>
 
-          <span className="block text-[11px] mb-1" style={{ color: style.text, fontFamily: 'var(--font-body)' }}>
+          <span className="block text-body-sm mb-1" style={{ color: style.text, fontFamily: 'var(--font-body)' }}>
             {style.long}
           </span>
 
           {label && (
-            <span className="block text-[11px] mb-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+            <span className="block text-body-sm mb-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
               {label}
             </span>
           )}
 
           {measurement.awaiting && (
-            <span className="block font-mono text-[9.5px] mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
               awaiting: {measurement.awaiting}
             </span>
           )}
 
           {measurement.model && (
-            <span className="block font-mono text-[9.5px] mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
               model: {measurement.model}
             </span>
           )}
 
           {measurement.parents?.map((p) => (
-            <span key={p.name} className="block font-mono text-[9.5px] mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span key={p.name} className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
               parent: {p.name} ({p.provenance})
             </span>
           ))}
 
           {missingParents && (
-            <span className="block font-mono text-[9.5px] mb-0.5" style={{ color: 'var(--act-soft)' }}>
+            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--act-soft)' }}>
               derived value with no declared parents — report this
             </span>
           )}
 
           {measurement.confidence !== undefined && (
-            <span className="block font-mono text-[9.5px] mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
               confidence: {(measurement.confidence * 100).toFixed(0)}%
             </span>
           )}
 
           <span
-            className="block font-mono text-[9px] pt-1.5 mt-1.5"
+            className="block font-mono text-micro pt-1.5 mt-1.5"
             style={{ color: 'var(--text-4)', borderTop: '1px solid var(--line)' }}
           >
             {measurement.source} · {formatShortIST(measurement.timestamp)} IST ·{' '}

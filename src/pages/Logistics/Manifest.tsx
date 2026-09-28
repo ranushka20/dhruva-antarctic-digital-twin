@@ -88,23 +88,23 @@ export default function ManifestPage() {
         <button
           type="button"
           onClick={() => navigate('/logistics')}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px]"
+          className="m-back flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-body-sm"
           style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
         >
           <ArrowLeft size={12} /> Logistics
         </button>
-        <h1 className="text-[24px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Manifest — {voyage.name}
         </h1>
-        <span className="font-mono text-[10px] ml-2" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption ml-2" style={{ color: 'var(--text-3)' }}>
           season {voyage.season} · {voyage.status}
         </span>
       </div>
 
       {toast && (
-        <div className="px-6 py-2 shrink-0" role="status"
+        <div key={toast} className="m-toast px-6 py-2 shrink-0" role="status"
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}>
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
+          <span className="font-mono text-caption" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
         </div>
       )}
 
@@ -127,9 +127,9 @@ export default function ManifestPage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>Versions</h2>
+              <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Versions</h2>
               {versions.length === 0 ? (
-                <p className="text-[11.5px]" style={{ color: 'var(--text-4)' }}>
+                <p className="text-body-sm" style={{ color: 'var(--text-4)' }}>
                   No manifest generated for this voyage yet. Generating creates version 1 and appends
                   it to the audit chain — later runs never overwrite it.
                 </p>
@@ -142,19 +142,19 @@ export default function ManifestPage() {
                       style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px]" style={{ color: 'var(--text)' }}>v{m.version}</span>
-                        <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+                        <span className="font-mono text-body-sm" style={{ color: 'var(--text)' }}>v{m.version}</span>
+                        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
                           {formatShortIST(m.generatedAt)}
                         </span>
-                        <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-3)' }}>
+                        <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-3)' }}>
                           {m.totalMassKg.toLocaleString()} kg
                         </span>
                       </div>
-                      <p className="font-mono text-[9px] mt-1" style={{ color: 'var(--text-4)' }}>
+                      <p className="font-mono text-micro mt-1" style={{ color: 'var(--text-4)' }}>
                         {m.generatedBy} · {shortHash(m.auditHash)}
                       </p>
                       {m.deferredAtRisk > 0 && (
-                        <p className="font-mono text-[9px] mt-0.5" style={{ color: 'var(--act-soft)' }}>
+                        <p className="font-mono text-micro mt-0.5" style={{ color: 'var(--act-soft)' }}>
                           {m.deferredAtRisk} deferred at risk
                         </p>
                       )}
@@ -167,14 +167,14 @@ export default function ManifestPage() {
                 <button
                   type="button"
                   onClick={() => downloadText(`${latest.id}.csv`, csv, 'text/csv')}
-                  className="w-full mt-3 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[12px] min-h-[44px]"
+                  className="w-full mt-3 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-body min-h-[44px]"
                   style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
                 >
                   <Download size={12} /> Export v{latest.version} as CSV
                 </button>
               )}
 
-              <p className="font-mono text-[9px] mt-3" style={{ color: 'var(--text-4)' }}>
+              <p className="font-mono text-micro mt-3" style={{ color: 'var(--text-4)' }}>
                 Quantities derive from SYNTH stock and burn-rate figures. Exports carry that class on
                 every row — a manifest that presents placeholder tonnage as fact is the most damaging
                 thing this page could produce.

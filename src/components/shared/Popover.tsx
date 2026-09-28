@@ -3,6 +3,7 @@
 // Used by ProvenanceBadge hover popover and other in-context info panels.
 
 import { type ReactNode, useState, useRef, useEffect } from 'react';
+import { usePresence } from '@/hooks/usePresence';
 
 interface PopoverProps {
   trigger: ReactNode;
@@ -13,6 +14,7 @@ interface PopoverProps {
 export function Popover({ trigger, children, className = '' }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { mounted, state } = usePresence(open, 120);
 
   useEffect(() => {
     if (!open) return;
@@ -30,9 +32,10 @@ export function Popover({ trigger, children, className = '' }: PopoverProps) {
       <div onClick={() => setOpen(!open)} className="cursor-pointer">
         {trigger}
       </div>
-      {open && (
+      {mounted && (
         <div
-          className="absolute z-50 mt-1 rounded-lg p-3 min-w-48 shadow-lg"
+          data-state={state}
+          className="m-pop absolute z-50 mt-1 rounded-lg p-3 min-w-48 shadow-lg"
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',

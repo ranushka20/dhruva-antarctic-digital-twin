@@ -22,7 +22,7 @@ export function ChainBanner({ linkToAudit = true }: { linkToAudit?: boolean }) {
       }}
     >
       <ShieldAlert size={15} style={{ color: 'var(--act)' }} aria-hidden />
-      <span className="text-[12.5px]" style={{ color: 'var(--act-soft)', fontFamily: 'var(--font-body)' }}>
+      <span className="text-body" style={{ color: 'var(--act-soft)', fontFamily: 'var(--font-body)' }}>
         Audit chain broken at entry{' '}
         <span className="font-mono">#{status.brokenAt}</span>. Records after this point cannot be
         shown as unaltered. Bulk operations are disabled until the chain is reviewed.
@@ -30,7 +30,7 @@ export function ChainBanner({ linkToAudit = true }: { linkToAudit?: boolean }) {
       {linkToAudit && (
         <Link
           to="/compliance?tab=audit"
-          className="ml-auto text-[11.5px] font-medium px-3 py-1 rounded-full shrink-0"
+          className="ml-auto text-body-sm font-medium px-3 py-1 rounded-full shrink-0"
           style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)' }}
         >
           Open audit log

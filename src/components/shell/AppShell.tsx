@@ -3,9 +3,11 @@
 // session-expiry notice. Also the one place the local stores are seeded, so
 // every page can assume data exists without each one guarding for it.
 
-import { Outlet } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { NavBar } from './NavBar';
+import { tabIndex } from './navTabs';
+import { PageSkeleton } from '@/components/shared/Loading';
 import { CommandPalette } from './CommandPalette';
 import { ChainBanner } from '@/components/shared/ChainBanner';
 import { ensureSeeded } from '@/state/bootstrap';
@@ -17,6 +19,15 @@ import { useTick } from '@/state/useStore';
 export function AppShell() {
   const [ready, setReady] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Route transition direction: moving right along the nav tabs slides the
+  // new page in from the right, moving left from the left. Drill-ins within
+  // a tab (Overview → Action Centre) only fade and assemble.
+  const { pathname } = useLocation();
+  const [route, setRoute] = useState({ path: pathname, dx: 0 });
+  if (route.path !== pathname) {
+    setRoute({ path: pathname, dx: Math.sign(tabIndex(pathname) - tabIndex(route.path)) * 14 });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -47,16 +58,11 @@ export function AppShell() {
       <NavBar onOpenSearch={() => setPaletteOpen(true)} />
       <ChainBanner />
       <SessionNotice />
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        {ready ? (
-          <Outlet />
-        ) : (
-          <div className="flex items-center justify-center h-64">
-            <span className="font-mono text-[11px]" style={{ color: 'var(--text-3)' }}>
-              Restoring last known state…
-            </span>
-          </div>
-        )}
+      <main
+        className="flex-1 min-h-0 overflow-y-auto"
+        style={{ '--route-dx': route.dx + 'px' } as CSSProperties}
+      >
+        {ready ? <Outlet /> : <PageSkeleton label="Restoring last known state" />}
       </main>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
@@ -76,17 +82,17 @@ function SessionNotice() {
   return (
     <div
       role="status"
-      className="flex items-center gap-2.5 px-5 py-1.5 shrink-0"
+      className="m-toast flex items-center gap-2.5 px-5 py-1.5 shrink-0"
       style={{ backgroundColor: 'rgba(217,164,65,0.12)', borderBottom: '1px solid var(--watch)' }}
     >
-      <span className="text-[12px]" style={{ color: 'var(--watch-soft)' }}>
+      <span className="text-body" style={{ color: 'var(--watch-soft)' }}>
         Session expires in <span className="font-mono">{formatDuration(remaining)}</span>. Queued
         local records are kept either way.
       </span>
       <button
         type="button"
         onClick={() => renewSession()}
-        className="ml-auto text-[11.5px] font-medium px-3 py-1 rounded-full"
+        className="ml-auto text-body-sm font-medium px-3 py-1 rounded-full"
         style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)', fontFamily: 'var(--font-body)' }}
       >
         Renew

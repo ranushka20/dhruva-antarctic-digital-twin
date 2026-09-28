@@ -30,7 +30,7 @@ export function ZoneCell({ zone, selected = false, onClick, className = '' }: Zo
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg p-2.5 text-left transition-all ${className}`}
+      className={`m-lift rounded-lg p-2.5 text-left ${className}`}
       style={{
         backgroundColor: STATUS_BG[zone.status] ?? STATUS_BG.unknown,
         border: `1px solid ${selected ? 'var(--text)' : STATUS_BORDER[zone.status] ?? STATUS_BORDER.unknown}`,
@@ -38,13 +38,13 @@ export function ZoneCell({ zone, selected = false, onClick, className = '' }: Zo
       }}
     >
       <div className="flex items-center gap-1.5 mb-1">
-        <span className="font-mono text-[9px] uppercase tracking-[0.10em]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-3)' }}>
           {zone.code}
         </span>
         <StatusDot status={zone.status} size={6} />
       </div>
       <p
-        className="text-[11px] mb-0.5"
+        className="text-body-sm mb-0.5"
         style={{
           color: 'var(--text)',
           fontFamily: 'var(--font-body)',
@@ -54,7 +54,7 @@ export function ZoneCell({ zone, selected = false, onClick, className = '' }: Zo
         {zone.name}
       </p>
       {zone.summary && (
-        <span className="font-mono text-[9px]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-micro" style={{ color: 'var(--text-3)' }}>
           {zone.summary.value !== null ? `${zone.summary.value} ${zone.summary.unit}` : '—'}
         </span>
       )}

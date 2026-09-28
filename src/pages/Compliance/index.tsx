@@ -34,6 +34,7 @@ import { currentActor, useCan } from '@/state/auth';
 import { formatShortIST, formatDateIST } from '@/lib/time';
 import { synth } from '@/lib/provenance';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
 type Tab = 'obligations' | 'waste' | 'inspections' | 'audit';
 
@@ -157,28 +158,29 @@ export default function CompliancePage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Compliance &amp; Audit
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {SCOPES.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setScope(s.id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={scope === s.id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: scope === s.id ? 'var(--text)' : 'transparent',
                 color: scope === s.id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {s.label}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tabular-nums">
+        <div className="flex items-center gap-3 font-mono text-body-sm uppercase tabular-nums">
           <span style={{ color: 'var(--text-2)' }}>{counts.dueIn30} due in 30 d</span>
           <span style={{ color: counts.overdue > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
             {counts.overdue} overdue
@@ -189,7 +191,7 @@ export default function CompliancePage() {
         <button
           type="button"
           onClick={() => setTab('audit')}
-          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
           style={{
             border: `1px solid ${status?.ok === false ? 'var(--act)' : 'var(--ok)'}`,
             color: status?.ok === false ? 'var(--act-soft)' : 'var(--ok-soft)',
@@ -202,26 +204,32 @@ export default function CompliancePage() {
       </div>
 
       {/* ---- Tabs ---- */}
-      <div className="flex items-center gap-1 px-6 py-2 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            aria-selected={tab === t.id}
-            className="px-3.5 py-1.5 rounded-full text-[12px]"
-            style={{
-              backgroundColor: tab === t.id ? 'var(--panel-raised)' : 'transparent',
-              color: tab === t.id ? 'var(--text)' : 'var(--text-3)',
-              border: `1px solid ${tab === t.id ? 'var(--line-strong)' : 'transparent'}`,
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="px-6 py-2 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div role="tablist" className="relative isolate flex items-center gap-1 w-fit">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              onClick={() => setTab(t.id)}
+              aria-selected={tab === t.id}
+              className="px-3.5 py-1.5 rounded-full text-body hover:text-[var(--text-2)]"
+              style={{
+                color: tab === t.id ? 'var(--text)' : 'var(--text-3)',
+                border: '1px solid transparent',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+          <ActiveIndicator
+            className="rounded-full"
+            style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line-strong)' }}
+          />
+        </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-5">
+      <div key={tab} className="m-panel flex-1 min-h-0 overflow-y-auto p-5">
         {tab === 'obligations' && (
           <Obligations
             obligations={obligations}
@@ -256,7 +264,7 @@ export default function CompliancePage() {
             chain={chain}
             status={status}
             verifying={verifying}
-            onVerify={() => { void verify(); }}
+            onVerify={verify}
             onExport={() =>
               downloadText('antarasetu-audit-chain.json', exportChainJSON('hq'), 'application/json')
             }
@@ -276,7 +284,7 @@ export default function CompliancePage() {
       >
         {record?.kind === 'obligation' && (
           <div className="space-y-3">
-            <h3 className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+            <h3 className="text-title font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
               {record.obligation.name}
             </h3>
             <Field k="Station" v={STATION_LABEL[record.obligation.stationId]} />
@@ -287,13 +295,13 @@ export default function CompliancePage() {
             <Field k="Status" v={record.obligation.status.replace('_', ' ')} />
             <Field k="Template" v={`${record.obligation.templateId} v${record.obligation.templateVersion}`} />
             {record.obligation.status === 'queued_offline' && (
-              <p className="text-[11.5px]" style={{ color: 'var(--watch-soft)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--watch-soft)' }}>
                 Evidence for this obligation is queued in the station outbox. It is not overdue —
                 the record exists, the link does not.
               </p>
             )}
             <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid var(--line)' }}>
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+              <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                 Class
               </span>
               <ProvenanceBadge
@@ -311,7 +319,7 @@ export default function CompliancePage() {
                   'application/json'
                 )
               }
-              className="w-full py-2.5 rounded-full text-[12px] min-h-[44px]"
+              className="w-full py-2.5 rounded-full text-body min-h-[44px]"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canExport ? 1 : 0.4 }}
             >
               Download record
@@ -321,7 +329,7 @@ export default function CompliancePage() {
 
         {record?.kind === 'inspection' && (
           <div className="space-y-3">
-            <h3 className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+            <h3 className="text-title font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
               {record.inspection.type}
             </h3>
             <Field k="Station" v={STATION_LABEL[record.inspection.stationId as 'bharati' | 'maitri']} />
@@ -340,10 +348,10 @@ export default function CompliancePage() {
 function Field({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-baseline gap-2 py-1" style={{ borderTop: '1px solid var(--line)' }}>
-      <span className="font-mono text-[9px] uppercase tracking-[0.10em] w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
+      <span className="font-mono text-micro uppercase tracking-label w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
         {k}
       </span>
-      <span className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>{v}</span>
+      <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>{v}</span>
     </div>
   );
 }

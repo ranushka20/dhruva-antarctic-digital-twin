@@ -34,13 +34,13 @@ export function Reconciliation({ conflicts, canResolve, onResolve }: Props) {
       aria-label="Reconciliation"
     >
       <div className="flex items-baseline gap-2 mb-1">
-        <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>Reconciliation</h2>
-        <span className="font-mono text-[10px]" style={{ color: pending.length ? 'var(--watch-soft)' : 'var(--text-3)' }}>
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Reconciliation</h2>
+        <span className="font-mono text-caption" style={{ color: pending.length ? 'var(--watch-soft)' : 'var(--text-3)' }}>
           {pending.length} awaiting resolution
         </span>
       </div>
 
-      <p className="font-mono text-[9.5px] mb-3" style={{ color: 'var(--text-4)' }}>
+      <p className="font-mono text-micro mb-3" style={{ color: 'var(--text-4)' }}>
         Rule: the higher-tier actor wins; ties resolve to the station, as the side closer to ground
         truth. The losing version is kept as superseded.
       </p>
@@ -71,7 +71,7 @@ export function Reconciliation({ conflicts, canResolve, onResolve }: Props) {
         onClose={() => setOverride(null)}
         title="Override the reconciliation rule"
       >
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           You are choosing the {override?.as === 'hq' ? 'HQ' : 'station'} version against the default
           rule. The reason is appended to the audit chain alongside both versions.
         </p>
@@ -80,7 +80,7 @@ export function Reconciliation({ conflicts, canResolve, onResolve }: Props) {
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Why does this version win?"
-          className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+          className="w-full px-3 py-2 text-body outline-none mb-3"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
         <button
@@ -90,7 +90,7 @@ export function Reconciliation({ conflicts, canResolve, onResolve }: Props) {
             if (override) onResolve(override.conflict.objectId, override.as, reason);
             setOverride(null);
           }}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+          className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
           style={{
             backgroundColor: reason.trim() ? 'var(--act)' : 'var(--panel-raised)',
             color: reason.trim() ? 'var(--bg)' : 'var(--text-4)',
@@ -123,12 +123,12 @@ function ConflictCard({
       }}
     >
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span className="font-mono text-[9px] tracking-[0.08em] px-1.5 py-0.5 rounded"
+        <span className="font-mono text-micro tracking-label px-1.5 py-0.5 rounded"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)' }}>
           {conflict.objectType.toUpperCase()}
         </span>
-        <span className="font-mono text-[10.5px]" style={{ color: 'var(--text-2)' }}>{conflict.objectId}</span>
-        <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-2)' }}>{conflict.objectId}</span>
+        <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
           differs on {conflict.differingFields.join(', ')}
         </span>
       </div>
@@ -155,7 +155,7 @@ function ConflictCard({
       </div>
 
       {resolved ? (
-        <p className="font-mono text-[9.5px] mt-2" style={{ color: 'var(--text-3)' }}>
+        <p className="font-mono text-micro mt-2" style={{ color: 'var(--text-3)' }}>
           Resolved to {conflict.resolvedAs === 'hq' ? 'HQ' : 'station'}
           {conflict.overrideReason ? ' — operator override: ' + conflict.overrideReason : ' by the default rule'}
         </p>
@@ -165,17 +165,17 @@ function ConflictCard({
             type="button"
             disabled={!canResolve}
             onClick={onApplyRule}
-            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[34px]"
             style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', fontFamily: 'var(--font-body)', opacity: canResolve ? 1 : 0.4 }}
           >
             Apply rule →{' '}
-            <span className="font-mono text-[10.5px]">{conflict.defaultResolution.toUpperCase()}</span>
+            <span className="font-mono text-caption">{conflict.defaultResolution.toUpperCase()}</span>
           </button>
           <button
             type="button"
             disabled={!canResolve}
             onClick={() => onOverride?.(conflict.defaultResolution === 'hq' ? 'station' : 'hq')}
-            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[34px]"
             style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)', fontFamily: 'var(--font-body)', opacity: canResolve ? 1 : 0.4 }}
           >
             Override
@@ -204,17 +204,17 @@ function VersionBlock({
       }}
     >
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: 'var(--text-3)' }}>{title}</span>
+        <span className="font-mono text-micro tracking-label" style={{ color: 'var(--text-3)' }}>{title}</span>
         {superseded && (
-          <span className="font-mono text-[8px] uppercase px-1 rounded" style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro uppercase px-1 rounded" style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
             Superseded
           </span>
         )}
       </div>
-      <p className="text-[11px]" style={{ color: 'var(--text-2)' }}>{actor}</p>
-      <p className="font-mono text-[9px] mb-1.5" style={{ color: 'var(--text-4)' }}>{formatShortIST(at)}</p>
+      <p className="text-body-sm" style={{ color: 'var(--text-2)' }}>{actor}</p>
+      <p className="font-mono text-micro mb-1.5" style={{ color: 'var(--text-4)' }}>{formatShortIST(at)}</p>
       {Object.entries(fields).map(([k, v]) => (
-        <p key={k} className="font-mono text-[9.5px]" style={{ color: differing.includes(k) ? 'var(--watch-soft)' : 'var(--text-4)' }}>
+        <p key={k} className="font-mono text-micro" style={{ color: differing.includes(k) ? 'var(--watch-soft)' : 'var(--text-4)' }}>
           {k}: {String(v)}
         </p>
       ))}

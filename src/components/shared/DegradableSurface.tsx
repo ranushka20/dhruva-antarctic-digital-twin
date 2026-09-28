@@ -102,7 +102,7 @@ export function DegradableSurface({
       {note && (
         <p
           role="status"
-          className="flex items-center justify-center gap-1.5 mt-1.5 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.08em]"
+          className="flex items-center justify-center gap-1.5 mt-1.5 px-2 py-1 font-mono text-micro uppercase tracking-label"
           style={{
             backgroundColor: syncState === 'DARK' ? 'rgba(139,154,148,0.10)' : 'rgba(217,164,65,0.10)',
             border: `1px dashed ${syncState === 'DARK' ? 'var(--unknown)' : 'var(--watch)'}`,

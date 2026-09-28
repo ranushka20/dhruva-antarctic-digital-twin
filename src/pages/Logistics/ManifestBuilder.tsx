@@ -43,9 +43,9 @@ export function ManifestBuilder({
       aria-label="Manifest builder"
     >
       <div className="flex items-center mb-3">
-        <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>Manifest builder</h2>
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Manifest builder</h2>
         {voyage && (
-          <span className="font-mono text-[9.5px] ml-2" style={{ color: 'var(--text-3)' }}>
+          <span className="font-mono text-micro ml-2" style={{ color: 'var(--text-3)' }}>
             {voyage.name}
           </span>
         )}
@@ -58,7 +58,7 @@ export function ManifestBuilder({
           {/* ---- Capacity meter (FR-4.1) ---- */}
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1.5">
-              <label className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+              <label className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                 Cargo capacity
               </label>
               <input
@@ -70,16 +70,16 @@ export function ManifestBuilder({
                   if (Number.isFinite(n) && n > 0) onCapacityChange(n);
                   else setCapacityInput(String(capacityKg));
                 }}
-                className="w-24 px-2 py-1 font-mono text-[11px] tabular-nums outline-none"
+                className="w-24 px-2 py-1 font-mono text-body-sm tabular-nums outline-none"
                 style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
                 aria-label="Available cargo capacity in kilograms"
               />
-              <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>kg</span>
+              <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>kg</span>
               <ProvenanceBadge
                 measurement={synth(capacityKg, 'kg', 'confirmed voyage cargo plan')}
                 label="Available cargo capacity"
               />
-              <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-4)' }}>
+              <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
                 range {voyage.capacityKg.min.toLocaleString()}–{voyage.capacityKg.max.toLocaleString()} kg
               </span>
             </div>
@@ -90,7 +90,7 @@ export function ManifestBuilder({
               height={6}
               label="Capacity consumed"
             />
-            <div className="flex justify-between mt-1 font-mono text-[9.5px] tabular-nums" style={{ color: 'var(--text-3)' }}>
+            <div className="flex justify-between mt-1 font-mono text-micro tabular-nums" style={{ color: 'var(--text-3)' }}>
               <span>{totals.totalMassKg.toLocaleString()} kg loaded</span>
               <span style={{ color: totals.remainingKg < 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
                 {totals.remainingKg.toLocaleString()} kg remaining
@@ -109,7 +109,7 @@ export function ManifestBuilder({
                     {i === firstDeferredIndex && firstDeferredIndex > -1 && (
                       <div className="flex items-center gap-2 my-2">
                         <span className="h-px flex-1" style={{ backgroundColor: 'var(--line-strong)' }} />
-                        <span className="font-mono text-[9px] tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+                        <span className="font-mono text-micro tracking-label" style={{ color: 'var(--text-4)' }}>
                           DEFERRED — {Math.max(0, totals.remainingKg).toLocaleString()} kg LEFT AT THE CUT
                         </span>
                         <span className="h-px flex-1" style={{ backgroundColor: 'var(--line-strong)' }} />
@@ -128,7 +128,7 @@ export function ManifestBuilder({
 
           {/* ---- Footer (FR-4.5, FR-4.7) ---- */}
           <div className="mt-3 pt-2.5" style={{ borderTop: '1px solid var(--line)' }}>
-            <div className="flex items-center gap-3 font-mono text-[10px] tabular-nums mb-2 flex-wrap">
+            <div className="flex items-center gap-3 font-mono text-caption tabular-nums mb-2 flex-wrap">
               <span style={{ color: 'var(--text-3)' }}>
                 BHR {totals.byStation.bharati.toLocaleString()} kg
               </span>
@@ -141,7 +141,7 @@ export function ManifestBuilder({
             </div>
 
             {totals.deferredAtRisk > 0 && (
-              <p className="flex items-start gap-1.5 text-[11px] mb-2" style={{ color: 'var(--act-soft)' }}>
+              <p className="flex items-start gap-1.5 text-body-sm mb-2" style={{ color: 'var(--act-soft)' }}>
                 <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden />
                 {totals.deferredAtRisk} deferred item{totals.deferredAtRisk === 1 ? '' : 's'} run out before
                 the following voyage arrives. Those become emergencies, not backlog.
@@ -152,7 +152,7 @@ export function ManifestBuilder({
               type="button"
               onClick={onGenerate}
               disabled={!canGenerate || totals.carried.length === 0}
-              className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+              className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
               style={{
                 backgroundColor: canGenerate && totals.carried.length > 0 ? 'var(--act)' : 'var(--panel-raised)',
                 color: canGenerate && totals.carried.length > 0 ? 'var(--bg)' : 'var(--text-4)',
@@ -178,16 +178,16 @@ function CandidateRow({ candidate, rank, onToggle }: { candidate: Candidate; ran
         opacity: candidate.included ? 1 : 0.72,
       }}
     >
-      <span className="font-mono text-[9px] w-5 shrink-0" style={{ color: 'var(--text-4)' }}>{rank}</span>
+      <span className="font-mono text-micro w-5 shrink-0" style={{ color: 'var(--text-4)' }}>{rank}</span>
 
       <span className="flex-1 min-w-0">
         <span className="flex items-center gap-1.5">
-          <span className="text-[12px] truncate" style={{ color: 'var(--text)' }}>{candidate.name}</span>
+          <span className="text-body truncate" style={{ color: 'var(--text)' }}>{candidate.name}</span>
           {candidate.manualOverride && (
             <Hand size={10} style={{ color: 'var(--watch-soft)' }} aria-label="Manual override" />
           )}
         </span>
-        <span className="block font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+        <span className="block font-mono text-micro" style={{ color: 'var(--text-4)' }}>
           {STATION_CODE[candidate.stationId as 'bharati' | 'maitri']} ·{' '}
           {candidate.quantity.toLocaleString()} {candidate.unit} ·{' '}
           {candidate.massKg.toLocaleString()} kg ·{' '}
@@ -197,14 +197,14 @@ function CandidateRow({ candidate, rank, onToggle }: { candidate: Candidate; ran
         </span>
       </span>
 
-      <span className="font-mono text-[10.5px] tabular-nums shrink-0" style={{ color: 'var(--text-2)' }}>
+      <span className="font-mono text-caption tabular-nums shrink-0" style={{ color: 'var(--text-2)' }}>
         {candidate.score.toFixed(2)}
       </span>
 
       <button
         type="button"
         onClick={onToggle}
-        className="text-[11px] font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
+        className="text-body-sm font-medium px-2.5 py-1 rounded shrink-0 min-h-[30px]"
         style={{
           fontFamily: 'var(--font-body)',
           border: `1px solid ${candidate.included ? 'var(--ok)' : 'var(--line)'}`,

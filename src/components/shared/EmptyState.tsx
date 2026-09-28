@@ -26,7 +26,7 @@ export function EmptyState({ reason, icon, action, className = '' }: EmptyStateP
         </div>
       )}
       <p
-        className="text-center text-[12.5px] max-w-xs"
+        className="text-center text-body max-w-xs"
         style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
       >
         {reason}

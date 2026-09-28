@@ -28,7 +28,7 @@ export function SyncPill({ state, ageSeconds, className = '' }: SyncPillProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-mono text-[9.5px] tracking-[0.06em] px-2 py-1 rounded-full ${className}`}
+      className={`inline-flex items-center gap-1.5 font-mono text-micro tracking-[0.06em] px-2 py-1 rounded-full ${className}`}
       style={{
         border: `1px ${style.borderStyle} var(--line-strong)`,
         color: 'var(--text-2)',
@@ -36,7 +36,7 @@ export function SyncPill({ state, ageSeconds, className = '' }: SyncPillProps) {
       }}
     >
       <span
-        className="inline-block w-1.5 h-1.5 rounded-full"
+        className={`inline-block w-1.5 h-1.5 rounded-full ${state === 'LIVE' ? 'm-breathe' : ''}`}
         style={{ backgroundColor: style.dotColor }}
       />
       {style.label}

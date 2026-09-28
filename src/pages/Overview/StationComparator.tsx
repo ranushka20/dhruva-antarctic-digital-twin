@@ -69,7 +69,7 @@ export function StationComparator({ primary, compare, onBrief }: Props) {
       <button
         type="button"
         onClick={onBrief}
-        className="mt-4 w-full py-2.5 text-[12.5px] font-medium rounded-full"
+        className="mt-4 w-full py-2.5 text-body font-medium rounded-full"
         style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
       >
         Station brief ({openCount})
@@ -84,18 +84,18 @@ function StationColumn({
   return (
     <div className={align === 'right' ? 'text-right' : 'text-left'}>
       <p
-        className="text-[32px] font-semibold leading-none"
+        className="text-hero font-semibold leading-none"
         style={{ fontFamily: 'var(--font-display)', color: active ? 'var(--text)' : 'var(--text-3)' }}
       >
         {station.code}
       </p>
       <p
-        className="text-[11.5px] mt-1"
+        className="text-body-sm mt-1"
         style={{ color: active ? 'var(--text-2)' : 'var(--text-3)' }}
       >
         {station.name}
       </p>
-      <p className="font-mono text-[8.5px] tracking-[0.08em] mt-0.5" style={{ color: 'var(--text-4)' }}>
+      <p className="font-mono text-micro tracking-label mt-0.5" style={{ color: 'var(--text-4)' }}>
         {active ? 'PRIMARY' : 'COMPARISON'}
       </p>
     </div>
@@ -111,18 +111,18 @@ function SplitStat({
 }) {
   return (
     <div className="flex-1 pt-2.5 pb-1">
-      <p className="font-mono text-[9px] uppercase tracking-[0.12em] mb-1.5" style={{ color: 'var(--text-4)' }}>
+      <p className="font-mono text-micro uppercase tracking-label mb-1.5" style={{ color: 'var(--text-4)' }}>
         {label}
       </p>
       <div className="flex">
         <div className="flex-1">
-          <p className="font-mono text-[13px] tabular-nums" style={{ color: leftColor }}>{left}</p>
-          <p className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>{leftSub}</p>
+          <p className="font-mono text-body tabular-nums" style={{ color: leftColor }}>{left}</p>
+          <p className="font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>{leftSub}</p>
         </div>
         <div style={{ width: 1, backgroundColor: 'var(--line)' }} />
         <div className="flex-1 pl-3">
-          <p className="font-mono text-[13px] tabular-nums" style={{ color: rightColor }}>{right}</p>
-          <p className="font-mono text-[8.5px] tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>{rightSub}</p>
+          <p className="font-mono text-body tabular-nums" style={{ color: rightColor }}>{right}</p>
+          <p className="font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>{rightSub}</p>
         </div>
       </div>
     </div>

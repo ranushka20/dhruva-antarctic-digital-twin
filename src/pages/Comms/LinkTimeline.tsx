@@ -33,7 +33,7 @@ export function LinkTimeline({ segments, windowHours, now = Date.now() }: Props)
         aria-label={`Link state over the last ${windowHours} hours`}
       >
         {segments.length === 0 && (
-          <span className="m-auto font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+          <span className="m-auto font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             no link history in this window
           </span>
         )}
@@ -60,7 +60,7 @@ export function LinkTimeline({ segments, windowHours, now = Date.now() }: Props)
         })}
       </div>
 
-      <div className="flex items-center gap-3 mt-1.5 font-mono text-[8.5px] tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>
+      <div className="flex items-center gap-3 mt-1.5 font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>
         <Legend color="var(--ok)" label="LIVE" />
         <Legend color="var(--watch)" label="LAGGING" />
         <Legend color="var(--unknown)" label="DARK (hatched)" hatched />

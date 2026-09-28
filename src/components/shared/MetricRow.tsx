@@ -25,13 +25,13 @@ export function MetricRow({ label, measurement, digits = 1, tone = 'default', cl
   return (
     <div className={'flex items-center gap-2 py-1 ' + className}>
       <span
-        className="font-mono text-[9.5px] uppercase tracking-[0.10em] shrink-0"
+        className="font-mono text-micro uppercase tracking-label shrink-0"
         style={{ color: 'var(--text-3)' }}
       >
         {label}
       </span>
       <span className="flex-1 border-b border-dotted" style={{ borderColor: 'var(--line)' }} />
-      <span className="font-mono text-[12px] tabular-nums" style={{ color: TONE[tone] }}>
+      <span className="font-mono text-body tabular-nums" style={{ color: TONE[tone] }}>
         {formatValue(measurement, digits)}
         {measurement.unit ? <span style={{ color: 'var(--text-3)' }}> {measurement.unit}</span> : null}
       </span>

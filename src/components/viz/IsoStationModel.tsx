@@ -176,7 +176,7 @@ export function IsoStationModel({
                 x={tN.x}
                 y={tN.y + TILE_H/2}
                 textAnchor="middle"
-                className="font-mono text-[9px] pointer-events-none select-none"
+                className="font-mono text-micro pointer-events-none select-none"
                 fill="var(--text)"
                 style={{ fontWeight: 600, letterSpacing: '0.05em' }}
               >
@@ -186,7 +186,7 @@ export function IsoStationModel({
                 x={tN.x}
                 y={tN.y + TILE_H/2 + 12}
                 textAnchor="middle"
-                className="font-mono text-[8px] pointer-events-none select-none"
+                className="font-mono text-micro pointer-events-none select-none"
                 fill="var(--text-3)"
               >
                 {zone.topValue.value} {zone.topValue.unit}

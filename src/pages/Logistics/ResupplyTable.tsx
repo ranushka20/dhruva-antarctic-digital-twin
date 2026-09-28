@@ -75,19 +75,19 @@ export function ResupplyTable({
         style={{ borderBottom: '1px solid var(--line-strong)' }}
       >
         <span className="w-[13px] shrink-0" />
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] w-[190px] shrink-0" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro uppercase tracking-label w-[190px] shrink-0" style={{ color: 'var(--text-4)' }}>
           Resource
         </span>
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] w-[96px] shrink-0" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro uppercase tracking-label w-[96px] shrink-0" style={{ color: 'var(--text-4)' }}>
           Autonomy
         </span>
         <span className="flex-1 min-w-[180px]">
-          <span className="block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+          <span className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
             Cover, and when the ship can reach it
           </span>
           <Axis horizonDays={horizonDays} />
         </span>
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em] w-[58px] shrink-0 text-right" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro uppercase tracking-label w-[58px] shrink-0 text-right" style={{ color: 'var(--text-4)' }}>
           Order by
         </span>
         <span className="w-4 shrink-0" />
@@ -108,7 +108,7 @@ export function ResupplyTable({
         ))}
       </div>
 
-      <p className="font-mono text-[9px] px-4 py-2.5 shrink-0" style={{ color: 'var(--text-4)', borderTop: '1px solid var(--line)' }}>
+      <p className="font-mono text-micro px-4 py-2.5 shrink-0" style={{ color: 'var(--text-4)', borderTop: '1px solid var(--line)' }}>
         Autonomy always carries its ± band. A station we cannot currently reach gets a hatched
         bar and no order-by date — a stale input never produces a confident deadline.
       </p>
@@ -123,7 +123,7 @@ function Axis({ horizonDays }: { horizonDays: number }) {
       {ticks.map((t) => (
         <span
           key={t}
-          className="absolute font-mono text-[8.5px] -translate-x-1/2"
+          className="absolute font-mono text-micro -translate-x-1/2"
           style={{ left: (t / horizonDays) * 100 + '%', color: 'var(--text-4)' }}
         >
           {t === 0 ? 'today' : t + 'd'}
@@ -161,22 +161,22 @@ function Row({
 
         <span className="w-[190px] shrink-0 min-w-0">
           <span className="flex items-center gap-1.5">
-            <span className="text-[12.5px] truncate" style={{ color: 'var(--text)' }}>{resource.name}</span>
+            <span className="text-body truncate" style={{ color: 'var(--text)' }}>{resource.name}</span>
             {resource.belowReorder && (
               <span
-                className="font-mono text-[8px] uppercase tracking-[0.06em] px-1 py-0.5 rounded shrink-0"
+                className="font-mono text-micro uppercase tracking-[0.06em] px-1 py-0.5 rounded shrink-0"
                 style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
               >
                 Reorder
               </span>
             )}
           </span>
-          <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             {STATION_CODE[resource.stationId]}
           </span>
         </span>
 
-        <span className="w-[96px] shrink-0 font-mono text-[12px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <span className="w-[96px] shrink-0 font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
           {Math.round(resource.autonomyDays)} ±{Math.round(resource.autonomyBandDays)} d
         </span>
 
@@ -185,7 +185,7 @@ function Row({
         </span>
 
         <span
-          className="w-[58px] shrink-0 text-right font-mono text-[12px] tabular-nums"
+          className="w-[58px] shrink-0 text-right font-mono text-body tabular-nums"
           style={{ color: lsodColor(resource.lsodDays) }}
         >
           {resource.lsodDays === null
@@ -306,7 +306,7 @@ function RowDetail({
     <div className="px-4 pb-3.5 pt-0.5" style={{ backgroundColor: 'var(--panel-raised)' }}>
       <div className="flex flex-wrap items-start gap-x-8 gap-y-3 pl-[16px]">
         <Detail label="Stock">
-          <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
             {typeof resource.stock.value === 'number' ? resource.stock.value.toLocaleString() : '—'}{' '}
             <span style={{ color: 'var(--text-4)' }}>{resource.unit}</span>
           </span>
@@ -314,7 +314,7 @@ function RowDetail({
         </Detail>
 
         <Detail label="Burn / day">
-          <span className="font-mono text-[12px] tabular-nums" style={{ color: TREND_COLOR[trend] }}>
+          <span className="font-mono text-body tabular-nums" style={{ color: TREND_COLOR[trend] }}>
             {typeof resource.burnRate.value === 'number' ? resource.burnRate.value.toLocaleString() : '—'}
           </span>
           <Sparkline series={series} width={56} height={18} />
@@ -322,7 +322,7 @@ function RowDetail({
         </Detail>
 
         <Detail label="Margin to ship">
-          <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
             {resource.marginDays
               ? `${resource.marginDays.min < 0 ? '−' : '+'}${Math.abs(Math.round(resource.marginDays.min))} d`
               : '—'}
@@ -330,7 +330,7 @@ function RowDetail({
         </Detail>
 
         <Detail label="Reorder point">
-          <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
             {resource.reorderPoint?.toLocaleString() ?? '—'}{' '}
             <span style={{ color: 'var(--text-4)' }}>{resource.unit}</span>
           </span>
@@ -340,7 +340,7 @@ function RowDetail({
           type="button"
           disabled={!canRaise}
           onClick={onRaiseAction}
-          className="ml-auto text-[11.5px] font-medium px-3 py-1.5 rounded-full self-center min-h-[34px]"
+          className="ml-auto text-body-sm font-medium px-3 py-1.5 rounded-full self-center min-h-[34px]"
           style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
         >
           Raise action
@@ -348,7 +348,7 @@ function RowDetail({
       </div>
 
       {resource.lsodDays === null && (
-        <p className="text-[11px] mt-2.5 pl-[16px]" style={{ color: 'var(--watch-soft)' }}>
+        <p className="text-body-sm mt-2.5 pl-[16px]" style={{ color: 'var(--watch-soft)' }}>
           {resource.lsodUnavailableReason === 'no-voyage'
             ? 'No voyage configured for this season, so there is no date to be late for. Autonomy still computes.'
             : `${STATION_CODE[resource.stationId]} has not reported since its last sync. Cover above is last-known; an order-by date from a stale input would be a guess presented as a deadline.`}
@@ -361,7 +361,7 @@ function RowDetail({
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+      <p className="font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
         {label}
       </p>
       <div className="flex items-center gap-2">{children}</div>

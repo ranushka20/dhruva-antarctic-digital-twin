@@ -32,7 +32,7 @@ export function PageHeader({
       {backTo && (
         <button
           onClick={() => navigate(backTo)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors hover:bg-[var(--panel-alt)]"
+          className="m-back flex items-center gap-1 px-2.5 py-1 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
           style={{
             color: 'var(--text-2)',
             fontFamily: 'var(--font-body)',
@@ -45,7 +45,7 @@ export function PageHeader({
       )}
 
       <h1
-        className="text-[27px] font-medium"
+        className="text-display font-medium"
         style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}
       >
         {title}

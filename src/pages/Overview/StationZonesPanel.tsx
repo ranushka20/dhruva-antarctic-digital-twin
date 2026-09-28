@@ -50,7 +50,7 @@ export function StationZonesPanel({ stationName, zones, selectedCode, onSelect }
         style={{ height: 'var(--cone-clear)' }}
       >
         <span
-          className="font-mono text-[9.5px] tracking-[0.14em] px-3 py-1 rounded-full"
+          className="font-mono text-micro tracking-label px-3 py-1 rounded-full"
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',
@@ -81,23 +81,23 @@ export function StationZonesPanel({ stationName, zones, selectedCode, onSelect }
               aria-pressed={selected}
             >
               <span className="flex items-center gap-1.5 mb-1 min-w-0">
-                <span className="font-mono text-[9px] tracking-[0.10em] shrink-0" style={{ color: 'var(--text-3)' }}>
+                <span className="font-mono text-micro tracking-label shrink-0" style={{ color: 'var(--text-3)' }}>
                   {zone.code}
                 </span>
                 <StatusDot status={zone.status} size={6} />
                 {zone.openActionCount > 0 && (
-                  <span className="font-mono text-[8.5px] ml-auto shrink-0" style={{ color: 'var(--act-soft)' }}>
+                  <span className="font-mono text-micro ml-auto shrink-0" style={{ color: 'var(--act-soft)' }}>
                     {zone.openActionCount}
                   </span>
                 )}
               </span>
               <span
-                className="block text-[11px] truncate"
+                className="block text-body-sm truncate"
                 style={{ color: 'var(--text)', fontWeight: zone.status === 'warning' ? 600 : 400 }}
               >
                 {zone.name}
               </span>
-              <span className="block font-mono text-[9px] mt-0.5 truncate" style={{ color: 'var(--text-3)' }}>
+              <span className="block font-mono text-micro mt-0.5 truncate" style={{ color: 'var(--text-3)' }}>
                 {zone.summary?.value !== null && zone.summary?.value !== undefined
                   ? `${zone.summary.value} ${zone.summary.unit}`
                   : '—'}
@@ -107,7 +107,7 @@ export function StationZonesPanel({ stationName, zones, selectedCode, onSelect }
         })}
       </div>
 
-      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 font-mono text-[9px] uppercase tracking-[0.06em]" style={{ color: 'var(--text-3)' }}>
+      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 font-mono text-micro uppercase tracking-[0.06em]" style={{ color: 'var(--text-3)' }}>
         <LegendSwatch color="var(--ok)" label={`${counts.ok} nominal`} />
         <LegendSwatch color="var(--watch)" label={`${counts.watch} low`} />
         <LegendSwatch color="var(--act)" label={`${counts.warning} warning`} />

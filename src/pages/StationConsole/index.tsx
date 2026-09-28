@@ -102,14 +102,14 @@ export default function StationConsolePage() {
         style={{ borderBottom: '1px solid var(--line)' }}
       >
         <Snowflake size={18} style={{ color: 'var(--ok)' }} aria-hidden />
-        <span className="text-[14px] font-semibold tracking-[0.1em]" style={{ fontFamily: 'var(--font-display)' }}>
+        <span className="text-title font-semibold tracking-[0.1em]" style={{ fontFamily: 'var(--font-display)' }}>
           Station Console · {profile.name}
         </span>
-        <span className="font-mono text-[11px] tabular-nums ml-3" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-body-sm tabular-nums ml-3" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
         <span
-          className="font-mono text-[10px] uppercase tracking-[0.06em] px-2.5 py-1 rounded-full ml-auto"
+          className="font-mono text-caption uppercase tracking-[0.06em] px-2.5 py-1 rounded-full ml-auto"
           style={{
             border: '1px solid var(--line-strong)',
             color: queue.length > 0 ? 'var(--act-soft)' : 'var(--text-3)',
@@ -119,7 +119,8 @@ export default function StationConsolePage() {
         </span>
         <Link
           to="/"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px]"
+          data-press
+          className="m-back flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-body-sm"
           style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
         >
           <ArrowLeft size={12} /> HQ view
@@ -141,7 +142,7 @@ export default function StationConsolePage() {
         }}
       >
         <span
-          className="text-[12.5px] font-medium"
+          className="text-body font-medium"
           style={{
             color: sync.state === 'LIVE' ? 'var(--ok-soft)' : queue.length > 12 ? 'var(--act-soft)' : 'var(--watch-soft)',
           }}
@@ -152,7 +153,7 @@ export default function StationConsolePage() {
               ? `LINK DOWN ${formatDuration(sync.ageSeconds)} · ${queue.length} records queued`
               : `LINK DOWN ${formatDuration(sync.ageSeconds)} · working locally`}
         </span>
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+        <span className="text-caption" style={{ color: 'var(--text-2)' }}>
           Everything on this console works without a link. Records are written locally first.
         </span>
         {linkUp && queue.length > 0 && (
@@ -160,7 +161,7 @@ export default function StationConsolePage() {
             type="button"
             onClick={onDrain}
             disabled={busy}
-            className="ml-auto px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            className="ml-auto px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
             style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)', fontFamily: 'var(--font-body)', opacity: busy ? 0.5 : 1 }}
           >
             {drain.running ? 'Draining…' : 'Send queue'}
@@ -175,7 +176,7 @@ export default function StationConsolePage() {
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}
         >
           <Check size={14} style={{ color: 'var(--ok)' }} aria-hidden />
-          <span className="text-[12px]" style={{ color: 'var(--ok-soft)' }}>
+          <span className="text-body" style={{ color: 'var(--ok-soft)' }}>
             {confirmation.what} written locally and queued at{' '}
             <span className="font-mono">{confirmation.tier}</span>, position{' '}
             <span className="font-mono">{confirmation.position}</span> in the transfer order.
@@ -185,7 +186,7 @@ export default function StationConsolePage() {
 
       <main className="flex-1 min-h-0 overflow-y-auto p-5">
         {!ready && (
-          <p className="font-mono text-[11px] py-6 text-center" style={{ color: 'var(--text-3)' }}>
+          <p className="font-mono text-body-sm py-6 text-center" style={{ color: 'var(--text-3)' }}>
             Opening the local store…
           </p>
         )}
@@ -196,7 +197,7 @@ export default function StationConsolePage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3">Quick actions</h2>
+              <h2 className="text-title font-semibold mb-3">Quick actions</h2>
               <div className="space-y-2">
                 <BigButton icon={<AlertTriangle size={18} />} label="Log fault" onClick={() => setForm('fault')} />
                 <BigButton icon={<ClipboardList size={18} />} label="Record action" onClick={() => setForm('action')} />
@@ -211,16 +212,16 @@ export default function StationConsolePage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-1">Autonomy — computed locally</h2>
-              <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
+              <h2 className="text-title font-semibold mb-1">Autonomy — computed locally</h2>
+              <p className="text-caption mb-3" style={{ color: 'var(--text-3)' }}>
                 Same coupling engine as HQ. One engine, two hosts — these figures will match HQ's
                 once the queue drains.
               </p>
               {resources.slice(0, 5).map((r) => (
                 <div key={r.id} className="flex items-center gap-2 py-1.5" style={{ borderTop: '1px solid var(--line)' }}>
                   <StatusDot status={r.risk === 'critical' ? 'warning' : r.risk} size={6} />
-                  <span className="text-[11.5px] flex-1 truncate">{r.name}</span>
-                  <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+                  <span className="text-body-sm flex-1 truncate">{r.name}</span>
+                  <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
                     {Math.round(r.autonomyDays)} ±{Math.round(r.autonomyBandDays)} d
                   </span>
                 </div>
@@ -234,7 +235,7 @@ export default function StationConsolePage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3">Zone status</h2>
+              <h2 className="text-title font-semibold mb-3">Zone status</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {zones.map((z) => (
                   <div
@@ -248,11 +249,11 @@ export default function StationConsolePage() {
                     }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-mono text-[9px] tracking-[0.1em]" style={{ color: 'var(--text-3)' }}>{z.code}</span>
+                      <span className="font-mono text-micro tracking-label" style={{ color: 'var(--text-3)' }}>{z.code}</span>
                       <StatusDot status={z.status} size={6} />
                     </div>
-                    <p className="text-[11.5px]" style={{ fontWeight: z.status === 'warning' ? 600 : 400 }}>{z.name}</p>
-                    <p className="font-mono text-[9.5px]" style={{ color: 'var(--text-3)' }}>
+                    <p className="text-body-sm" style={{ fontWeight: z.status === 'warning' ? 600 : 400 }}>{z.name}</p>
+                    <p className="font-mono text-micro" style={{ color: 'var(--text-3)' }}>
                       {z.summary?.value ?? '—'} {z.summary?.unit}
                     </p>
                   </div>
@@ -264,7 +265,7 @@ export default function StationConsolePage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3">Open local actions</h2>
+              <h2 className="text-title font-semibold mb-3">Open local actions</h2>
               {localActions.length === 0 ? (
                 <EmptyState reason="Nothing raised on this console yet. Anything logged here stays usable with no link and syncs when one returns." />
               ) : (
@@ -276,11 +277,11 @@ export default function StationConsolePage() {
                       style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}
                     >
                       <TierChip tier={a.tier} />
-                      <span className="text-[11.5px] flex-1 truncate">{a.title}</span>
-                      <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+                      <span className="text-body-sm flex-1 truncate">{a.title}</span>
+                      <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
                         {a.state.replace('_', ' ')}
                       </span>
-                      <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
+                      <span className="font-mono text-micro uppercase px-1.5 py-0.5 rounded"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
                         Pending sync
                       </span>
@@ -327,7 +328,7 @@ function BigButton({ icon, label, onClick }: { icon: React.ReactNode; label: str
       }}
     >
       <span style={{ color: 'var(--ok-soft)' }} aria-hidden>{icon}</span>
-      <span className="text-[13.5px]">{label}</span>
+      <span className="text-title">{label}</span>
     </button>
   );
 }
@@ -354,12 +355,12 @@ function LocalOutbox({
       aria-label="Local outbox"
     >
       <div className="flex items-baseline gap-2 mb-1">
-        <h2 className="text-[13.5px] font-semibold">Local outbox</h2>
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+        <h2 className="text-title font-semibold">Local outbox</h2>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
           {(totalBytes / 1024).toFixed(0)} KB
         </span>
       </div>
-      <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
+      <p className="text-caption mb-3" style={{ color: 'var(--text-3)' }}>
         A record may be promoted to a higher tier with a reason. Demotion is not permitted.
       </p>
 
@@ -376,19 +377,19 @@ function LocalOutbox({
                 style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[9px] w-4 shrink-0" style={{ color: 'var(--text-4)' }}>{i + 1}</span>
+                  <span className="font-mono text-micro w-4 shrink-0" style={{ color: 'var(--text-4)' }}>{i + 1}</span>
                   <TierChip tier={r.tier} />
-                  <span className="text-[11px] flex-1 truncate">{r.payloadRef}</span>
-                  <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>
+                  <span className="text-body-sm flex-1 truncate">{r.payloadRef}</span>
+                  <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>
                     {(r.sizeBytes / 1024).toFixed(1)} KB
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+                  <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
                     {formatShortIST(r.createdAtStation)} · {r.type}
                   </span>
                   {r.promotedFrom && (
-                    <span className="font-mono text-[8px] px-1 rounded" style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}>
+                    <span className="font-mono text-micro px-1 rounded" style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}>
                       ↑ from {r.promotedFrom}
                     </span>
                   )}
@@ -397,7 +398,7 @@ function LocalOutbox({
                       <button
                         type="button"
                         onClick={() => { setPromoting(r); setReason(''); setError(null); }}
-                        className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[28px]"
+                        className="text-body-sm font-medium px-2.5 py-1 rounded min-h-[28px]"
                         style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                       >
                         Promote
@@ -409,7 +410,7 @@ function LocalOutbox({
                         try { onRemove(r.id); setError(null); }
                         catch (e) { setError(e instanceof Error ? e.message : 'Remove failed'); }
                       }}
-                      className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[28px]"
+                      className="text-body-sm font-medium px-2.5 py-1 rounded min-h-[28px]"
                       style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                     >
                       Remove
@@ -422,10 +423,10 @@ function LocalOutbox({
         </ul>
       )}
 
-      {error && <p className="font-mono text-[10px] mt-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
+      {error && <p className="font-mono text-caption mt-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
 
       <Modal open={promoting !== null} onClose={() => setPromoting(null)} title="Promote record">
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           Promoting moves “{promoting?.payloadRef}” from {promoting?.tier} to{' '}
           {promoting ? higherTier(promoting.tier) : ''}. The reason is recorded and travels with the
           record. Demotion is not offered.
@@ -435,7 +436,7 @@ function LocalOutbox({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Why does this need to go sooner?"
-          className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+          className="w-full px-3 py-2 text-body outline-none mb-3"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
         <button
@@ -448,7 +449,7 @@ function LocalOutbox({
             }
             setPromoting(null);
           }}
-          className="w-full rounded-full text-[12.5px] font-medium"
+          className="w-full rounded-full text-body font-medium"
           style={{
             minHeight: 48,
             backgroundColor: reason.trim() ? 'var(--act)' : 'var(--panel-raised)',
@@ -547,20 +548,20 @@ function StationForms({
       <Modal open={form === 'fault'} onClose={closeAll} title="Log fault">
         <Label>Zone</Label>
         <select value={zoneCode} onChange={(e) => setZoneCode(e.target.value)}
-          className="w-full px-3 mb-3 text-[12px] outline-none" style={{ ...fieldStyle, minHeight: 48 }}>
+          className="w-full px-3 mb-3 text-body outline-none" style={{ ...fieldStyle, minHeight: 48 }}>
           {zones.map((z) => <option key={z.code} value={z.code}>{z.code} — {z.name}</option>)}
         </select>
 
         <Label>Asset</Label>
         <input value={assetId} onChange={(e) => setAssetId(e.target.value)}
-          placeholder="Local asset tag" className="w-full px-3 mb-3 text-[12px] outline-none"
+          placeholder="Local asset tag" className="w-full px-3 mb-3 text-body outline-none"
           style={{ ...fieldStyle, minHeight: 48 }} />
 
         <Label>Severity → tier</Label>
         <div className="flex gap-1.5 mb-3">
           {(['T0', 'T1', 'T2', 'T3'] as Tier[]).map((t) => (
             <button key={t} type="button" onClick={() => setSeverity(t)}
-              className="flex-1 font-mono text-[11px] rounded-full"
+              className="flex-1 font-mono text-body-sm rounded-full"
               style={{
                 minHeight: 48,
                 backgroundColor: severity === t ? 'var(--panel-raised)' : 'transparent',
@@ -574,7 +575,7 @@ function StationForms({
 
         <Label>Description</Label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-          className="w-full px-3 py-2 mb-3 text-[12px] outline-none" style={fieldStyle} />
+          className="w-full px-3 py-2 mb-3 text-body outline-none" style={fieldStyle} />
 
         {error && <ErrorLine text={error} />}
         <SubmitButton
@@ -609,11 +610,11 @@ function StationForms({
       <Modal open={form === 'action'} onClose={closeAll} title="Record action">
         <Label>What was done or needs doing</Label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-          className="w-full px-3 py-2 mb-3 text-[12px] outline-none" style={fieldStyle} />
+          className="w-full px-3 py-2 mb-3 text-body outline-none" style={fieldStyle} />
 
         <Label>Owner</Label>
         <select value={assetId} onChange={(e) => setAssetId(e.target.value)}
-          className="w-full px-3 mb-3 text-[12px] outline-none" style={{ ...fieldStyle, minHeight: 48 }}>
+          className="w-full px-3 mb-3 text-body outline-none" style={{ ...fieldStyle, minHeight: 48 }}>
           <option value="">Unassigned</option>
           {ROSTER.filter((m) => m.stationId === STATION).map((m) => (
             <option key={m.id} value={m.id}>{m.name} — {m.role}</option>
@@ -654,7 +655,7 @@ function StationForms({
         <select
           value={resourceId}
           onChange={(e) => { setResourceId(e.target.value); setPreview(null); }}
-          className="w-full px-3 mb-3 text-[12px] outline-none"
+          className="w-full px-3 mb-3 text-body outline-none"
           style={{ ...fieldStyle, minHeight: 48 }}
         >
           <option value="">Select a resource</option>
@@ -680,13 +681,13 @@ function StationForms({
               });
             } else setPreview(null);
           }}
-          className="w-full px-3 mb-3 font-mono text-[12px] outline-none"
+          className="w-full px-3 mb-3 font-mono text-body outline-none"
           style={{ ...fieldStyle, minHeight: 48 }}
         />
 
         {/* The station sees the consequence of its own entry immediately */}
         {preview && (
-          <p className="font-mono text-[12px] mb-3">
+          <p className="font-mono text-body mb-3">
             <span className="uppercase" style={{ color: 'var(--text-4)' }}>autonomy </span>
             <span style={{ color: 'var(--text-2)' }}>{Math.round(preview.before)}</span>
             <span style={{ color: 'var(--text-4)' }}> → </span>
@@ -698,7 +699,7 @@ function StationForms({
 
         <Label>Reason</Label>
         <input value={reason} onChange={(e) => setReason(e.target.value)}
-          className="w-full px-3 mb-3 text-[12px] outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
+          className="w-full px-3 mb-3 text-body outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
 
         {error && <ErrorLine text={error} />}
         <SubmitButton
@@ -721,11 +722,11 @@ function StationForms({
         <Label>Record</Label>
         <input value={description} onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Waste return — September"
-          className="w-full px-3 mb-3 text-[12px] outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
+          className="w-full px-3 mb-3 text-body outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
         <Label>Notes</Label>
         <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
-          className="w-full px-3 py-2 mb-3 text-[12px] outline-none" style={fieldStyle} />
-        <p className="font-mono text-[9.5px] mb-3" style={{ color: 'var(--text-4)' }}>
+          className="w-full px-3 py-2 mb-3 text-body outline-none" style={fieldStyle} />
+        <p className="text-caption mb-3" style={{ color: 'var(--text-3)' }}>
           Queued at T2. While it is queued, the matching obligation at HQ reads QUEUED OFFLINE
           rather than OVERDUE — the station did its part.
         </p>
@@ -742,8 +743,8 @@ function StationForms({
         <Label>Describe the attachment</Label>
         <input value={description} onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Photo — heater bank 3 contactor"
-          className="w-full px-3 mb-3 text-[12px] outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
-        <p className="font-mono text-[9.5px] mb-3" style={{ color: 'var(--text-4)' }}>
+          className="w-full px-3 mb-3 text-body outline-none" style={{ ...fieldStyle, minHeight: 48 }} />
+        <p className="text-caption mb-3" style={{ color: 'var(--text-3)' }}>
           Attachments queue at T3 so they never block the record they belong to.
         </p>
         {error && <ErrorLine text={error} />}
@@ -759,14 +760,14 @@ function StationForms({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+    <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
       {children}
     </label>
   );
 }
 
 function ErrorLine({ text }: { text: string }) {
-  return <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }} role="alert">{text}</p>;
+  return <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }} role="alert">{text}</p>;
 }
 
 function SubmitButton({ disabled, label, onClick }: { disabled: boolean; label: string; onClick: () => void }) {
@@ -775,7 +776,7 @@ function SubmitButton({ disabled, label, onClick }: { disabled: boolean; label: 
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="w-full rounded-full text-[13px] font-medium"
+      className="w-full rounded-full text-body font-medium"
       style={{
         minHeight: 56,
         backgroundColor: disabled ? 'var(--panel-raised)' : 'var(--act)',

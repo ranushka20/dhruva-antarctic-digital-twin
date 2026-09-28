@@ -24,10 +24,10 @@ export function MissedLog({ windows }: { windows: MissedWindow[] }) {
       aria-label="What we missed"
     >
       <div className="flex items-baseline gap-2 mb-1">
-        <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>What we missed</h2>
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>What we missed</h2>
       </div>
 
-      <p className="font-mono text-[10px] mb-3" style={{ color: 'var(--text-3)' }}>
+      <p className="font-mono text-caption mb-3" style={{ color: 'var(--text-3)' }}>
         {summary.records} record{summary.records === 1 ? '' : 's'} recovered across{' '}
         {formatDuration(summary.gapSeconds)} of gap · {summary.actions} action
         {summary.actions === 1 ? '' : 's'} · {summary.faults} fault
@@ -50,27 +50,27 @@ function WindowBlock({ window: w }: { window: MissedWindow }) {
   return (
     <div style={{ border: '1px dashed var(--line-strong)', borderRadius: 'var(--r-inner)' }} className="p-3">
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-2)' }}>
           {formatShortIST(new Date(w.fromMs).toISOString())} → {formatShortIST(new Date(w.toMs).toISOString())}
         </span>
-        <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
           {formatDuration(w.durationSeconds)}
         </span>
         {w.cause && (
-          <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
             {w.cause}
           </span>
         )}
       </div>
 
       {w.stillOpen && w.entries.length === 0 ? (
-        <p className="text-[11.5px]" style={{ color: 'var(--act-soft)' }}>
+        <p className="text-body-sm" style={{ color: 'var(--act-soft)' }}>
           Gap still open — nothing from this window has reached HQ yet. We cannot say the station
           has been quiet, only that we have heard nothing. Whatever it has written is waiting in
           its local outbox.
         </p>
       ) : w.stationReportedNothing ? (
-        <p className="text-[11.5px]" style={{ color: 'var(--watch-soft)' }}>
+        <p className="text-body-sm" style={{ color: 'var(--watch-soft)' }}>
           No records — the station reported nothing in this window. That is not the same as “no
           data available”: the gap has closed and nothing was queued, so there is nothing still to
           arrive.
@@ -81,28 +81,28 @@ function WindowBlock({ window: w }: { window: MissedWindow }) {
             const skew = clockSkewSeconds(entry.stationTime, entry.hqReceiptTime);
             return (
               <li key={entry.recordId} className="flex items-center gap-2">
-                <span className="font-mono text-[9.5px] w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
+                <span className="font-mono text-micro w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
                   {formatShortIST(entry.stationTime)}
                 </span>
                 <TierChip tier={entry.tier} />
-                <span className="font-mono text-[9px] w-16 shrink-0" style={{ color: 'var(--text-4)' }}>
+                <span className="font-mono text-micro w-16 shrink-0" style={{ color: 'var(--text-4)' }}>
                   {entry.type.toUpperCase()}
                 </span>
                 <Link
                   to={entry.type === 'action' ? '/actions' : entry.type === 'compliance' ? '/compliance' : '/station'}
-                  className="text-[11px] flex-1 truncate"
+                  className="text-body-sm flex-1 truncate"
                   style={{ color: 'var(--text-2)' }}
                 >
                   {entry.summary}
                 </Link>
                 {Math.abs(skew) > 120 && (
-                  <span className="font-mono text-[8.5px] shrink-0" style={{ color: 'var(--watch-soft)' }}
+                  <span className="font-mono text-micro shrink-0" style={{ color: 'var(--watch-soft)' }}
                     title="Clock skew between station-stamped time and HQ receipt time">
                     skew {formatDuration(Math.abs(skew))}
                   </span>
                 )}
                 <span
-                  className="font-mono text-[8.5px] px-1.5 py-0.5 rounded shrink-0"
+                  className="font-mono text-micro px-1.5 py-0.5 rounded shrink-0"
                   style={{
                     border: `1px ${entry.reconciled ? 'solid var(--ok)' : 'dashed var(--watch)'}`,
                     color: entry.reconciled ? 'var(--ok-soft)' : 'var(--watch-soft)',

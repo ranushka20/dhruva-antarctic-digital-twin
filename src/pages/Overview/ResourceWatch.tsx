@@ -33,10 +33,10 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
       aria-label="Resource watch"
     >
       <div className="flex items-baseline gap-2.5 mb-3">
-        <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
           Resource watch
         </h2>
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
           Unresolvable deadlines first, then LSOD
         </span>
       </div>
@@ -51,7 +51,7 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
                 {['Resource', 'Station', 'Autonomy', 'Margin to ship', 'LSOD'].map((h, i) => (
                   <th
                     key={h}
-                    className="font-mono text-[9px] uppercase tracking-[0.12em] font-normal pb-2 px-1"
+                    className="font-mono text-micro uppercase tracking-label font-normal pb-2 px-1"
                     style={{
                       color: 'var(--text-4)',
                       textAlign: i >= 2 ? (i === 4 ? 'right' : 'left') : 'left',
@@ -74,10 +74,10 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
                   <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
                     <span className="flex items-center gap-2">
                       <StatusDot status={RISK_DOT[r.risk]} size={6} />
-                      <span className="text-[12.5px]" style={{ color: 'var(--text)' }}>{r.name}</span>
+                      <span className="text-body" style={{ color: 'var(--text)' }}>{r.name}</span>
                       {r.belowReorder && (
                         <span
-                          className="font-mono text-[8px] uppercase tracking-[0.06em] px-1 py-0.5 rounded"
+                          className="font-mono text-micro uppercase tracking-[0.06em] px-1 py-0.5 rounded"
                           style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.4)' }}
                         >
                           Reorder
@@ -87,14 +87,14 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
                   </td>
 
                   <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="font-mono text-[11px]" style={{ color: 'var(--text-3)' }}>
+                    <span className="font-mono text-body-sm" style={{ color: 'var(--text-3)' }}>
                       {STATION_CODE[r.stationId]}
                     </span>
                   </td>
 
                   <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
                     <span className="flex items-center gap-1.5">
-                      <span className="font-mono text-[12px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+                      <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
                         {Math.round(r.autonomyDays)} ±{Math.round(r.autonomyBandDays)} d
                       </span>
                       <ProvenanceBadge measurement={r.stock} label={r.name + ' stock'} />
@@ -106,7 +106,7 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
                   </td>
 
                   <td
-                    className="py-2 px-1 text-right font-mono text-[11.5px] tabular-nums"
+                    className="py-2 px-1 text-right font-mono text-body-sm tabular-nums"
                     style={{ borderBottom: '1px solid var(--line)', color: lsodColor(r.lsodDays) }}
                   >
                     {r.lsodDays === null
@@ -125,7 +125,7 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
 
 function MarginBar({ resource }: { resource: DerivedResource }) {
   if (!resource.marginDays) {
-    return <span className="font-mono text-[10px]" style={{ color: 'var(--text-4)' }}>—</span>;
+    return <span className="font-mono text-caption" style={{ color: 'var(--text-4)' }}>—</span>;
   }
   const { min } = resource.marginDays;
   const tone = min < 0 ? 'act' : min <= 21 ? 'watch' : 'ok';
@@ -139,7 +139,7 @@ function MarginBar({ resource }: { resource: DerivedResource }) {
         hatched={resource.syncState !== 'LIVE'}
         label={`Margin to ship for ${resource.name}`}
       />
-      <span className="font-mono text-[10px] tabular-nums shrink-0" style={{ color: 'var(--text-3)' }}>
+      <span className="font-mono text-caption tabular-nums shrink-0" style={{ color: 'var(--text-3)' }}>
         {min < 0 ? '−' : '+'}{Math.abs(Math.round(min))}d
       </span>
     </span>

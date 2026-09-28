@@ -40,17 +40,17 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
         className="p-4 overflow-x-auto"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <h3 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>Season calendar</h3>
+        <h3 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Season calendar</h3>
         <svg viewBox={`0 0 ${width} 76`} className="w-full min-w-[560px]" style={{ height: 76 }}
           role="img" aria-label="Obligations plotted on their due dates">
           <line x1={pad} y1={46} x2={width - pad} y2={46} stroke="var(--line-strong)" strokeWidth={1} />
           <line x1={dayToX(0)} y1={26} x2={dayToX(0)} y2={62} stroke="var(--text-3)" strokeWidth={1} strokeDasharray="3 3" />
-          <text x={dayToX(0)} y={20} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={9} fill="var(--text-3)">
+          <text x={dayToX(0)} y={20} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-3)">
             today
           </text>
 
           {[-60, -30, 30, 60, 90, 120].map((d) => (
-            <text key={d} x={dayToX(d)} y={70} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">
+            <text key={d} x={dayToX(d)} y={70} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">
               {d > 0 ? '+' : ''}{d}d
             </text>
           ))}
@@ -75,7 +75,7 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
         className="p-4"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <h3 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>Obligations</h3>
+        <h3 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Obligations</h3>
         {obligations.length === 0 ? (
           <EmptyState reason="No obligations registered for this scope and period." />
         ) : (
@@ -84,7 +84,7 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
               <thead>
                 <tr>
                   {['Obligation', 'Stn', 'Category', 'Cadence', 'Due', 'Owner', 'Status', ''].map((h) => (
-                    <th key={h} className="pb-2 px-1.5 text-left font-mono text-[9px] uppercase tracking-[0.12em] font-normal"
+                    <th key={h} className="pb-2 px-1.5 text-left font-mono text-micro uppercase tracking-label font-normal"
                       style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>
                       {h}
                     </th>
@@ -97,26 +97,26 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
                   const overdueNoAction = o.status === 'overdue' && !o.linkedActionId;
                   return (
                     <tr key={o.id} onClick={() => onOpen(o.id)} className="cursor-pointer hover:bg-[var(--panel-raised)]">
-                      <td className="py-2 px-1.5 text-[12.5px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text)' }}>
+                      <td className="py-2 px-1.5 text-body" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text)' }}>
                         {o.name}
                       </td>
-                      <td className="py-2 px-1.5 font-mono text-[11px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                      <td className="py-2 px-1.5 font-mono text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
                         {STATION_CODE[o.stationId]}
                       </td>
-                      <td className="py-2 px-1.5 text-[11px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                      <td className="py-2 px-1.5 text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
                         {o.category}
                       </td>
-                      <td className="py-2 px-1.5 font-mono text-[10px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-4)' }}>
+                      <td className="py-2 px-1.5 font-mono text-caption" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-4)' }}>
                         {o.cadence}
                       </td>
-                      <td className="py-2 px-1.5 font-mono text-[11px] tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
+                      <td className="py-2 px-1.5 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
                         {formatDateIST(o.dueDate)}
                       </td>
-                      <td className="py-2 px-1.5 text-[11px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                      <td className="py-2 px-1.5 text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
                         {o.owner}
                       </td>
                       <td className="py-2 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
-                        <span className="font-mono text-[8.5px] tracking-[0.06em] px-1.5 py-0.5 rounded whitespace-nowrap"
+                        <span className="font-mono text-micro tracking-[0.06em] px-1.5 py-0.5 rounded whitespace-nowrap"
                           style={{ border: `1px solid ${style.border}`, color: style.color }}>
                           {style.label}
                         </span>
@@ -127,13 +127,13 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
                           <button
                             type="button"
                             onClick={() => onOpenAction(o.linkedActionId!)}
-                            className="text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                            className="text-body-sm font-medium px-2.5 py-1 rounded min-h-[30px]"
                             style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                           >
                             Open action
                           </button>
                         ) : overdueNoAction ? (
-                          <span className="font-mono text-[9px] uppercase" style={{ color: 'var(--act-soft)' }}
+                          <span className="font-mono text-micro uppercase" style={{ color: 'var(--act-soft)' }}
                             title="An overdue obligation must carry a T2 action — a missing link is a data-integrity error">
                             No linked action
                           </span>
@@ -146,7 +146,7 @@ export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
             </table>
           </div>
         )}
-        <p className="font-mono text-[9px] mt-3" style={{ color: 'var(--text-4)' }}>
+        <p className="font-mono text-micro mt-3" style={{ color: 'var(--text-4)' }}>
           QUEUED OFFLINE is not OVERDUE: the record exists at the station and is waiting on the link,
           not on a person.
         </p>

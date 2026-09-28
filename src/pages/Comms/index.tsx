@@ -32,6 +32,7 @@ import { STATION_LABEL } from '@/state/stationScope';
 import { useCan, currentActor } from '@/state/auth';
 import { formatClockIST, formatDuration, formatShortIST } from '@/lib/time';
 import { synth } from '@/lib/provenance';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
 type Scope = 'both' | StationId;
 const WINDOWS = [24, 168] as const;
@@ -75,45 +76,47 @@ export default function CommsPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Sync &amp; Comms
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {(['both', 'bharati', 'maitri'] as Scope[]).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setScope(s)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={scope === s}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: scope === s ? 'var(--text)' : 'transparent',
                 color: scope === s ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {s === 'both' ? 'Both' : STATION_LABEL[s]}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
-        <div className="flex items-center gap-1 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {WINDOWS.map((w) => (
             <button
               key={w}
               type="button"
               onClick={() => setWindowHours(w)}
-              className="px-3 py-1.5 rounded-full font-mono text-[10.5px]"
+              aria-pressed={windowHours === w}
+              className="px-3 py-1.5 rounded-full font-mono text-caption"
               style={{
-                backgroundColor: windowHours === w ? 'var(--panel-raised)' : 'transparent',
                 color: windowHours === w ? 'var(--text)' : 'var(--text-3)',
               }}
             >
               {w === 24 ? '24 H' : '7 D'}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
         </div>
 
-        <span className="font-mono text-[11px] tabular-nums ml-auto" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-body-sm tabular-nums ml-auto" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
       </div>
@@ -129,7 +132,7 @@ export default function CommsPage() {
           }}
         >
           <Radio size={14} style={{ color: 'var(--sim-soft)' }} aria-hidden />
-          <span className="text-[12px]" style={{ color: 'var(--sim-soft)' }}>
+          <span className="text-body" style={{ color: 'var(--sim-soft)' }}>
             <strong>Simulated outage running</strong> on {STATION_LABEL[scenario.stationId]} since{' '}
             {formatShortIST(scenario.startedAt)} — started by {scenario.startedBy}. This writes only
             to the demo scenario store; no operational record is affected.
@@ -137,7 +140,7 @@ export default function CommsPage() {
           <button
             type="button"
             onClick={stopOutageScenario}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[34px]"
             style={{ border: '1px solid var(--sim)', color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}
           >
             <Square size={10} /> End simulation
@@ -206,31 +209,29 @@ function LinkStateCard({
       aria-label={`${STATION_LABEL[stationId]} link state`}
     >
       <div className="flex items-center gap-2.5 mb-3 flex-wrap">
-        <h2 className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h2 className="text-title font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           {STATION_LABEL[stationId]}
         </h2>
         <SyncPill state={info.state} ageSeconds={info.ageSeconds} />
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
           last successful sync {formatShortIST(info.lastSyncAt)}
         </span>
 
         {/* The connectivity toggle: this page owns it, the whole app reads it */}
-        <div className="flex items-center gap-1 ml-auto p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-auto p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {(['LIVE', 'LAGGING', 'DARK'] as ConnectivityState[]).map((state) => (
             <button
               key={state}
               type="button"
               onClick={() => setStationConnectivity(stationId, state, 'operator toggle (' + actorName + ')')}
               aria-pressed={info.state === state}
-              className="px-2.5 py-1 rounded-full font-mono text-[9.5px] tracking-[0.06em] min-h-[30px]"
-              style={{
-                backgroundColor: info.state === state ? 'var(--panel-raised)' : 'transparent',
-                color: info.state === state ? 'var(--text)' : 'var(--text-3)',
-              }}
+              className="px-2.5 py-1 rounded-full font-mono text-micro tracking-[0.06em] min-h-[30px]"
+              style={{ color: info.state === state ? 'var(--text)' : 'var(--text-3)' }}
             >
               {state}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
         </div>
 
         <button
@@ -239,7 +240,7 @@ function LinkStateCard({
           onClick={() =>
             simulatedHere ? stopOutageScenario() : startOutageScenario(stationId, actorName)
           }
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[34px]"
           style={{
             border: '1px dashed var(--sim)',
             color: 'var(--sim-soft)',
@@ -267,10 +268,10 @@ function LinkStateCard({
           tone={stats.longestGapSeconds > 12 * 3600 ? 'act' : 'default'}
         />
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
             Next contact
           </span>
-          <span className="font-mono text-[11.5px]" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-body-sm" style={{ color: 'var(--text-2)' }}>
             {info.state === 'DARK' ? 'unscheduled' : 'continuous'}
           </span>
           <ProvenanceBadge
@@ -287,10 +288,10 @@ function Stat({ label, value, tone = 'default' }: { label: string; value: string
   const color = tone === 'ok' ? 'var(--ok-soft)' : tone === 'watch' ? 'var(--watch-soft)' : tone === 'act' ? 'var(--act-soft)' : 'var(--text-2)';
   return (
     <div className="flex items-center gap-1.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+      <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
         {label}
       </span>
-      <span className="font-mono text-[11.5px] tabular-nums" style={{ color }}>{value}</span>
+      <span className="font-mono text-body-sm tabular-nums" style={{ color }}>{value}</span>
     </div>
   );
 }

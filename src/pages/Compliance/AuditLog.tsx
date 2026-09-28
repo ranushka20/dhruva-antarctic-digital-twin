@@ -14,12 +14,13 @@ import type { ChainEntry, ChainStatus } from '@/lib/hashChain';
 import { shortHash } from '@/lib/hashChain';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatShortIST, formatDuration } from '@/lib/time';
+import { AsyncButton } from '@/components/shared/AsyncButton';
 
 interface Props {
   chain: ChainEntry[];
   status: ChainStatus | null;
   verifying: boolean;
-  onVerify: () => void;
+  onVerify: () => Promise<void> | void;
   onExport: () => void;
   onTamper: (seq: number) => void;
   canTamper: boolean;
@@ -69,12 +70,12 @@ export function AuditLog({
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
         <div className="flex items-center gap-2.5 mb-3 flex-wrap">
-          <h3 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
             Tamper-evident hash chain (SHA-256)
           </h3>
           {status && (
             <span
-              className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
+              className="flex items-center gap-1.5 text-body-sm font-medium px-2.5 py-1 rounded-full"
               style={{
                 border: `1px solid ${status.ok ? 'var(--ok)' : 'var(--act)'}`,
                 color: status.ok ? 'var(--ok-soft)' : 'var(--act-soft)',
@@ -85,25 +86,26 @@ export function AuditLog({
               {status.ok ? `Chain verified · ${status.verified}` : `Chain broken at entry ${status.brokenAt}`}
             </span>
           )}
-          <button
-            type="button"
+          <AsyncButton
             onClick={onVerify}
+            pendingLabel="Verifying…"
+            doneLabel={status?.ok === false ? null : 'Verified'}
             disabled={verifying}
-            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
             style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)', opacity: verifying ? 0.5 : 1 }}
           >
             {verifying ? 'Verifying…' : 'Verify chain'}
-          </button>
+          </AsyncButton>
           <button
             type="button"
             onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
             style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
           >
             <Download size={11} /> Export JSON
           </button>
           {status && (
-            <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
+            <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
               {status.verified} entries in {status.durationMs} ms · checked {formatShortIST(status.checkedAt)}
             </span>
           )}
@@ -138,12 +140,12 @@ export function AuditLog({
           })}
         </div>
         {status && !status.ok && (
-          <p className="flex items-center gap-1.5 font-mono text-[10px] mt-2" style={{ color: 'var(--act-soft)' }}>
+          <p className="flex items-center gap-1.5 font-mono text-caption mt-2" style={{ color: 'var(--act-soft)' }}>
             <Unlink size={11} /> Severed link at position {status.brokenAt}. Everything after it is
             no longer provably unaltered.
           </p>
         )}
-        <p className="font-mono text-[9px] mt-2" style={{ color: 'var(--text-4)' }}>
+        <p className="font-mono text-micro mt-2" style={{ color: 'var(--text-4)' }}>
           Tamper-evident, not non-repudiable: this chain proves records have not been altered since
           they were written. It carries no digital signature.
         </p>
@@ -152,18 +154,18 @@ export function AuditLog({
       {/* ---- Filters (FR-5.2) ---- */}
       <div className="flex items-center gap-2 flex-wrap">
         <select value={objectType} onChange={(e) => setObjectType(e.target.value)}
-          className="px-2.5 py-1.5 font-mono text-[10.5px] outline-none" style={select} aria-label="Filter by object type">
+          className="px-2.5 py-1.5 font-mono text-caption outline-none" style={select} aria-label="Filter by object type">
           {objectTypes.map((t) => <option key={t} value={t}>{t === 'all' ? 'All object types' : t}</option>)}
         </select>
         <select value={actor} onChange={(e) => setActor(e.target.value)}
-          className="px-2.5 py-1.5 font-mono text-[10.5px] outline-none" style={select} aria-label="Filter by actor">
+          className="px-2.5 py-1.5 font-mono text-caption outline-none" style={select} aria-label="Filter by actor">
           {actors.map((a) => <option key={a} value={a}>{a === 'all' ? 'All actors' : a}</option>)}
         </select>
         <button
           type="button"
           onClick={() => setOfflineOnly((v) => !v)}
           aria-pressed={offlineOnly}
-          className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
+          className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[34px]"
           style={{
             border: `1px solid ${offlineOnly ? 'var(--watch)' : 'var(--line)'}`,
             color: offlineOnly ? 'var(--watch-soft)' : 'var(--text-3)',
@@ -172,7 +174,7 @@ export function AuditLog({
         >
           Written offline
         </button>
-        <span className="font-mono text-[10px] ml-auto" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-caption ml-auto" style={{ color: 'var(--text-4)' }}>
           {filtered.length} of {chain.length} entries
         </span>
       </div>
@@ -205,32 +207,32 @@ export function AuditLog({
                     onClick={() => setExpanded(open ? null : entry.seq)}
                     className="w-full flex items-center gap-2 text-left flex-wrap"
                   >
-                    <span className="font-mono text-[9.5px] w-10 shrink-0" style={{ color: 'var(--text-4)' }}>
+                    <span className="font-mono text-micro w-10 shrink-0" style={{ color: 'var(--text-4)' }}>
                       #{entry.seq}
                     </span>
-                    <span className="font-mono text-[9.5px] w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
+                    <span className="font-mono text-micro w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
                       {formatShortIST(entry.at)}
                     </span>
-                    <span className="font-mono text-[9px] w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
+                    <span className="font-mono text-micro w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
                       {entry.objectType}
                     </span>
-                    <span className="text-[11.5px] flex-1 min-w-0 truncate" style={{ color: 'var(--text-2)' }}>
+                    <span className="text-body-sm flex-1 min-w-0 truncate" style={{ color: 'var(--text-2)' }}>
                       {entry.payloadSummary}
                     </span>
-                    <span className="text-[10.5px] shrink-0" style={{ color: 'var(--text-3)' }}>{entry.actor}</span>
+                    <span className="text-caption shrink-0" style={{ color: 'var(--text-3)' }}>{entry.actor}</span>
                     {entry.writtenOffline && (
-                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
+                      <span className="font-mono text-micro uppercase px-1 rounded shrink-0"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
                         Offline
                       </span>
                     )}
                     {entry.superseded && (
-                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
+                      <span className="font-mono text-micro uppercase px-1 rounded shrink-0"
                         style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
                         Superseded
                       </span>
                     )}
-                    <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>
+                    <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>
                       {shortHash(entry.hash)}
                     </span>
                   </button>
@@ -253,7 +255,7 @@ export function AuditLog({
                         <button
                           type="button"
                           onClick={() => onTamper(entry.seq)}
-                          className="mt-1.5 text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                          className="mt-1.5 text-body-sm font-medium px-2.5 py-1 rounded min-h-[30px]"
                           style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}
                           title="Demo affordance: edits the payload without updating the hash, so Verify chain catches it"
                         >
@@ -275,9 +277,9 @@ export function AuditLog({
 function Kv({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <p className="flex gap-2">
-      <span className="font-mono text-[9px] w-24 shrink-0" style={{ color: 'var(--text-4)' }}>{k}</span>
+      <span className="font-mono text-micro w-24 shrink-0" style={{ color: 'var(--text-4)' }}>{k}</span>
       <span
-        className={mono ? 'font-mono text-[9px] break-all' : 'text-[11px]'}
+        className={mono ? 'font-mono text-micro break-all' : 'text-body-sm'}
         style={{ color: 'var(--text-3)' }}
       >
         {v}

@@ -111,7 +111,7 @@ export function ActionTable({
                 <button
                   type="button"
                   onClick={() => setSort((s) => ({ key: col.key, dir: s.key === col.key && s.dir === 1 ? -1 : 1 }))}
-                  className="font-mono text-[9px] uppercase tracking-[0.12em]"
+                  className="font-mono text-micro uppercase tracking-label"
                   style={{ color: sort.key === col.key ? 'var(--text-2)' : 'var(--text-4)' }}
                 >
                   {col.label}{sort.key === col.key ? (sort.dir === 1 ? ' ↑' : ' ↓') : ''}
@@ -119,7 +119,7 @@ export function ActionTable({
               </th>
             ))}
             <th className="pb-2 px-2 text-right" style={{ borderBottom: '1px solid var(--line-strong)' }}>
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+              <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                 Actions
               </span>
             </th>
@@ -158,22 +158,22 @@ export function ActionTable({
                   <TierChip tier={a.tier} />
                 </span>
               </td>
-              <td className="px-2 py-2 max-w-[280px]" style={{ borderBottom: '1px solid var(--line)' }}>
-                <span className="block text-[12.5px] truncate" style={{ color: 'var(--text)' }}>{a.title}</span>
-                <span className="block font-mono text-[9.5px] truncate" style={{ color: 'var(--text-4)' }}>
+              <td className="px-2 py-2 max-w-[220px]" style={{ borderBottom: '1px solid var(--line)' }}>
+                <span className="block text-body truncate" style={{ color: 'var(--text)' }}>{a.title}</span>
+                <span className="block font-mono text-micro truncate" style={{ color: 'var(--text-4)' }}>
                   {a.zoneCode ? a.zoneCode + ' · ' : ''}{a.assetId ?? a.trigger.metricName}
                 </span>
               </td>
-              <td className="px-2 py-2 font-mono text-[11px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+              <td className="px-2 py-2 font-mono text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
                 {STATION_CODE[a.stationId]}
               </td>
-              <td className="px-2 py-2" style={{ borderBottom: '1px solid var(--line)' }}>
-                <span className="font-mono text-[10px]" style={{ color: 'var(--text-2)' }}>
+              <td className="px-2 py-2 whitespace-nowrap" style={{ borderBottom: '1px solid var(--line)' }}>
+                <span className="font-mono text-caption" style={{ color: 'var(--text-2)' }}>
                   {a.state.replace('_', ' ')}
                 </span>
                 {a.sla.breached && (
                   <span
-                    className="ml-1.5 font-mono text-[8.5px] px-1 py-0.5 rounded"
+                    className="ml-1.5 font-mono text-micro px-1 py-0.5 rounded"
                     style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
                     title={`SLA target ${formatDuration(a.sla.targetSeconds)} — over by ${formatDuration(a.sla.elapsedSeconds - a.sla.targetSeconds)}`}
                   >
@@ -181,25 +181,25 @@ export function ActionTable({
                   </span>
                 )}
               </td>
-              <td className="px-2 py-2 font-mono text-[11px] tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
-                {formatDuration(a.ageSeconds)}
+              <td className="px-2 py-2 font-mono text-body-sm tabular-nums min-w-[88px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                <span className="whitespace-nowrap">{formatDuration(a.ageSeconds)}</span>
                 {a.syncState !== 'LIVE' && (
-                  <span className="block text-[8.5px]" style={{ color: 'var(--text-4)' }}>as of last sync</span>
+                  <span className="block text-micro" style={{ color: 'var(--text-4)' }}>as of last sync</span>
                 )}
               </td>
-              <td className="px-2 py-2 text-[11.5px]" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+              <td className="px-2 py-2 text-body-sm whitespace-nowrap" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
                 {a.assignee?.name ?? '—'}
               </td>
-              <td className="px-2 py-2" style={{ borderBottom: '1px solid var(--line)' }}>
+              <td className="px-2 py-2 min-w-[132px]" style={{ borderBottom: '1px solid var(--line)' }}>
                 {a.consequenceLabel ? (
                   <span
-                    className="font-mono text-[10.5px]"
+                    className="font-mono text-caption"
                     style={{ color: a.consequence?.kind === 'safety' ? 'var(--act-soft)' : 'var(--watch-soft)' }}
                   >
                     {a.consequenceLabel}
                   </span>
                 ) : (
-                  <span className="font-mono text-[10px]" style={{ color: 'var(--text-4)' }} title="The coupling engine produces no consequence for this trigger">
+                  <span className="font-mono text-caption" style={{ color: 'var(--text-4)' }} title="The coupling engine produces no consequence for this trigger">
                     none modelled
                   </span>
                 )}
@@ -224,7 +224,7 @@ export function ActionTable({
           <button
             type="button"
             onClick={() => setWindowEnd((e) => e + WINDOW_SIZE)}
-            className="text-[11.5px] font-medium px-3 py-1.5 rounded-full"
+            className="text-body-sm font-medium px-3 py-1.5 rounded-full"
             style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
           >
             Show {Math.min(WINDOW_SIZE, sorted.length - windowed.length)} more ·{' '}
@@ -250,7 +250,7 @@ function RowActions({
       onClick={fn}
       disabled={!enabled || !canWrite}
       title={!canWrite ? 'Your role cannot change action state' : undefined}
-      className="text-[11px] font-medium px-2.5 py-1 rounded ml-1"
+      className="text-body-sm font-medium px-2.5 py-1 rounded ml-1"
       style={{
         fontFamily: 'var(--font-body)',
         border: `1px solid ${primary ? 'var(--act)' : 'var(--line)'}`,

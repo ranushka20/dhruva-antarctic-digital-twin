@@ -27,6 +27,8 @@ import { STATION_LABEL } from '@/state/stationScope';
 import { useCan } from '@/state/auth';
 import { formatShortIST, formatDateIST } from '@/lib/time';
 import { shortHash } from '@/lib/hashChain';
+import { AsyncButton } from '@/components/shared/AsyncButton';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
 export default function HandoverPage() {
   const [searchParams] = useSearchParams();
@@ -61,35 +63,36 @@ export default function HandoverPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Crew Handover
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {(['bharati', 'maitri'] as StationId[]).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setStationId(id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={stationId === id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: stationId === id ? 'var(--text)' : 'transparent',
                 color: stationId === id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {STATION_LABEL[id]}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <label className="flex items-center gap-2">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
             Rotation
           </span>
           <select
             value={rotation.id}
             onChange={(e) => setRotationId(e.target.value)}
-            className="px-2.5 py-1.5 font-mono text-[10.5px] outline-none"
+            className="px-2.5 py-1.5 font-mono text-caption outline-none"
             style={{
               backgroundColor: 'var(--panel)', border: '1px solid var(--line)',
               borderRadius: 'var(--r-pill)', color: 'var(--text-2)',
@@ -105,28 +108,29 @@ export default function HandoverPage() {
 
         <SyncPill state={sync.state} ageSeconds={sync.ageSeconds} />
 
-        <button
-          type="button"
-          onClick={() => { void onGenerate(); }}
+        <AsyncButton
+          onClick={onGenerate}
           disabled={!canGenerate}
-          className="ml-auto px-4 py-2 rounded-full text-[12.5px] font-medium min-h-[40px]"
+          pendingLabel="Sealing capsule…"
+          doneLabel="Capsule sealed"
+          className="ml-auto px-4 py-2 rounded-full text-body font-medium min-h-[40px]"
           style={{ backgroundColor: 'var(--act)', color: 'var(--bg)', opacity: canGenerate ? 1 : 0.4 }}
         >
           Generate capsule
-        </button>
+        </AsyncButton>
       </div>
 
       {toast && (
-        <div className="px-6 py-2 shrink-0" role="status"
+        <div key={toast} className="m-toast px-6 py-2 shrink-0" role="status"
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}>
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
+          <span className="font-mono text-caption" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
         </div>
       )}
 
       {sync.state !== 'LIVE' && (
         <div className="px-6 py-2 shrink-0" role="status"
           style={{ backgroundColor: 'rgba(217,164,65,0.10)', borderBottom: '1px solid var(--watch)' }}>
-          <span className="text-[12px]" style={{ color: 'var(--watch-soft)' }}>
+          <span className="text-body" style={{ color: 'var(--watch-soft)' }}>
             {STATION_LABEL[stationId]} is {sync.state}. The capsule still generates from last-known
             state — every affected section is marked stale and §8 states the gap.
           </span>
@@ -141,10 +145,10 @@ export default function HandoverPage() {
               className="p-5"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[17px] font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+              <h2 className="text-headline font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
                 {STATION_LABEL[stationId]} — rotation capsule
               </h2>
-              <p className="font-mono text-[10px] mb-4" style={{ color: 'var(--text-3)' }}>
+              <p className="font-mono text-caption mb-4" style={{ color: 'var(--text-3)' }}>
                 {formatDateIST(rotation.from)} → {formatDateIST(rotation.to)} · outgoing lead{' '}
                 {rotation.outgoingLead}
               </p>
@@ -153,19 +157,19 @@ export default function HandoverPage() {
                 {sections.filter((s) => included[s.key]).map((section, i) => (
                   <li key={section.key}>
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="font-mono text-[10px]" style={{ color: 'var(--text-4)' }}>
+                      <span className="font-mono text-caption" style={{ color: 'var(--text-4)' }}>
                         {i + 1}
                       </span>
-                      <h3 className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>
+                      <h3 className="text-body font-semibold" style={{ color: 'var(--text)' }}>
                         {section.title}
                       </h3>
                       {section.stale && (
-                        <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded"
+                        <span className="font-mono text-micro uppercase px-1.5 py-0.5 rounded"
                           style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
                           Stale
                         </span>
                       )}
-                      <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
+                      <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
                         {section.key === 'notes' ? (notes.trim() ? 1 : 0) : section.itemCount}
                       </span>
                     </div>
@@ -176,14 +180,14 @@ export default function HandoverPage() {
                         onChange={(e) => setNotes(e.target.value)}
                         rows={4}
                         placeholder="The only section that is typed rather than assembled. Anything the next crew cannot read out of the records."
-                        className="w-full px-3 py-2 text-[12px] outline-none"
+                        className="w-full px-3 py-2 text-body outline-none"
                         style={{
                           backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)',
                           borderRadius: 'var(--r-inner)', color: 'var(--text)',
                         }}
                       />
                     ) : section.itemCount === 0 ? (
-                      <p className="text-[11.5px] px-3 py-2"
+                      <p className="text-body-sm px-3 py-2"
                         style={{ color: 'var(--text-4)', backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}>
                         none — {section.emptyNote}
                       </p>
@@ -192,7 +196,7 @@ export default function HandoverPage() {
                         {section.lines.map((line, j) => (
                           <li
                             key={j}
-                            className="text-[11.5px] px-3 py-1.5"
+                            className="text-body-sm px-3 py-1.5"
                             style={{
                               color: line.includes('CROSSES A THRESHOLD') || line.includes('DEFERRED:')
                                 ? 'var(--act-soft)'
@@ -218,7 +222,7 @@ export default function HandoverPage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>Contents</h2>
+              <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Contents</h2>
               <ul className="space-y-1">
                 {sections.map((section) => (
                   <li key={section.key}>
@@ -229,10 +233,10 @@ export default function HandoverPage() {
                         checked={included[section.key]}
                         onChange={() => setIncluded((cur) => ({ ...cur, [section.key]: !cur[section.key] }))}
                       />
-                      <span className="text-[12px] flex-1" style={{ color: 'var(--text-2)' }}>
+                      <span className="text-body flex-1" style={{ color: 'var(--text-2)' }}>
                         {SECTION_TITLES[section.key]}
                       </span>
-                      <span className="font-mono text-[10.5px] tabular-nums" style={{ color: 'var(--text-3)' }}>
+                      <span className="font-mono text-caption tabular-nums" style={{ color: 'var(--text-3)' }}>
                         {section.key === 'notes'
                           ? (notes.trim() ? 1 : '—')
                           : section.itemCount === 0 ? '—' : section.itemCount}
@@ -261,7 +265,7 @@ export default function HandoverPage() {
                   onClick={() => window.print()}
                 />
               </div>
-              <p className="font-mono text-[9px] mt-2" style={{ color: 'var(--text-4)' }}>
+              <p className="font-mono text-micro mt-2" style={{ color: 'var(--text-4)' }}>
                 Every export carries the provenance notice. A capsule presenting SYNTH figures as
                 fact is the most damaging thing this page could produce.
               </p>
@@ -272,9 +276,9 @@ export default function HandoverPage() {
               className="p-4"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
             >
-              <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>Versions</h2>
+              <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Versions</h2>
               {capsules.length === 0 ? (
-                <p className="text-[11.5px]" style={{ color: 'var(--text-4)' }}>
+                <p className="text-body-sm" style={{ color: 'var(--text-4)' }}>
                   None generated yet. A capsule is immutable once generated — regenerating creates a
                   new version and never overwrites one.
                 </p>
@@ -284,26 +288,26 @@ export default function HandoverPage() {
                     <li key={c.id} className="px-3 py-2"
                       style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)' }}>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px]" style={{ color: 'var(--text)' }}>v{c.version}</span>
-                        <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+                        <span className="font-mono text-body-sm" style={{ color: 'var(--text)' }}>v{c.version}</span>
+                        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
                           {formatShortIST(c.generatedAt)}
                         </span>
-                        <span className="font-mono text-[9px] ml-auto" style={{ color: 'var(--text-4)' }}>
+                        <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-4)' }}>
                           {c.syncStateAtGeneration.state}
                         </span>
                       </div>
-                      <p className="font-mono text-[9px] mt-1" style={{ color: 'var(--text-4)' }}>
+                      <p className="font-mono text-micro mt-1" style={{ color: 'var(--text-4)' }}>
                         {c.generatedBy} · {shortHash(c.auditHash)}
                       </p>
                       {c.acknowledgedBy ? (
-                        <p className="flex items-center gap-1.5 font-mono text-[9.5px] mt-1" style={{ color: 'var(--ok-soft)' }}>
+                        <p className="flex items-center gap-1.5 font-mono text-micro mt-1" style={{ color: 'var(--ok-soft)' }}>
                           <Check size={10} /> received by {c.acknowledgedBy} · {formatShortIST(c.acknowledgedAt!)}
                         </p>
                       ) : (
                         <button
                           type="button"
                           onClick={() => { setAckOpen(true); setIncomingLead(''); }}
-                          className="mt-1.5 text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
+                          className="mt-1.5 text-body-sm font-medium px-2.5 py-1 rounded min-h-[30px]"
                           style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                         >
                           Mark received
@@ -319,7 +323,7 @@ export default function HandoverPage() {
       </div>
 
       <Modal open={ackOpen} onClose={() => setAckOpen(false)} title="Acknowledge capsule">
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           The incoming crew lead marks the capsule received. The acknowledgement is appended to the
           audit chain and the capsule then shows both parties.
         </p>
@@ -327,27 +331,28 @@ export default function HandoverPage() {
           value={incomingLead}
           onChange={(e) => setIncomingLead(e.target.value)}
           placeholder="Incoming crew lead"
-          className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+          className="w-full px-3 py-2 text-body outline-none mb-3"
           style={{
             backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)',
             borderRadius: 'var(--r-inner)', color: 'var(--text)',
           }}
         />
-        <button
-          type="button"
+        <AsyncButton
           disabled={!incomingLead.trim() || !latest}
           onClick={async () => {
             if (latest) await acknowledgeCapsule(latest.id, incomingLead);
             setAckOpen(false);
           }}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+          pendingLabel="Recording…"
+          doneLabel={null}
+          className="w-full inline-flex justify-center py-2.5 rounded-full text-body font-medium min-h-[44px]"
           style={{
             backgroundColor: incomingLead.trim() ? 'var(--act)' : 'var(--panel-raised)',
             color: incomingLead.trim() ? 'var(--bg)' : 'var(--text-4)',
           }}
         >
           Record acknowledgement
-        </button>
+        </AsyncButton>
       </Modal>
     </div>
   );
@@ -359,7 +364,7 @@ function ExportButton({ label, disabled, onClick }: { label: string; disabled: b
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11.5px] font-medium min-h-[38px]"
+      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-body-sm font-medium min-h-[38px]"
       style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)', opacity: disabled ? 0.4 : 1 }}
     >
       {label === 'Print / PDF' ? <FileText size={11} /> : <Download size={11} />}

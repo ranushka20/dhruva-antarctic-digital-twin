@@ -42,6 +42,7 @@ import {
   type ParamGroup, type ScenarioValues,
 } from '@/state/sandbox';
 import PRESETS from '@/mock/scenarios/presets.json';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
 const GROUPS: ParamGroup[] = ['environmental', 'energy', 'logistics', 'crew'];
 
@@ -174,8 +175,8 @@ export default function SandboxPage() {
         }}
       >
         <FlaskConical size={15} style={{ color: 'var(--sim)' }} aria-hidden />
-        <span className="text-[12.5px]" style={{ color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] font-semibold">
+        <span className="text-body" style={{ color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}>
+          <span className="font-mono text-body-sm uppercase tracking-label font-semibold">
             Simulation — not live station data
           </span>
           {' · '}forked from {STATION_LABEL[stationId]} state at {formatShortIST(forkedAt)} IST.
@@ -188,29 +189,30 @@ export default function SandboxPage() {
         className="flex items-center gap-3 h-[52px] px-6 shrink-0 flex-wrap"
         style={{ borderBottom: '1px solid var(--line)' }}
       >
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Research Sandbox
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {(['bharati', 'maitri'] as const).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => reFork(id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={stationId === id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: stationId === id ? 'var(--text)' : 'transparent',
                 color: stationId === id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {STATION_LABEL[id]}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <span
-          className="font-mono text-[9.5px] uppercase tracking-[0.08em] px-2.5 py-1 rounded-full"
+          className="font-mono text-micro uppercase tracking-label px-2.5 py-1 rounded-full"
           style={{
             border: `1px solid ${changed.length ? 'var(--line-strong)' : 'var(--line)'}`,
             color: changed.length ? 'var(--text-2)' : 'var(--text-4)',
@@ -221,7 +223,7 @@ export default function SandboxPage() {
 
         <div className="flex-1" />
 
-        <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
 
@@ -229,7 +231,7 @@ export default function SandboxPage() {
           type="button"
           onClick={reset}
           disabled={changed.length === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium"
           style={{ border: '1px solid var(--line)', color: 'var(--text-2)', opacity: changed.length ? 1 : 0.4 }}
         >
           <RotateCcw size={12} /> Reset
@@ -237,7 +239,7 @@ export default function SandboxPage() {
         <button
           type="button"
           onClick={() => setSaveOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium"
           style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
         >
           <Save size={12} /> Save scenario
@@ -245,7 +247,7 @@ export default function SandboxPage() {
         <button
           type="button"
           onClick={onExport}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm font-medium"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
         >
           <Download size={12} /> Export
@@ -254,11 +256,12 @@ export default function SandboxPage() {
 
       {toast && (
         <div
-          className="px-6 py-2 shrink-0"
+          key={toast}
+          className="m-toast px-6 py-2 shrink-0"
           role="status"
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}
         >
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
+          <span className="font-mono text-caption" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
         </div>
       )}
 
@@ -271,7 +274,7 @@ export default function SandboxPage() {
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Scenario parameters"
             >
-              <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>
+              <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>
                 Scenario parameters
               </h2>
 
@@ -291,11 +294,11 @@ export default function SandboxPage() {
                       {open
                         ? <ChevronDown size={12} style={{ color: 'var(--text-4)' }} />
                         : <ChevronRight size={12} style={{ color: 'var(--text-4)' }} />}
-                      <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+                      <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                         {GROUP_LABEL[group]}
                       </span>
                       {groupChanged > 0 && (
-                        <span className="font-mono text-[8.5px] ml-auto px-1.5 py-0.5 rounded"
+                        <span className="font-mono text-micro ml-auto px-1.5 py-0.5 rounded"
                           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}>
                           {groupChanged}
                         </span>
@@ -327,10 +330,10 @@ export default function SandboxPage() {
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Preset scenarios"
             >
-              <h2 className="text-[13.5px] font-semibold mb-1" style={{ color: 'var(--text)' }}>
+              <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
                 Presets
               </h2>
-              <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
+              <p className="font-mono text-micro mb-3" style={{ color: 'var(--text-4)' }}>
                 Data rows in mock/scenarios/presets.json — adding one is not a code change.
               </p>
               <div className="space-y-1.5">
@@ -342,10 +345,10 @@ export default function SandboxPage() {
                     className="w-full text-left p-2.5 rounded transition-colors hover:bg-[var(--panel-alt)]"
                     style={{ border: '1px solid var(--line)', backgroundColor: 'var(--panel-raised)' }}
                   >
-                    <span className="block text-[12px] font-medium" style={{ color: 'var(--text)' }}>
+                    <span className="block text-body font-medium" style={{ color: 'var(--text)' }}>
                       {preset.name}
                     </span>
-                    <span className="block text-[10.5px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                    <span className="block text-caption mt-0.5" style={{ color: 'var(--text-3)' }}>
                       {preset.note}
                     </span>
                   </button>
@@ -354,7 +357,7 @@ export default function SandboxPage() {
 
               {saved.length > 0 && (
                 <>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.12em] mt-4 mb-2" style={{ color: 'var(--text-4)' }}>
+                  <p className="font-mono text-micro uppercase tracking-label mt-4 mb-2" style={{ color: 'var(--text-4)' }}>
                     Saved
                   </p>
                   <div className="space-y-1.5">
@@ -366,8 +369,8 @@ export default function SandboxPage() {
                           onClick={() => setValues(clampAll({ ...baseline, ...s.values }))}
                           className="flex-1 min-w-0 text-left"
                         >
-                          <span className="block text-[12px] truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
-                          <span className="block font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+                          <span className="block text-body truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
+                          <span className="block font-mono text-micro" style={{ color: 'var(--text-4)' }}>
                             {STATION_LABEL[s.stationId]} · {formatShortIST(s.savedAt)}
                           </span>
                         </button>
@@ -397,10 +400,10 @@ export default function SandboxPage() {
               aria-label="Scenario impact"
             >
               <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Scenario impact
                 </h2>
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+                <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                   Before is the live modelled state · after is SIM
                 </span>
               </div>
@@ -417,10 +420,10 @@ export default function SandboxPage() {
               aria-label="Cause and effect trace"
             >
               <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Cause → effect
                 </h2>
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+                <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
                   Same engine as the twin · hover a row for the formula
                 </span>
               </div>
@@ -437,7 +440,7 @@ export default function SandboxPage() {
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
                 aria-label="Autonomy projection"
               >
-                <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>
                   Stock depletion
                 </h2>
                 <DepletionChart
@@ -449,7 +452,7 @@ export default function SandboxPage() {
                   lsodBaseline={base.result.lsodDays}
                   lsodScenario={scenario.result.lsodDays}
                 />
-                <p className="font-mono text-[9px] mt-2.5" style={{ color: 'var(--text-4)' }}>
+                <p className="font-mono text-micro mt-2.5" style={{ color: 'var(--text-4)' }}>
                   Projection from the entered rate — not a prediction. Both paths assume the burn
                   rate their own parameters produce, held constant.
                 </p>
@@ -461,10 +464,10 @@ export default function SandboxPage() {
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
                 aria-label="Zone impact"
               >
-                <h2 className="text-[13.5px] font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
                   Zone impact
                 </h2>
-                <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
+                <p className="font-mono text-micro mb-3" style={{ color: 'var(--text-4)' }}>
                   Each zone re-run with its own envelope penalty. Engine output, not a threshold on
                   the slider.
                 </p>
@@ -481,18 +484,18 @@ export default function SandboxPage() {
                           border: `1px ${z.worsened ? 'solid var(--line-strong)' : 'solid var(--line)'}`,
                         }}
                       >
-                        <span className="font-mono text-[9px] uppercase tracking-[0.10em] w-6 shrink-0"
+                        <span className="font-mono text-micro uppercase tracking-label w-6 shrink-0"
                           style={{ color: 'var(--text-3)' }}>
                           {z.zone.code}
                         </span>
-                        <span className="text-[11.5px] flex-1 truncate" style={{ color: 'var(--text)' }}>
+                        <span className="text-body-sm flex-1 truncate" style={{ color: 'var(--text)' }}>
                           {z.zone.name}
                         </span>
                         <StatusDot status={RISK_DOT[z.before]} size={6} />
-                        <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>→</span>
+                        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>→</span>
                         <StatusDot status={RISK_DOT[z.after]} size={6} />
                         {z.worsened && (
-                          <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded shrink-0"
+                          <span className="font-mono text-micro uppercase px-1 py-0.5 rounded shrink-0"
                             style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)' }}>
                             Sim
                           </span>
@@ -515,7 +518,7 @@ export default function SandboxPage() {
               aria-label="Scenario causal trace"
             >
               <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Scenario trace
                 </h2>
                 <ProvenanceBadge
@@ -530,7 +533,7 @@ export default function SandboxPage() {
       </div>
 
       <Modal open={saveOpen} onClose={() => setSaveOpen(false)} title="Save scenario">
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
           Parameters are saved, results are not. A stored result is a simulated number waiting to be
           read as fact.
         </p>
@@ -538,7 +541,7 @@ export default function SandboxPage() {
           value={scenarioName}
           onChange={(e) => setScenarioName(e.target.value)}
           placeholder="Scenario name"
-          className="w-full px-3 mb-3 text-[12.5px] outline-none"
+          className="w-full px-3 mb-3 text-body outline-none"
           style={{
             minHeight: 40, backgroundColor: 'var(--panel)',
             border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)',
@@ -548,7 +551,7 @@ export default function SandboxPage() {
           type="button"
           onClick={onSave}
           disabled={!scenarioName.trim()}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium"
+          className="w-full py-2.5 rounded-full text-body font-medium"
           style={{
             backgroundColor: 'var(--text)', color: 'var(--bg)',
             opacity: scenarioName.trim() ? 1 : 0.4,
@@ -577,11 +580,11 @@ function ParameterSlider({
   return (
     <div>
       <div className="flex items-baseline gap-2 mb-1">
-        <label className="text-[11.5px] flex-1 min-w-0 truncate" style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}>
+        <label className="text-body-sm flex-1 min-w-0 truncate" style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}>
           {param.label}
         </label>
         <span
-          className="font-mono text-[11.5px] tabular-nums shrink-0"
+          className="font-mono text-body-sm tabular-nums shrink-0"
           style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}
         >
           {value.toFixed(digits)} {param.unit}
@@ -612,13 +615,13 @@ function ParameterSlider({
       </div>
 
       <div className="flex items-center gap-2 mt-0.5">
-        <span className="font-mono text-[8.5px]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
           baseline {baseline.toFixed(digits)}
         </span>
         <button
           type="button"
           onClick={() => setShowWhy((v) => !v)}
-          className="ml-auto font-mono text-[8.5px] underline shrink-0"
+          className="ml-auto font-mono text-micro underline shrink-0"
           style={{ color: 'var(--text-4)' }}
           aria-expanded={showWhy}
         >
@@ -628,8 +631,8 @@ function ParameterSlider({
 
       {showWhy && (
         <div className="mt-1.5 p-2 rounded" style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}>
-          <p className="text-[10.5px] mb-1" style={{ color: 'var(--text-2)' }}>{param.mechanism}</p>
-          <p className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
+          <p className="text-caption mb-1" style={{ color: 'var(--text-2)' }}>{param.mechanism}</p>
+          <p className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             bounds: {param.boundSource}
           </p>
         </div>
@@ -695,13 +698,13 @@ function DiffCard({ metric: m }: { metric: Metric }) {
       className="p-2.5 rounded-xl min-w-0 overflow-hidden"
       style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
     >
-      <p className="font-mono text-[9px] uppercase tracking-[0.10em] truncate mb-1.5" style={{ color: 'var(--text-3)' }}>
+      <p className="font-mono text-micro uppercase tracking-label truncate mb-1.5" style={{ color: 'var(--text-3)' }}>
         {m.label}
       </p>
 
       <div className="flex items-baseline gap-1.5 mb-1">
-        <span className="font-mono text-[9px] uppercase w-10 shrink-0" style={{ color: 'var(--text-4)' }}>Before</span>
-        <span className="font-mono text-[13px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-micro uppercase w-10 shrink-0" style={{ color: 'var(--text-4)' }}>Before</span>
+        <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
           {fmt(m.before)}{m.beforeBand ? ` ±${fmt(m.beforeBand)}` : ''}
         </span>
         <ProvenanceBadge
@@ -715,8 +718,8 @@ function DiffCard({ metric: m }: { metric: Metric }) {
       </div>
 
       <div className="flex items-baseline gap-1.5">
-        <span className="font-mono text-[9px] uppercase w-10 shrink-0" style={{ color: 'var(--text-3)' }}>After</span>
-        <span className="font-mono text-[15px] font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
+        <span className="font-mono text-micro uppercase w-10 shrink-0" style={{ color: 'var(--text-3)' }}>After</span>
+        <span className="font-mono text-title font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
           {fmt(m.after)}{m.afterBand ? ` ±${fmt(m.afterBand)}` : ''}
         </span>
         <ProvenanceBadge
@@ -728,13 +731,13 @@ function DiffCard({ metric: m }: { metric: Metric }) {
       </div>
 
       <div className="flex items-center gap-1.5 mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--line)' }}>
-        <span className="font-mono text-[11px] tabular-nums" style={{ color: deltaColor }}>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: deltaColor }}>
           {delta > 0 ? '+' : delta < 0 ? '−' : ''}{fmt(Math.abs(delta))} {m.unit}
         </span>
         {m.afterRisk && (
           <span className="flex items-center gap-1 ml-auto shrink-0">
             <StatusDot status={RISK_DOT[m.beforeRisk ?? 'ok']} size={5} />
-            <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>→</span>
+            <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>→</span>
             <StatusDot status={RISK_DOT[m.afterRisk]} size={5} />
           </span>
         )}
@@ -761,26 +764,26 @@ function TraceDiff({
             style={{ backgroundColor: i % 2 ? 'transparent' : 'var(--panel-raised)' }}
             title={step.formula}
           >
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-micro uppercase tracking-label w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
               {step.label.replace('↓ ', '')}
             </span>
-            <span className="font-mono text-[11.5px] tabular-nums w-20 shrink-0 text-right" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-body-sm tabular-nums w-20 shrink-0 text-right" style={{ color: 'var(--text-3)' }}>
               {fmt(b)}
             </span>
-            <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>→</span>
-            <span className="font-mono text-[12.5px] tabular-nums w-20 shrink-0 text-right font-semibold" style={{ color: 'var(--text)' }}>
+            <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>→</span>
+            <span className="font-mono text-body tabular-nums w-20 shrink-0 text-right font-semibold" style={{ color: 'var(--text)' }}>
               {fmt(a)}
             </span>
-            <span className="font-mono text-[9.5px] shrink-0" style={{ color: 'var(--text-4)' }}>
+            <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>
               {step.value.unit}
             </span>
             <span
-              className="font-mono text-[10.5px] tabular-nums w-16 shrink-0 text-right"
+              className="font-mono text-caption tabular-nums w-16 shrink-0 text-right"
               style={{ color: deltaColor(step.label, delta) }}
             >
               {nearlyEqual(delta, 0) ? '—' : `${delta > 0 ? '+' : '−'}${fmt(Math.abs(delta))}`}
             </span>
-            <span className="font-mono text-[9px] flex-1 min-w-0 truncate" style={{ color: 'var(--text-4)' }}>
+            <span className="font-mono text-micro flex-1 min-w-0 truncate" style={{ color: 'var(--text-4)' }}>
               {step.formula}
             </span>
           </li>
@@ -827,7 +830,7 @@ function DepletionChart({
         height={H - PAD_T - PAD_B}
         fill="var(--ok)" opacity={0.10}
       />
-      <text x={x(shipWindow.earliestDay) + 4} y={PAD_T + 10} fontFamily="var(--font-mono)" fontSize={8.5}
+      <text x={x(shipWindow.earliestDay) + 4} y={PAD_T + 10} fontFamily="var(--font-mono)" fontSize={11}
         fill="var(--ok-soft)" letterSpacing="0.6">SHIP WINDOW</text>
 
       {/* axes */}
@@ -835,7 +838,7 @@ function DepletionChart({
       <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={y(0)} stroke="var(--line-strong)" strokeWidth={1} />
       {[0, 0.5, 1].map((t) => (
         <text key={t} x={PAD_L - 5} y={y(t) + 3} textAnchor="end"
-          fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">
+          fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">
           {Math.round(t * 100)}%
         </text>
       ))}
@@ -852,10 +855,10 @@ function DepletionChart({
       {lsodBaseline !== null && <LsodTick d={lsodBaseline} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--text-3)" />}
       {lsodScenario !== null && <LsodTick d={lsodScenario} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--sim-soft)" label />}
 
-      <text x={W - PAD_R} y={H - 6} textAnchor="end" fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">
+      <text x={W - PAD_R} y={H - 6} textAnchor="end" fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">
         {horizon} d
       </text>
-      <text x={PAD_L} y={H - 6} fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">today</text>
+      <text x={PAD_L} y={H - 6} fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">today</text>
     </svg>
   );
 }
@@ -872,7 +875,7 @@ function LsodTick({
       <line x1={x(d)} y1={yTop} x2={x(d)} y2={yBottom} stroke={color} strokeWidth={1} strokeDasharray="2 3" />
       <circle cx={x(d)} cy={yBottom} r={3} fill={color} />
       {label && (
-        <text x={x(d) + 4} y={yBottom - 5} fontFamily="var(--font-mono)" fontSize={8.5} fill={color}>
+        <text x={x(d) + 4} y={yBottom - 5} fontFamily="var(--font-mono)" fontSize={11} fill={color}>
           LSOD {Math.round(d)} d
         </text>
       )}

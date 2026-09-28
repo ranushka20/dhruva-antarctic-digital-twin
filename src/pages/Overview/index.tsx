@@ -91,7 +91,7 @@ export default function OverviewPage() {
         className="flex items-center gap-3 h-[52px] px-6 shrink-0"
         style={{ borderBottom: '1px solid var(--line)' }}
       >
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           HQ Overview
         </h1>
 
@@ -103,10 +103,10 @@ export default function OverviewPage() {
             readOnly
             onFocus={(e) => { e.currentTarget.blur(); window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', ctrlKey: true })); }}
             placeholder="Search assets, actions, records"
-            className="flex-1 bg-transparent outline-none text-[12px] min-w-0"
+            className="flex-1 bg-transparent outline-none text-body min-w-0"
             style={{ color: 'var(--text-2)' }}
           />
-          <span className="font-mono text-[8.5px] px-1.5 py-0.5 rounded shrink-0"
+          <span className="font-mono text-micro px-1.5 py-0.5 rounded shrink-0"
             style={{ border: '1px solid var(--line)', color: 'var(--text-4)' }}>
             ⌘ SPACE
           </span>
@@ -114,7 +114,7 @@ export default function OverviewPage() {
 
         <div className="flex-1" />
 
-        <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
 
@@ -123,7 +123,7 @@ export default function OverviewPage() {
         <button
           type="button"
           onClick={() => openTwin()}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-body font-semibold shrink-0"
           style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
           title={`Open the ${primary.name} 3D digital twin`}
         >
@@ -133,7 +133,7 @@ export default function OverviewPage() {
         <button
           type="button"
           onClick={() => navigate('/actions')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
           style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
         >
           <Filter size={12} /> Filter
@@ -141,7 +141,7 @@ export default function OverviewPage() {
         <button
           type="button"
           onClick={() => navigate('/compliance')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
           style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
         >
           <FileText size={12} /> Reports
@@ -183,7 +183,7 @@ export default function OverviewPage() {
               {/* Says out loud what the double-click does — the gesture is
                   worthless if nobody knows it is there. */}
               <p
-                className="absolute left-4 bottom-3 font-mono text-[9.5px] uppercase tracking-[0.10em] pointer-events-none"
+                className="absolute left-4 bottom-3 font-mono text-micro uppercase tracking-label pointer-events-none"
                 style={{ color: 'var(--text-4)' }}
               >
                 Click a station to select · double-click to open its 3D twin
@@ -230,21 +230,21 @@ export default function OverviewPage() {
               }}
               aria-label="Selection summary"
             >
-              <p className="font-mono text-[9px] uppercase tracking-[0.12em] mb-2" style={{ color: 'var(--text-4)' }}>
+              <p className="font-mono text-micro uppercase tracking-label mb-2" style={{ color: 'var(--text-4)' }}>
                 Selection
               </p>
 
               {selectedZoneData && zoneImpact ? (
                 <>
-                  <p className="text-[14px] font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+                  <p className="text-title font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
                     {selectedZoneData.code} {selectedZoneData.name}
                   </p>
-                  <p className="text-[11.5px] mb-2" style={{ color: 'var(--text-3)' }}>
+                  <p className="text-body-sm mb-2" style={{ color: 'var(--text-3)' }}>
                     {zoneImpact.lossPct > 0
                       ? `Holding this zone in ${selectedZoneData.status} adds ${zoneImpact.lossPct.toFixed(0)}% envelope loss.`
                       : 'Zone nominal — no modelled autonomy cost.'}
                   </p>
-                  <p className="font-mono text-[15px] tabular-nums">
+                  <p className="font-mono text-title tabular-nums">
                     <span style={{ color: 'var(--text-2)' }}>{Math.round(zoneImpact.beforeDays)}</span>
                     <span style={{ color: 'var(--text-4)' }}> → </span>
                     <span style={{ color: zoneImpact.deltaDays < 0 ? 'var(--act-soft)' : 'var(--text)' }}>
@@ -253,7 +253,7 @@ export default function OverviewPage() {
                   </p>
                 </>
               ) : (
-                <p className="text-[11.5px]" style={{ color: 'var(--text-3)' }}>
+                <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
                   Select a zone to see what leaving it in its current state costs in days of autonomy.
                 </p>
               )}
@@ -264,7 +264,7 @@ export default function OverviewPage() {
               <button
                 type="button"
                 onClick={() => openTwin(primary.id)}
-                className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-full text-[12.5px] font-semibold"
+                className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-full text-body font-semibold"
                 style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
               >
                 <Box size={14} />
@@ -299,17 +299,17 @@ function OutboxStrip({
       className="flex items-center gap-4 px-4 py-2.5 shrink-0"
       style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
     >
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] shrink-0" style={{ color: 'var(--text-4)' }}>
+      <span className="font-mono text-micro uppercase tracking-label shrink-0" style={{ color: 'var(--text-4)' }}>
         Records pending
       </span>
-      <span className="font-mono text-[11.5px] tabular-nums shrink-0" style={{ color: total > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>
+      <span className="font-mono text-body-sm tabular-nums shrink-0" style={{ color: total > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>
         {total} queued
       </span>
 
       <div className="flex-1 flex items-center gap-1.5 min-w-[120px]">
         {outbox.map((t) => (
           <div key={t.tier} className="flex-1 flex items-center gap-1.5" style={{ flexGrow: Math.max(1, t.queued) }}>
-            <span className="font-mono text-[8.5px] shrink-0" style={{ color: 'var(--text-4)' }}>{t.tier}</span>
+            <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>{t.tier}</span>
             <ProgressBar
               value={t.queued}
               max={Math.max(1, ...outbox.map((o) => o.queued))}
@@ -321,7 +321,7 @@ function OutboxStrip({
         ))}
       </div>
 
-      <span className="font-mono text-[9.5px] tracking-[0.06em] shrink-0" style={{ color: 'var(--text-3)' }}>
+      <span className="font-mono text-micro tracking-[0.06em] shrink-0" style={{ color: 'var(--text-3)' }}>
         {status}
       </span>
     </div>

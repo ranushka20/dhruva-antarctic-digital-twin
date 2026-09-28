@@ -30,11 +30,13 @@ import { formatValue, isUnknown } from '@/lib/provenance';
 interface Props {
   action: DerivedAction;
   onClose: () => void;
+  /** 'closed' while the drawer plays its exit (see usePresence). */
+  state?: 'open' | 'closed';
 }
 
 type Dialog = null | 'assign' | 'defer' | 'resolve' | 'evidence';
 
-export function ActionDrawer({ action, onClose }: Props) {
+export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<string | null>(null);
   const actor = currentActor();
@@ -60,9 +62,17 @@ export function ActionDrawer({ action, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40" style={{ backgroundColor: 'rgba(10,13,12,0.55)' }} onClick={onClose} />
+      <div
+        data-overlay
+        data-state={state}
+        className="m-backdrop fixed inset-0 z-40"
+        style={{ backgroundColor: 'rgba(10,13,12,0.55)' }}
+        onClick={onClose}
+      />
       <aside
-        className="fixed top-0 right-0 bottom-0 z-50 w-[480px] max-w-full flex flex-col"
+        data-overlay
+        data-state={state}
+        className="m-sheet fixed top-0 right-0 bottom-0 z-50 w-[480px] max-w-full flex flex-col"
         style={{
           backgroundColor: 'var(--panel-alt)',
           borderLeft: '1px solid var(--line-strong)',
@@ -76,14 +86,14 @@ export function ActionDrawer({ action, onClose }: Props) {
           <div className="flex items-center gap-2 mb-2">
             <TierChip tier={action.tier} />
             <span
-              className="font-mono text-[9px] tracking-[0.08em] px-2 py-0.5 rounded-full"
+              className="font-mono text-micro tracking-label px-2 py-0.5 rounded-full"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
             >
               {action.state.replace('_', ' ')}
             </span>
             {action.sla.breached && (
               <span
-                className="font-mono text-[9px] tracking-[0.06em] px-2 py-0.5 rounded-full"
+                className="font-mono text-micro tracking-[0.06em] px-2 py-0.5 rounded-full"
                 style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
               >
                 SLA +{formatDuration(action.sla.elapsedSeconds - action.sla.targetSeconds)}
@@ -100,18 +110,18 @@ export function ActionDrawer({ action, onClose }: Props) {
             </button>
           </div>
 
-          <h2 className="text-[17px] font-semibold leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+          <h2 className="text-headline font-semibold leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
             {action.title}
           </h2>
 
-          <p className="font-mono text-[9.5px] tracking-[0.06em] mt-1.5" style={{ color: 'var(--text-3)' }}>
+          <p className="font-mono text-micro tracking-[0.06em] mt-1.5" style={{ color: 'var(--text-3)' }}>
             {STATION_LABEL[action.stationId]}
             {action.zoneCode ? ' › ' + action.zoneCode : ''}
             {action.assetId ? ' › ' + action.assetId : ''}
           </p>
 
           {action.slaPausedNow && (
-            <p className="font-mono text-[9.5px] mt-1.5" style={{ color: 'var(--watch-soft)' }}>
+            <p className="font-mono text-micro mt-1.5" style={{ color: 'var(--watch-soft)' }}>
               SLA clock paused — {STATION_LABEL[action.stationId]} is DARK. A station cannot breach
               an SLA it could not be told about.
             </p>
@@ -122,24 +132,24 @@ export function ActionDrawer({ action, onClose }: Props) {
           {/* ---- Trigger block (FR-5.3) ---- */}
           <Section title="Trigger — what raised this">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-[12px]" style={{ color: 'var(--text-2)' }}>
+              <span className="text-body" style={{ color: 'var(--text-2)' }}>
                 {action.trigger.metricName}
               </span>
-              <span className="font-mono text-[13px] tabular-nums" style={{ color: 'var(--text)' }}>
+              <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text)' }}>
                 {isUnknown(action.trigger.measurement) ? '—' : formatValue(action.trigger.measurement)}{' '}
                 <span style={{ color: 'var(--text-3)' }}>{action.trigger.measurement.unit}</span>
               </span>
               <ProvenanceBadge measurement={action.trigger.measurement} label={action.trigger.metricName} />
             </div>
             {action.trigger.threshold && (
-              <p className="font-mono text-[10px] mt-1.5" style={{ color: 'var(--text-3)' }}>
+              <p className="font-mono text-caption mt-1.5" style={{ color: 'var(--text-3)' }}>
                 against {action.trigger.threshold.label}:{' '}
                 {action.trigger.threshold.value} {action.trigger.threshold.unit}
               </p>
             )}
-            <p className="text-[11.5px] mt-2" style={{ color: 'var(--text-3)' }}>{action.reason}</p>
+            <p className="text-body-sm mt-2" style={{ color: 'var(--text-3)' }}>{action.reason}</p>
             {action.trigger.measurement.provenance === 'SYNTH' && (
-              <p className="text-[11px] mt-2" style={{ color: 'var(--watch-soft)' }}>
+              <p className="text-body-sm mt-2" style={{ color: 'var(--watch-soft)' }}>
                 This action was triggered by a synthetic metric — the feed behind it is not
                 connected yet, so treat the value as a placeholder, not a reading.
               </p>
@@ -150,7 +160,7 @@ export function ActionDrawer({ action, onClose }: Props) {
           <Section title="Why this matters">
             <CausalTrace input={traceInput} />
             {action.consequence && (
-              <p className="font-mono text-[11px] mt-2" style={{ color: 'var(--act-soft)' }}>
+              <p className="font-mono text-body-sm mt-2" style={{ color: 'var(--act-soft)' }}>
                 Cost of inaction: {action.consequence.label}
               </p>
             )}
@@ -175,7 +185,7 @@ export function ActionDrawer({ action, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => setDialog('evidence')}
-                  className="text-[11px] font-medium px-2.5 py-1 rounded"
+                  className="text-body-sm font-medium px-2.5 py-1 rounded"
                   style={{ border: '1px solid var(--line)', color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
                 >
                   Attach
@@ -184,7 +194,7 @@ export function ActionDrawer({ action, onClose }: Props) {
             }
           >
             {action.evidence.length === 0 ? (
-              <p className="text-[11.5px]" style={{ color: 'var(--text-4)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--text-4)' }}>
                 Nothing attached. T0 and T1 actions need at least one evidence item before they can
                 be resolved.
               </p>
@@ -193,14 +203,14 @@ export function ActionDrawer({ action, onClose }: Props) {
                 {action.evidence.map((e) => (
                   <li key={e.id} className="flex items-center gap-2">
                     <Paperclip size={11} style={{ color: 'var(--text-4)' }} aria-hidden />
-                    <span className="font-mono text-[9px] w-14 shrink-0" style={{ color: 'var(--text-4)' }}>
+                    <span className="font-mono text-micro w-14 shrink-0" style={{ color: 'var(--text-4)' }}>
                       {e.kind.toUpperCase()}
                     </span>
-                    <span className="text-[11.5px] flex-1 truncate" style={{ color: 'var(--text-2)' }}>
+                    <span className="text-body-sm flex-1 truncate" style={{ color: 'var(--text-2)' }}>
                       {e.label}
                     </span>
                     {e.pendingSync && (
-                      <span className="font-mono text-[8.5px] uppercase px-1.5 py-0.5 rounded shrink-0"
+                      <span className="font-mono text-micro uppercase px-1.5 py-0.5 rounded shrink-0"
                         style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
                         Pending sync
                       </span>
@@ -214,7 +224,7 @@ export function ActionDrawer({ action, onClose }: Props) {
           {/* ---- Similar past faults (FR-5.7) ---- */}
           <Section title="Similar past faults">
             {similar.length === 0 ? (
-              <p className="text-[11.5px]" style={{ color: 'var(--text-4)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--text-4)' }}>
                 No past record scores above 0.35 against this one. Matching is TF-IDF cosine over
                 this platform's own records — no external model, no training claim.
               </p>
@@ -222,12 +232,12 @@ export function ActionDrawer({ action, onClose }: Props) {
               <ul className="space-y-2">
                 {similar.map((s) => (
                   <li key={s.actionId} className="flex items-start gap-2">
-                    <span className="font-mono text-[10px] tabular-nums w-9 shrink-0" style={{ color: 'var(--ok-soft)' }}>
+                    <span className="font-mono text-caption tabular-nums w-9 shrink-0" style={{ color: 'var(--ok-soft)' }}>
                       {s.score.toFixed(2)}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[11.5px] truncate" style={{ color: 'var(--text-2)' }}>{s.title}</span>
-                      <span className="block text-[10.5px]" style={{ color: 'var(--text-4)' }}>{s.resolution}</span>
+                      <span className="block text-body-sm truncate" style={{ color: 'var(--text-2)' }}>{s.title}</span>
+                      <span className="block text-caption" style={{ color: 'var(--text-4)' }}>{s.resolution}</span>
                     </span>
                     <ProvenanceBadge
                       measurement={{
@@ -246,8 +256,8 @@ export function ActionDrawer({ action, onClose }: Props) {
 
           {action.deferral && (
             <Section title="Deferral">
-              <p className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>{action.deferral.reason}</p>
-              <p className="font-mono text-[10px] mt-1" style={{ color: 'var(--watch-soft)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--text-2)' }}>{action.deferral.reason}</p>
+              <p className="font-mono text-caption mt-1" style={{ color: 'var(--watch-soft)' }}>
                 review {formatShortIST(action.deferral.reviewDate)}
               </p>
             </Section>
@@ -255,8 +265,8 @@ export function ActionDrawer({ action, onClose }: Props) {
 
           {action.resolution && (
             <Section title="Resolution">
-              <p className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>{action.resolution.note}</p>
-              <p className="font-mono text-[10px] mt-1" style={{ color: 'var(--text-4)' }}>
+              <p className="text-body-sm" style={{ color: 'var(--text-2)' }}>{action.resolution.note}</p>
+              <p className="font-mono text-caption mt-1" style={{ color: 'var(--text-4)' }}>
                 {action.resolution.by} · {formatShortIST(action.resolution.at)}
               </p>
             </Section>
@@ -266,7 +276,7 @@ export function ActionDrawer({ action, onClose }: Props) {
         {/* ---- Footer bar (FR-5.8) ---- */}
         <footer className="flex items-center gap-2 px-5 py-3 shrink-0" style={{ borderTop: '1px solid var(--line)' }}>
           {error && (
-            <p className="absolute -mt-10 font-mono text-[9.5px]" style={{ color: 'var(--act-soft)' }} role="alert">
+            <p className="absolute -mt-10 font-mono text-micro" style={{ color: 'var(--act-soft)' }} role="alert">
               {error}
             </p>
           )}
@@ -274,7 +284,7 @@ export function ActionDrawer({ action, onClose }: Props) {
             type="button"
             disabled={!canWrite || action.state === 'RESOLVED' || action.state === 'DEFERRED'}
             onClick={() => setDialog('defer')}
-            className="px-3.5 py-2 rounded-full text-[11.5px] min-h-[40px]"
+            className="px-3.5 py-2 rounded-full text-body-sm min-h-[40px]"
             style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
           >
             Defer
@@ -283,7 +293,7 @@ export function ActionDrawer({ action, onClose }: Props) {
             type="button"
             disabled={!canWrite || action.state === 'RESOLVED'}
             onClick={() => setDialog('assign')}
-            className="px-3.5 py-2 rounded-full text-[11.5px] min-h-[40px]"
+            className="px-3.5 py-2 rounded-full text-body-sm min-h-[40px]"
             style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
           >
             Assign
@@ -294,7 +304,7 @@ export function ActionDrawer({ action, onClose }: Props) {
               type="button"
               disabled={!canWrite}
               onClick={() => run(() => transitions.acknowledge(action.id, actor.name))}
-              className="px-5 py-2 rounded-full text-[12.5px] font-medium min-h-[40px]"
+              className="px-5 py-2 rounded-full text-body font-medium min-h-[40px]"
               style={{ backgroundColor: 'var(--act)', color: 'var(--bg)', opacity: canWrite ? 1 : 0.4 }}
             >
               Acknowledge
@@ -304,7 +314,7 @@ export function ActionDrawer({ action, onClose }: Props) {
               type="button"
               disabled={!canWrite || action.state === 'RESOLVED'}
               onClick={() => setDialog('resolve')}
-              className="px-5 py-2 rounded-full text-[12.5px] font-medium min-h-[40px]"
+              className="px-5 py-2 rounded-full text-body font-medium min-h-[40px]"
               style={{
                 backgroundColor: action.state === 'RESOLVED' ? 'transparent' : 'var(--act)',
                 color: action.state === 'RESOLVED' ? 'var(--text-3)' : 'var(--bg)',
@@ -352,7 +362,7 @@ function Section({ title, aside, children }: { title: string; aside?: React.Reac
   return (
     <section>
       <div className="flex items-center mb-2">
-        <h3 className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+        <h3 className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
           {title}
         </h3>
         {aside && <span className="ml-auto">{aside}</span>}
@@ -376,39 +386,39 @@ function TimelineRow({ entry }: { entry: Action['timeline'][number] }) {
       />
       <div className="flex-1 min-w-0" style={{ opacity: entry.superseded ? 0.55 : 1 }}>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[10px] tracking-[0.06em]" style={{ color: 'var(--text-2)' }}>
+          <span className="font-mono text-caption tracking-[0.06em]" style={{ color: 'var(--text-2)' }}>
             {entry.state.replace('_', ' ')}
           </span>
-          <span className="font-mono text-[9.5px]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
             {formatShortIST(entry.at)} · {entry.by}
           </span>
           {entry.pendingSync && (
-            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded"
+            <span className="font-mono text-micro uppercase px-1 py-0.5 rounded"
               style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
               Pending sync
             </span>
           )}
           {entry.superseded && (
-            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded"
+            <span className="font-mono text-micro uppercase px-1 py-0.5 rounded"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)' }}>
               Superseded
             </span>
           )}
         </div>
         {entry.note && (
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{entry.note}</p>
+          <p className="text-body-sm mt-0.5" style={{ color: 'var(--text-3)' }}>{entry.note}</p>
         )}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-1 mt-1 font-mono text-[9px]"
+          className="flex items-center gap-1 mt-1 font-mono text-micro"
           style={{ color: 'var(--text-4)' }}
         >
           {open ? <ChevronDown size={9} /> : <ChevronRight size={9} />}
           {open ? entry.hash || '(not yet hashed)' : shortHash(entry.hash)}
         </button>
         {open && entry.prevHash && (
-          <p className="font-mono text-[8.5px] break-all mt-0.5" style={{ color: 'var(--text-4)' }}>
+          <p className="font-mono text-micro break-all mt-0.5" style={{ color: 'var(--text-4)' }}>
             prev {entry.prevHash}
           </p>
         )}
@@ -456,7 +466,7 @@ function AssignDialog({
   const roster = ROSTER.filter((r) => r.stationId === stationId);
   return (
     <Modal open={open} onClose={onClose} title="Assign action">
-      <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
         Assignment needs a named person or role from the station roster — an action owned by
         "someone" is an action owned by nobody.
       </p>
@@ -469,15 +479,15 @@ function AssignDialog({
               className="w-full flex items-center gap-2 px-3 py-2.5 text-left rounded-lg min-h-[44px]"
               style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
             >
-              <span className="text-[12.5px]" style={{ color: 'var(--text)' }}>{member.name}</span>
-              <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-3)' }}>
+              <span className="text-body" style={{ color: 'var(--text)' }}>{member.name}</span>
+              <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-3)' }}>
                 {member.role}
               </span>
             </button>
           </li>
         ))}
       </ul>
-      {error && <p className="font-mono text-[10px] mt-3" style={{ color: 'var(--act-soft)' }}>{error}</p>}
+      {error && <p className="font-mono text-caption mt-3" style={{ color: 'var(--act-soft)' }}>{error}</p>}
     </Modal>
   );
 }
@@ -491,45 +501,45 @@ function DeferDialog({
 
   return (
     <Modal open={open} onClose={onClose} title="Defer action">
-      <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
         A deferral needs a reason AND a review date. A deferral the next crew does not know about
         is the classic handover failure, so both fields appear in the handover capsule.
       </p>
 
-      <label className="block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+      <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
         Reason
       </label>
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         rows={3}
-        className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+        className="w-full px-3 py-2 text-body outline-none mb-3"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
 
-      <label className="block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+      <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
         Review date
       </label>
       <input
         type="date"
         value={reviewDate}
         onChange={(e) => setReviewDate(e.target.value)}
-        className="w-full px-3 py-2 text-[12px] font-mono outline-none mb-3"
+        className="w-full px-3 py-2 text-body font-mono outline-none mb-3"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
 
       {invalid && (
-        <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--watch-soft)' }}>
+        <p className="font-mono text-caption mb-2" style={{ color: 'var(--watch-soft)' }}>
           Both a reason and a review date are required.
         </p>
       )}
-      {error && <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
+      {error && <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
 
       <button
         type="button"
         disabled={invalid}
         onClick={() => onSubmit(reason, new Date(reviewDate).toISOString())}
-        className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
         style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-4)' : 'var(--bg)' }}
       >
         Defer and record
@@ -547,7 +557,7 @@ function ResolveDialog({
 
   return (
     <Modal open={open} onClose={onClose} title="Resolve action">
-      <label className="block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+      <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
         Resolution note
       </label>
       <textarea
@@ -555,23 +565,23 @@ function ResolveDialog({
         onChange={(e) => setNote(e.target.value)}
         rows={4}
         placeholder="What was done, and how it was confirmed"
-        className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+        className="w-full px-3 py-2 text-body outline-none mb-3"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
 
       {needsEvidence && (
-        <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>
+        <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>
           A {action.tier} action needs at least one evidence item before it can be resolved. Attach
           one from the Evidence section first.
         </p>
       )}
-      {error && <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
+      {error && <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
 
       <button
         type="button"
         disabled={invalid}
         onClick={() => onSubmit(note)}
-        className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
         style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-4)' : 'var(--bg)' }}
       >
         Resolve and record
@@ -594,7 +604,7 @@ function EvidenceDialog({
             key={k}
             type="button"
             onClick={() => setKind(k)}
-            className="flex-1 py-2 text-[11.5px] font-medium rounded-full min-h-[40px] capitalize"
+            className="flex-1 py-2 text-body-sm font-medium rounded-full min-h-[40px] capitalize"
             style={{
               fontFamily: 'var(--font-body)',
               backgroundColor: kind === k ? 'var(--panel-raised)' : 'transparent',
@@ -610,15 +620,15 @@ function EvidenceDialog({
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         placeholder="Describe the evidence"
-        className="w-full px-3 py-2 text-[12px] outline-none mb-3"
+        className="w-full px-3 py-2 text-body outline-none mb-3"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
-      {error && <p className="font-mono text-[10px] mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
+      {error && <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>{error}</p>}
       <button
         type="button"
         disabled={!label.trim()}
         onClick={() => onSubmit(kind, label)}
-        className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
         style={{ backgroundColor: label.trim() ? 'var(--act)' : 'var(--panel-raised)', color: label.trim() ? 'var(--bg)' : 'var(--text-4)' }}
       >
         Attach

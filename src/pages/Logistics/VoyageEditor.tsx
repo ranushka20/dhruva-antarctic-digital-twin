@@ -54,11 +54,11 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
   return (
     <Modal open={open} onClose={onClose} title={'Arrival windows — ' + voyage.name}>
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-mono text-[9.5px] tracking-[0.06em] px-1.5 py-0.5 rounded"
+        <span className="font-mono text-micro tracking-[0.06em] px-1.5 py-0.5 rounded"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)' }}>
           {voyage.status.toUpperCase()}
         </span>
-        <span className="font-mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
           season {voyage.season} · {voyage.capacityKg.min.toLocaleString()}–
           {voyage.capacityKg.max.toLocaleString()} kg
         </span>
@@ -68,14 +68,14 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
         />
       </div>
 
-      <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
         Moving a window recomputes every Last Safe Order Date on the page immediately. That is not
         a preview — the bars and ticks move with the save.
       </p>
 
       {(['bharati', 'maitri'] as const).map((id) => (
         <div key={id} className="mb-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
+          <p className="font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
             {STATION_LABEL[id]} arrival
           </p>
           <div className="flex gap-2">
@@ -83,7 +83,7 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
               type="date"
               value={id === 'bharati' ? bhrFrom : mtrFrom}
               onChange={(e) => (id === 'bharati' ? setBhrFrom : setMtrFrom)(e.target.value)}
-              className="flex-1 px-3 py-2 font-mono text-[12px] outline-none"
+              className="flex-1 px-3 py-2 font-mono text-body outline-none"
               style={field}
               aria-label={STATION_LABEL[id] + ' earliest arrival'}
             />
@@ -91,7 +91,7 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
               type="date"
               value={id === 'bharati' ? bhrTo : mtrTo}
               onChange={(e) => (id === 'bharati' ? setBhrTo : setMtrTo)(e.target.value)}
-              className="flex-1 px-3 py-2 font-mono text-[12px] outline-none"
+              className="flex-1 px-3 py-2 font-mono text-body outline-none"
               style={field}
               aria-label={STATION_LABEL[id] + ' latest arrival'}
             />
@@ -102,7 +102,7 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
       <button
         type="button"
         onClick={save}
-        className="w-full py-2.5 rounded-full text-[12.5px] font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
         style={{ backgroundColor: 'var(--act)', color: 'var(--bg)' }}
       >
         Apply and recompute

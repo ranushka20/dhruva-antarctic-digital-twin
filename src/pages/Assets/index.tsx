@@ -66,12 +66,12 @@ export default function AssetsPage() {
     });
   }, [allAssets, filterStation, filterStatus, search]);
 
-  if (!bharati || !maitri) return <div className="p-5 font-mono text-[11px] text-[var(--text-3)]">Loading assets...</div>;
+  if (!bharati || !maitri) return <div className="p-5 text-body-sm text-[var(--text-3)]">Loading assets...</div>;
 
   // DETAIL VIEW
   if (assetId) {
     const asset = allAssets.find(a => a.id === assetId);
-    if (!asset) return <div className="p-5 font-mono text-[11px] text-[var(--text-3)]">Asset not found.</div>;
+    if (!asset) return <div className="p-5 text-body-sm text-[var(--text-3)]">Asset not found.</div>;
     
     const isBharati = asset.stationId === 'bharati';
     const stationData = isBharati ? bharati : maitri;
@@ -92,7 +92,7 @@ export default function AssetsPage() {
     return (
       <div className="h-screen flex flex-col bg-[var(--bg)] overflow-hidden">
         <div className="px-5 pt-4 pb-2 border-b border-[var(--line)] shrink-0 flex justify-between items-center bg-[var(--panel)]">
-          <PageHeader title={asset.name} backTo="/assets" backLabel="← Asset Register" />
+          <PageHeader title={asset.name} backTo="/assets" backLabel="Asset Register" />
         </div>
         
         <div className="flex-1 overflow-y-auto p-5">
@@ -107,29 +107,29 @@ export default function AssetsPage() {
                   <div className="flex items-center gap-3">
                     <StatusDot status={asset.status} />
                     <div>
-                      <h2 className="text-[20px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+                      <h2 className="text-headline font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
                         {asset.name}
                       </h2>
-                      <div className="font-mono text-[11px] text-[var(--text-3)] mt-1">
+                      <div className="font-mono text-body-sm text-[var(--text-3)] mt-1">
                         {asset.id} · {asset.stationCode} / {asset.zoneCode}
                       </div>
                     </div>
                   </div>
                   {asset.status !== 'ok' && (
-                    <div className="px-3 py-1 bg-[var(--act-soft)] text-[var(--act)] font-mono text-[11px] rounded uppercase">
+                    <div className="px-3 py-1 bg-[var(--act-soft)] text-[var(--act)] font-mono text-body-sm rounded uppercase">
                       Condition Degraded
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => navigate(`/stations/${asset.stationId}/twin?zone=${asset.zoneCode}`)}
-                      className="px-3 py-1.5 bg-[var(--bg)] border border-[var(--line)] rounded font-mono text-[10px] text-[var(--text)] hover:bg-[var(--panel-raised)] transition-colors"
+                      className="px-3 py-1.5 bg-[var(--bg)] border border-[var(--line)] rounded text-body-sm font-medium text-[var(--text)] hover:bg-[var(--panel-raised)] transition-colors"
                     >
                       View in 3D Twin
                     </button>
                     <button 
                       onClick={() => alert('Log Service action dispatched (Dev B handles real decrement)')}
-                      className="px-3 py-1.5 bg-[var(--act-soft)] text-[var(--act)] font-mono text-[10px] rounded hover:opacity-80 transition-opacity"
+                      className="px-3 py-1.5 bg-[var(--act-soft)] text-[var(--act)] text-body-sm font-medium rounded hover:opacity-80 transition-opacity"
                     >
                       Log Service
                     </button>
@@ -139,7 +139,7 @@ export default function AssetsPage() {
 
               {/* Live Metrics */}
               <div className="bg-[var(--panel)] rounded-xl border border-[var(--line)] p-5">
-                <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-4 tracking-widest">Live Telemetry</h3>
+                <h3 className="font-mono text-micro uppercase text-[var(--text-3)] mb-4 tracking-label">Live Telemetry</h3>
                 <div className="grid grid-cols-2 gap-4 mb-5">
                   <StatTile 
                     label={asset.threshold ? asset.threshold.label : "CURRENT"} 
@@ -148,10 +148,10 @@ export default function AssetsPage() {
                   />
                   {asset.threshold && (
                     <div className="p-3 rounded-lg border border-[var(--line)] flex flex-col justify-center">
-                      <span className="font-mono text-[10px] uppercase text-[var(--text-4)] mb-1">Threshold limit</span>
+                      <span className="font-mono text-micro uppercase tracking-label text-[var(--text-4)] mb-1">Threshold limit</span>
                       <div className="flex items-baseline gap-1">
-                        <span className="font-mono text-[20px] font-medium text-[var(--text)]">{asset.threshold.value}</span>
-                        <span className="font-mono text-[11px] text-[var(--text-3)]">{asset.threshold.unit}</span>
+                        <span className="font-mono text-headline font-medium text-[var(--text)]">{asset.threshold.value}</span>
+                        <span className="font-mono text-body-sm text-[var(--text-3)]">{asset.threshold.unit}</span>
                       </div>
                     </div>
                   )}
@@ -169,22 +169,22 @@ export default function AssetsPage() {
 
               {/* Maintenance & Fault History */}
               <div className="bg-[var(--panel)] rounded-xl border border-[var(--line)] p-5">
-                <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-4 tracking-widest">Fault History</h3>
+                <h3 className="font-mono text-micro uppercase text-[var(--text-3)] mb-4 tracking-label">Fault History</h3>
                 <div className="space-y-4">
                   {faultHistory.map((f: any) => (
                     <div key={f.id} className="border border-[var(--line)] rounded-lg p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="font-mono text-[12px] font-semibold text-[var(--text)]">{f.symptom}</div>
-                        <div className="font-mono text-[10px] text-[var(--text-4)]">{new Date(f.raisedAt).toLocaleDateString()}</div>
+                        <div className="text-body font-semibold text-[var(--text)]">{f.symptom}</div>
+                        <div className="font-mono text-caption text-[var(--text-4)]">{new Date(f.raisedAt).toLocaleDateString()}</div>
                       </div>
-                      <div className="font-mono text-[11px] text-[var(--text-3)] mb-2">Diagnosis: {f.diagnosis}</div>
+                      <div className="text-body-sm text-[var(--text-3)] mb-2">Diagnosis: {f.diagnosis}</div>
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-[var(--line)]">
                         <ProvenanceBadge measurement={{ provenance: f.provenance, value: null, unit: '', timestamp: '', source: '', freshnessSeconds: 0 }} />
-                        <span className="font-mono text-[10px] text-[var(--text-4)]">TTR: {f.timeToResolveMinutes} min</span>
+                        <span className="font-mono text-caption text-[var(--text-4)]">TTR: {f.timeToResolveMinutes} min</span>
                       </div>
                     </div>
                   ))}
-                  <div className="font-mono text-[9.5px] text-[var(--text-4)] italic">
+                  <div className="text-caption text-[var(--text-4)] italic">
                     Historical records are synthetic pending connection to NCPOR station maintenance log.
                   </div>
                 </div>
@@ -198,7 +198,7 @@ export default function AssetsPage() {
               {/* Active Actions */}
               {actions.length > 0 && (
                 <div className="bg-[var(--panel)] rounded-xl border border-[var(--line)] p-5">
-                  <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-4 tracking-widest flex justify-between">
+                  <h3 className="font-mono text-micro uppercase text-[var(--text-3)] mb-4 tracking-label flex justify-between">
                     <span>Active Tickets</span>
                     <span className="bg-[var(--act-soft)] text-[var(--act)] px-1.5 rounded-full">{actions.length}</span>
                   </h3>
@@ -217,7 +217,7 @@ export default function AssetsPage() {
 
               {/* Similar Faults via TF-IDF */}
               <div className="bg-[var(--panel)] rounded-xl border border-[var(--line)] p-5">
-                <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-4 tracking-widest flex items-center gap-2">
+                <h3 className="font-mono text-micro uppercase text-[var(--text-3)] mb-4 tracking-label flex items-center gap-2">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   Similar Past Faults
                 </h3>
@@ -225,22 +225,22 @@ export default function AssetsPage() {
                   {similarFaults.map((sf: any) => (
                     <div key={sf.fault.id} className="p-2 border border-[var(--line)] rounded-lg bg-[var(--bg)] cursor-pointer hover:border-[var(--brand)] transition-colors">
                       <div className="flex justify-between items-start mb-1">
-                        <div className="font-mono text-[11px] font-semibold text-[var(--text)]">{sf.fault.symptom}</div>
-                        <div className="font-mono text-[9px] px-1 bg-[var(--panel-raised)] rounded text-[var(--brand)]">
+                        <div className="text-body-sm font-semibold text-[var(--text)]">{sf.fault.symptom}</div>
+                        <div className="font-mono text-micro px-1 bg-[var(--panel-raised)] rounded text-[var(--brand)]">
                           {(sf.score * 100).toFixed(0)}%
                         </div>
                       </div>
-                      <div className="font-mono text-[10px] text-[var(--text-3)] truncate mb-2">
+                      <div className="text-caption text-[var(--text-3)] truncate mb-2">
                         {sf.fault.diagnosis}
                       </div>
                       <div className="flex justify-between items-center">
                         <ProvenanceBadge measurement={{ provenance: sf.fault.provenance, value: null, unit: '', timestamp: '', source: '', freshnessSeconds: 0 }} />
-                        <span className="font-mono text-[9px] text-[var(--text-4)]">{new Date(sf.fault.raisedAt).getFullYear()}</span>
+                        <span className="font-mono text-micro text-[var(--text-4)]">{new Date(sf.fault.raisedAt).getFullYear()}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-3 border-t border-[var(--line)] font-mono text-[9px] text-[var(--text-4)] leading-tight">
+                <div className="mt-4 pt-3 border-t border-[var(--line)] text-caption text-[var(--text-4)] leading-snug">
                   {SIMILARITY_METHOD_DISCLOSURE}
                 </div>
               </div>
@@ -256,29 +256,29 @@ export default function AssetsPage() {
   return (
     <div className="h-screen flex flex-col bg-[var(--bg)] overflow-hidden">
       <div className="px-5 pt-4 pb-2 border-b border-[var(--line)] shrink-0 flex justify-between items-center bg-[var(--panel)]">
-        <PageHeader title="Asset Register" backTo="/" backLabel="← HQ" />
+        <PageHeader title="Asset Register" backTo="/" backLabel="HQ" />
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Filter Rail */}
         <div className="w-[240px] border-r border-[var(--line)] bg-[var(--panel)] p-4 flex flex-col shrink-0 overflow-y-auto">
-           <h3 className="font-mono text-[10px] uppercase text-[var(--text-3)] mb-3 tracking-widest">Filters</h3>
+           <h3 className="font-mono text-micro uppercase text-[var(--text-3)] mb-3 tracking-label">Filters</h3>
            
            <div className="mb-4">
-             <label className="font-mono text-[10px] text-[var(--text-4)] block mb-1">Search</label>
+             <label className="text-caption text-[var(--text-3)] block mb-1">Search</label>
              <input 
                type="text" 
                placeholder="Asset name or ID..."
-               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-[12px] font-mono text-[var(--text)] focus:border-[var(--brand)] outline-none"
+               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-body text-[var(--text)] focus:border-[var(--brand)] outline-none"
                value={search}
                onChange={(e) => setSearch(e.target.value)}
              />
            </div>
 
            <div className="mb-4">
-             <label className="font-mono text-[10px] text-[var(--text-4)] block mb-1">Station</label>
+             <label className="text-caption text-[var(--text-3)] block mb-1">Station</label>
              <select 
-               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-[12px] font-mono text-[var(--text)] focus:border-[var(--brand)] outline-none"
+               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-body text-[var(--text)] focus:border-[var(--brand)] outline-none"
                value={filterStation}
                onChange={(e) => setFilterStation(e.target.value as any)}
              >
@@ -289,9 +289,9 @@ export default function AssetsPage() {
            </div>
 
            <div className="mb-4">
-             <label className="font-mono text-[10px] text-[var(--text-4)] block mb-1">Status</label>
+             <label className="text-caption text-[var(--text-3)] block mb-1">Status</label>
              <select 
-               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-[12px] font-mono text-[var(--text)] focus:border-[var(--brand)] outline-none"
+               className="w-full bg-[var(--bg)] border border-[var(--line)] rounded p-2 text-body text-[var(--text)] focus:border-[var(--brand)] outline-none"
                value={filterStatus}
                onChange={(e) => setFilterStatus(e.target.value)}
              >
@@ -306,7 +306,7 @@ export default function AssetsPage() {
         {/* Table View */}
         <div className="flex-1 overflow-y-auto bg-[var(--bg)] p-5">
            <div className="mb-4 flex justify-between items-end">
-              <span className="font-mono text-[11px] text-[var(--text-3)]">
+              <span className="font-mono text-body-sm text-[var(--text-3)]">
                 Showing {filteredAssets.length} of {allAssets.length} assets
               </span>
            </div>
@@ -315,16 +315,16 @@ export default function AssetsPage() {
              <table className="w-full text-left border-collapse">
                <thead>
                  <tr className="border-b border-[var(--line)] bg-[var(--panel-raised)]">
-                   <th className="p-3 font-mono text-[10px] text-[var(--text-3)] font-normal w-8">St.</th>
-                   <th className="p-3 font-mono text-[10px] text-[var(--text-3)] font-normal">Asset</th>
-                   <th className="p-3 font-mono text-[10px] text-[var(--text-3)] font-normal">Location</th>
-                   <th className="p-3 font-mono text-[10px] text-[var(--text-3)] font-normal text-right">Current Value</th>
+                   <th className="p-3 font-mono text-micro uppercase tracking-label text-[var(--text-3)] font-normal w-8">St.</th>
+                   <th className="p-3 font-mono text-micro uppercase tracking-label text-[var(--text-3)] font-normal">Asset</th>
+                   <th className="p-3 font-mono text-micro uppercase tracking-label text-[var(--text-3)] font-normal">Location</th>
+                   <th className="p-3 font-mono text-micro uppercase tracking-label text-[var(--text-3)] font-normal text-right">Current Value</th>
                  </tr>
                </thead>
                <tbody>
                  {filteredAssets.length === 0 ? (
                    <tr>
-                     <td colSpan={4} className="p-8 text-center font-mono text-[11px] text-[var(--text-4)]">
+                     <td colSpan={4} className="p-8 text-center text-body-sm text-[var(--text-4)]">
                        No assets found matching filters.
                      </td>
                    </tr>
@@ -339,22 +339,22 @@ export default function AssetsPage() {
                          <StatusDot status={asset.status} />
                        </td>
                        <td className="p-3 align-middle">
-                         <div className="font-mono text-[12px] font-semibold text-[var(--text)]">{asset.name}</div>
-                         <div className="font-mono text-[10px] text-[var(--text-4)] mt-0.5">{asset.id}</div>
+                         <div className="text-body font-semibold text-[var(--text)]">{asset.name}</div>
+                         <div className="font-mono text-caption text-[var(--text-4)] mt-0.5">{asset.id}</div>
                        </td>
                        <td className="p-3 align-middle">
-                         <div className="font-mono text-[11px] text-[var(--text)]">{asset.stationCode} / {asset.zoneCode}</div>
-                         <div className="font-mono text-[10px] text-[var(--text-4)] mt-0.5 truncate max-w-[200px]">{asset.zoneName}</div>
+                         <div className="font-mono text-body-sm text-[var(--text)]">{asset.stationCode} / {asset.zoneCode}</div>
+                         <div className="text-caption text-[var(--text-4)] mt-0.5 truncate max-w-[200px]">{asset.zoneName}</div>
                        </td>
                        <td className="p-3 align-middle text-right">
                          <div className="flex items-baseline justify-end gap-1">
-                           <span className="font-mono text-[13px] font-medium text-[var(--text)]">
+                           <span className="font-mono text-body font-medium text-[var(--text)]">
                              {typeof asset.current?.value === 'number' ? asset.current.value.toFixed(1) : asset.current?.value || '—'}
                            </span>
-                           <span className="font-mono text-[9px] text-[var(--text-3)]">{asset.current?.unit}</span>
+                           <span className="font-mono text-micro text-[var(--text-3)]">{asset.current?.unit}</span>
                          </div>
                          {asset.threshold && (
-                           <div className="font-mono text-[9px] text-[var(--text-4)] mt-0.5">
+                           <div className="font-mono text-micro text-[var(--text-4)] mt-0.5">
                              Threshold: {asset.threshold.value} {asset.threshold.unit}
                            </div>
                          )}

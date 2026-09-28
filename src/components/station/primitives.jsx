@@ -53,7 +53,7 @@ export function Metric({ label, value, tone, loading = false, className }) {
       ) : (
         <span
           className={cn(
-            "flex items-center gap-1.5 font-medium text-[0.9375rem] leading-none",
+            "flex items-center gap-1.5 font-medium text-title leading-none",
             tone === "online" && "text-success-foreground",
             tone === "warning" && "text-warning-foreground",
             tone === "offline" && "text-destructive-foreground",

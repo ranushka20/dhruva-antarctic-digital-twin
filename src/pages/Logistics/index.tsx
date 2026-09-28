@@ -27,6 +27,7 @@ import { getParamValue } from '@/state/params';
 import { STATION_LABEL, type StationFilter } from '@/state/stationScope';
 import { currentActor, useCan } from '@/state/auth';
 import { formatDateIST, daysFromNow } from '@/lib/time';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
 const SCOPES: { id: StationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -124,35 +125,36 @@ export default function LogisticsPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Header: title, scope, season. Nothing else. ---- */}
       <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Logistics &amp; Resupply
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {SCOPES.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setScope(s.id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={scope === s.id}
+              className="px-3 py-1.5 rounded-full text-body-sm"
               style={{
-                backgroundColor: scope === s.id ? 'var(--text)' : 'transparent',
                 color: scope === s.id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {s.label}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <label className="flex items-center gap-2 ml-auto">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+          <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
             Season
           </span>
           <select
             value={activeSeason ?? ''}
             onChange={(e) => setSeason(e.target.value)}
-            className="px-2.5 py-1.5 font-mono text-[11px] outline-none"
+            className="px-2.5 py-1.5 font-mono text-body-sm outline-none"
             style={{
               backgroundColor: 'var(--panel)', border: '1px solid var(--line)',
               borderRadius: 'var(--r-pill)', color: 'var(--text-2)',
@@ -275,32 +277,32 @@ function Tile({
     >
       <div className="flex items-center gap-1.5 mb-2">
         {icon && <span style={{ color: 'var(--text-4)' }} aria-hidden>{icon}</span>}
-        <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
           {label}
         </span>
       </div>
 
       <div className="flex items-baseline gap-1.5 mb-1.5">
         <span
-          className="text-[28px] font-semibold leading-none tabular-nums"
+          className="text-display font-semibold leading-none tabular-nums"
           style={{ fontFamily: 'var(--font-display)', color: valueColor }}
         >
           {value}
         </span>
-        <span className="font-mono text-[10.5px]" style={{ color: 'var(--text-3)' }}>{unit}</span>
+        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>{unit}</span>
       </div>
 
-      <p className="text-[11.5px]" style={{ color: 'var(--text-3)' }}>{note}</p>
+      <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>{note}</p>
 
       {footer && (
-        <p className="text-[11px] mt-1" style={{ color: 'var(--act-soft)' }}>{footer}</p>
+        <p className="text-body-sm mt-1" style={{ color: 'var(--act-soft)' }}>{footer}</p>
       )}
 
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="flex items-center justify-center gap-1.5 mt-3 py-2 rounded-full text-[11.5px] font-medium min-h-[36px]"
+          className="flex items-center justify-center gap-1.5 mt-3 py-2 rounded-full text-body-sm font-medium min-h-[36px]"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
         >
           {action.label} {action.icon}

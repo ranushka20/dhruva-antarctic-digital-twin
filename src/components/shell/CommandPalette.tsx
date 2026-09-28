@@ -162,18 +162,18 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 if (e.key === 'Enter' && results[cursor]) { e.preventDefault(); go(results[cursor]); }
               }}
               placeholder="Search assets, actions, records"
-              className="flex-1 bg-transparent outline-none text-[13px]"
+              className="flex-1 bg-transparent outline-none text-body"
               style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}
               aria-label="Search assets, actions, records"
             />
-            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--text-4)', border: '1px solid var(--line)' }}>
+            <span className="font-mono text-micro px-1.5 py-0.5 rounded" style={{ color: 'var(--text-4)', border: '1px solid var(--line)' }}>
               ESC
             </span>
           </div>
 
           <ul className="max-h-[52vh] overflow-y-auto py-1">
             {results.length === 0 && (
-              <li className="px-4 py-6 text-center text-[12px]" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}>
+              <li className="px-4 py-6 text-center text-body" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}>
                 Nothing matches “{query}”. Search covers actions, resources, obligations, inspections and the audit log of both stations.
               </li>
             )}
@@ -187,17 +187,17 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   style={{ backgroundColor: i === cursor ? 'var(--panel-raised)' : 'transparent' }}
                 >
                   <span
-                    className="font-mono text-[8.5px] tracking-[0.08em] w-16 shrink-0"
+                    className="font-mono text-micro tracking-label w-16 shrink-0"
                     style={{ color: KIND_COLOR[hit.kind] }}
                   >
                     {hit.kind.toUpperCase()}
                   </span>
                   {hit.tier && <TierChip tier={hit.tier} />}
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[12.5px] truncate" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+                    <span className="block text-body truncate" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
                       {hit.title}
                     </span>
-                    <span className="block font-mono text-[9.5px] truncate" style={{ color: 'var(--text-3)' }}>
+                    <span className="block font-mono text-micro truncate" style={{ color: 'var(--text-3)' }}>
                       {hit.sub}
                     </span>
                   </span>

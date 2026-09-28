@@ -51,7 +51,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
           className="text-[15px] font-semibold tracking-[0.1em]"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}
         >
-          Antarasetu
+          DHRUVA
         </span>
       </NavLink>
 

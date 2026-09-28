@@ -62,7 +62,7 @@ export default function LoginPage() {
             className="text-[19px] font-semibold tracking-[0.1em]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Antarasetu
+            DHRUVA
           </h1>
         </div>
         <p className="text-[11.5px] mb-5" style={{ color: 'var(--text-3)' }}>

@@ -361,7 +361,7 @@ export function exportParametersJSON(): string {
   return JSON.stringify(
     {
       exportedAt: new Date().toISOString(),
-      product: 'Antarasetu',
+      product: 'DHRUVA',
       note:
         'Every SYNTH-badged parameter is an assumption pending NCPOR confirmation. ' +
         'Values drive the coupling engine directly — changing one changes every derived figure.',

@@ -86,12 +86,13 @@ export function describeStanding(action: Action): { now: string; next: string | 
 /** What the next step does and where it is recorded — shown under the steps. */
 export function explainStep(action: Action, key: StepKey): string {
   if (key === 'ack') {
-    return `Acknowledging tells the station HQ has seen this. Your name and the time go into this ` +
-      `action's history and the audit log, and the ${formatDuration(action.sla.targetSeconds)} ` +
-      `response clock stops.`;
+    return `Acknowledging tells the station HQ has seen this. You add a short note on what happens ` +
+      `next; it goes into this action's history and the audit log with your name and the time, and ` +
+      `the ${formatDuration(action.sla.targetSeconds)} response clock stops.`;
   }
   if (key === 'assign') {
-    return 'Pick a named person from the station roster. An action owned by "someone" is owned by nobody.';
+    return 'Pick a named person from the station roster and say what they should do. An action owned ' +
+      'by "someone" is owned by nobody.';
   }
   return needsEvidence(action)
     ? `Write what was done. A ${action.tier} action also needs at least one evidence item.`

@@ -1,51 +1,129 @@
 // OWNER: Dev B
-// Obligations — a season calendar strip plus the due list.
+// Reports — "Are reports filed on time?"
 //
-// The distinction that has to be visible (FR-2.6): an obligation whose
-// evidence is sitting in a station outbox reads QUEUED OFFLINE, not OVERDUE.
-// The station did its part; the link did not. Marking that station
-// non-compliant would be wrong and an operator would rightly stop trusting
-// the page.
+// One list, grouped by status, most urgent first: Overdue → Waiting for the
+// link → Due in the next 30 days → Later → Filed (collapsed). Each group
+// heading carries its own count; the page's summary lives in the question
+// card above, so nothing else here counts.
+//
+// FR-2.6: a report filed at the station but still waiting for the satellite
+// link is NOT overdue — the station did its part, the link did not. Those
+// rows are amber with a dashed border and must never read as late.
+// FR-2.4: an overdue report always has an action; a missing one is flagged.
 
-import { useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
+import { useId, useMemo, useState } from 'react';
+import { AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import type { Obligation } from '@/shared/contracts';
-import { CHART_DEFAULTS, ChartContainer, ChartLegend, ChartTooltipContent } from '@/components/shared/Chart';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
-import { formatDateIST, daysFromNow } from '@/lib/time';
+import { StatusDot } from '@/components/shared/StatusDot';
+import { STATION_LABEL } from '@/state/stationScope';
 
-const STATUS_STYLE: Record<Obligation['status'], { color: string; label: string; border: string; hint: string }> = {
-  submitted: { color: 'var(--ok-soft)', label: 'Submitted', border: 'var(--ok)', hint: 'Evidence received at HQ.' },
-  due_soon: { color: 'var(--watch-soft)', label: 'Due soon', border: 'var(--watch)', hint: 'Due within the next 30 days.' },
-  overdue: { color: 'var(--act-soft)', label: 'Overdue', border: 'var(--act)', hint: 'Past its due date with no evidence received.' },
-  queued_offline: {
-    color: 'var(--watch-soft)', label: 'Queued offline', border: 'var(--watch)',
-    hint: 'The record exists at the station and is waiting on the link, not on a person. Not overdue.',
-  },
-  future: { color: 'var(--text-3)', label: 'Upcoming', border: 'var(--line-strong)', hint: 'Due later in the season.' },
-};
+type Status = Obligation['status'];
 
-const STATUS_ORDER: Obligation['status'][] = ['overdue', 'due_soon', 'queued_offline', 'submitted', 'future'];
+const WAITING_HINT = 'Filed at the station; waiting for the satellite link to reach HQ. Not late.';
+const NO_ACTION_HINT =
+  'Every overdue report should have an action raised for it automatically. This one has none, so the records need checking.';
 
-const CADENCE_LABEL: Record<Obligation['cadence'], string> = {
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  seasonal: 'Once a season',
-  annual: 'Once a year',
-  'event-driven': 'When an event occurs',
-};
-
-const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-/** "in 11 days" / "3 days ago" / "today" — plain words next to the date. */
-function relativeDays(iso: string): string {
-  const d = Math.round(daysFromNow(iso));
-  if (d === 0) return 'today';
-  if (d === 1) return 'tomorrow';
-  if (d === -1) return 'yesterday';
-  return d > 0 ? `in ${d} days` : `${-d} days ago`;
+interface Group {
+  status: Status;
+  title: string;
+  /** Sort inside the group: earliest due first, except Filed (latest first). */
+  newestFirst?: boolean;
 }
+
+/** Most urgent first. Filed is last and collapsed by default. */
+const GROUPS: Group[] = [
+  { status: 'overdue', title: 'Overdue' },
+  { status: 'queued_offline', title: 'Waiting for the link' },
+  { status: 'due_soon', title: 'Due in the next 30 days' },
+  { status: 'future', title: 'Later' },
+  { status: 'submitted', title: 'Filed', newestFirst: true },
+];
+
+// ---------------------------------------------------------------------------
+// Plain-language helpers
+
+/** Category words from the register, made readable: "fuel-handling record" → "Fuel handling record". */
+const CATEGORY_WORDS: Record<string, string> = {
+  eia: 'Environmental impact assessment',
+};
+
+function categoryLabel(category: string): string {
+  const known = CATEGORY_WORDS[category.trim().toLowerCase()];
+  if (known) return known;
+  const words = category.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+// Dates are compared as IST calendar days, so "3 days late" means the due
+// date was three calendar days ago at HQ, regardless of the hour.
+const DAY_MS = 86_400_000;
+const IST_OFFSET_MS = 330 * 60_000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const istDayNumber = (t: number) => Math.floor((t + IST_OFFSET_MS) / DAY_MS);
+
+function calendarDaysFromToday(iso: string, now: number): number {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return 0;
+  return istDayNumber(t) - istDayNumber(now);
+}
+
+/** "14 Nov", or "14 Nov 2027" when it isn't this year. */
+function shortDate(iso: string, now: number): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '—';
+  const d = new Date(t + IST_OFFSET_MS);
+  const thisYear = new Date(now + IST_OFFSET_MS).getUTCFullYear();
+  const base = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  return d.getUTCFullYear() === thisYear ? base : `${base} ${d.getUTCFullYear()}`;
+}
+
+type Tone = 'act' | 'strong' | 'quiet';
+
+/** Due date in words. `value` is the numeric part, rendered in mono. */
+interface DueWords {
+  before?: string;
+  value?: string;
+  after?: string;
+  tone: Tone;
+}
+
+const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
+
+function dueWords(o: Obligation, now: number): DueWords {
+  const days = calendarDaysFromToday(o.dueDate, now);
+  const date = shortDate(o.dueDate, now);
+  const dated = (tone: Tone): DueWords =>
+    days < 0 ? { before: 'Was due ', value: date, tone } : { before: 'Due ', value: date, tone };
+
+  switch (o.status) {
+    case 'overdue': {
+      const late = -days;
+      if (late < 1) return { before: 'Due today, now late', tone: 'act' };
+      return { value: String(late), after: ` ${plural(late, 'day')} late`, tone: 'act' };
+    }
+    case 'due_soon':
+      if (days === 0) return { before: 'Due today', tone: 'strong' };
+      if (days === 1) return { before: 'Due tomorrow', tone: 'strong' };
+      if (days > 1) return { before: 'Due in ', value: String(days), after: ' days', tone: 'strong' };
+      return dated('strong');
+    case 'future':
+      return dated('strong');
+    case 'queued_offline':
+    case 'submitted':
+    default:
+      return dated('quiet');
+  }
+}
+
+const TONE_COLOR: Record<Tone, string> = {
+  act: 'var(--act-soft)',
+  strong: 'var(--text)',
+  quiet: 'var(--text-2)',
+};
+
+// ---------------------------------------------------------------------------
 
 interface Props {
   obligations: Obligation[];
@@ -54,213 +132,196 @@ interface Props {
 }
 
 export function Obligations({ obligations, onOpen, onOpenAction }: Props) {
-  const cell = { borderBottom: '1px solid var(--line)' } as const;
+  const [showFiled, setShowFiled] = useState(false);
+  const filedListId = useId();
 
-  return (
-    <div className="flex flex-col gap-5">
-      {/* ---- Season calendar (FR-2.1): how much falls due each month ---- */}
-      <SeasonCalendar obligations={obligations} />
-
-      {/* ---- Due list (FR-2.2) ---- */}
-      <section
-        className="p-5"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
-      >
-        <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
-          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Obligations</h3>
-          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
-            Select a row to see the full record.
-          </p>
-        </div>
-        {obligations.length === 0 ? (
-          <EmptyState reason="No obligations registered for this scope and period." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[52rem] border-collapse">
-              <thead>
-                <tr>
-                  {['Obligation', 'Station', 'Due', 'Owner', 'Status', ''].map((h, i) => (
-                    <th key={h || 'action-' + i} className="pb-3 px-4 text-left text-body-sm font-medium"
-                      style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {obligations.map((o) => {
-                  const style = STATUS_STYLE[o.status];
-                  const overdueNoAction = o.status === 'overdue' && !o.linkedActionId;
-                  return (
-                    <tr key={o.id} onClick={() => onOpen(o.id)} className="cursor-pointer hover:bg-[var(--panel-raised)]">
-                      <td className="py-3 px-4 align-top" style={cell}>
-                        <span className="block text-body font-medium" style={{ color: 'var(--text)' }}>
-                          {o.name}
-                        </span>
-                        <span className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
-                          <span>{sentence(o.category)}</span>
-                          <span title={`Cadence: ${o.cadence}`}>{CADENCE_LABEL[o.cadence] ?? o.cadence}</span>
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 align-top" style={cell}>
-                        <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-body-sm whitespace-nowrap"
-                          style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', color: 'var(--text-2)' }}
-                          title={STATION_CODE[o.stationId]}
-                        >
-                          {STATION_LABEL[o.stationId]}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 align-top whitespace-nowrap" style={cell}>
-                        <span className="block font-mono text-body tabular-nums" style={{ color: 'var(--text)' }}>
-                          {formatDateIST(o.dueDate)}
-                        </span>
-                        <span className="block text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
-                          {relativeDays(o.dueDate)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 align-top text-body" style={{ ...cell, color: 'var(--text-2)' }}>
-                        {o.owner}
-                      </td>
-                      <td className="py-3 px-4 align-top" style={cell}>
-                        <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-body-sm font-medium whitespace-nowrap"
-                          style={{ border: `1px ${o.status === 'queued_offline' ? 'dashed' : 'solid'} ${style.border}`, color: style.color }}
-                          title={style.hint}
-                        >
-                          {style.label}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 align-top text-right whitespace-nowrap" style={cell}
-                        onClick={(e) => e.stopPropagation()}>
-                        {o.linkedActionId ? (
-                          <button
-                            type="button"
-                            onClick={() => onOpenAction(o.linkedActionId!)}
-                            className="text-body-sm font-medium px-4 min-h-9 rounded-full hover:bg-[var(--panel-alt)]"
-                            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
-                          >
-                            Open action
-                          </button>
-                        ) : overdueNoAction ? (
-                          <span className="text-body-sm font-medium" style={{ color: 'var(--act-soft)' }}
-                            title="An overdue obligation must carry a T2 action — a missing link is a data-integrity error">
-                            No linked action
-                          </span>
-                        ) : null}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <p className="text-body-sm mt-5 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
-          <span className="font-medium" style={{ color: 'var(--text-2)' }}>Queued offline is not overdue.</span>{' '}
-          The record exists at the station and is waiting on the link, not on a person.
-        </p>
-      </section>
-    </div>
-  );
-}
-
-export { STATUS_STYLE };
-
-// ---------------------------------------------------------------------------
-// Season calendar — one bar per month, stacked by status. The one thing it
-// says: how much falls due when, and how much of it is late. Individual
-// obligations are opened from the list below, not from the chart.
-
-const CAL_SERIES: { key: Obligation['status']; label: string; fill: string; legend: string }[] = [
-  { key: 'overdue', label: 'Overdue', fill: 'var(--act)', legend: 'var(--act)' },
-  { key: 'due_soon', label: 'Due soon', fill: 'var(--watch)', legend: 'var(--watch)' },
-  { key: 'queued_offline', label: 'Waiting to sync', fill: 'url(#obl-queued)', legend: 'var(--watch-soft)' },
-  { key: 'submitted', label: 'Submitted', fill: 'var(--ok)', legend: 'var(--ok)' },
-  { key: 'future', label: 'Upcoming', fill: 'var(--unknown)', legend: 'var(--unknown)' },
-];
-
-const monthFmt = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'Asia/Kolkata' });
-const monthLongFmt = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
-
-function SeasonCalendar({ obligations }: { obligations: Obligation[] }) {
-  const { rows, overdue, next30 } = useMemo(() => {
-    const now = new Date();
-    // Two months back, the current month, four ahead.
-    const months = Array.from({ length: 7 }, (_, i) => new Date(now.getFullYear(), now.getMonth() - 2 + i, 1));
-    const rows = months.map((m, i) => {
-      const row: Record<string, string | number> = {
-        month: i === 2 ? 'This month' : monthFmt.format(m),
-        full: monthLongFmt.format(m),
-      };
-      for (const sk of CAL_SERIES) row[sk.key] = 0;
-      for (const o of obligations) {
-        const d = new Date(o.dueDate);
-        if (d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth()) {
-          row[o.status] = (row[o.status] as number) + 1;
-        }
-      }
-      return row;
-    });
-    return {
-      rows,
-      overdue: obligations.filter((o) => o.status === 'overdue').length,
-      next30: obligations.filter((o) => { const d = daysFromNow(o.dueDate); return d >= 0 && d <= 30; }).length,
-    };
+  const groups = useMemo(() => {
+    return GROUPS.map((g) => {
+      const rows = obligations
+        .filter((o) => o.status === g.status)
+        .sort((a, b) => {
+          const diff = Date.parse(a.dueDate) - Date.parse(b.dueDate);
+          return g.newestFirst ? -diff : diff;
+        });
+      return { ...g, rows };
+    }).filter((g) => g.rows.length > 0);
   }, [obligations]);
+
+  const now = Date.now();
 
   return (
     <section
-      className="p-5"
+      className="@container p-5"
       style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
+      aria-labelledby="reports-heading"
     >
-      <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-1">
-        <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>What falls due each month</h3>
-      </div>
-      <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
-        <span className="font-mono" style={{ color: overdue > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>{overdue}</span> overdue ·{' '}
-        <span className="font-mono" style={{ color: 'var(--text-2)' }}>{next30}</span> due in the next 30 days.
-        Hover a month for its breakdown.
+      <h2 id="reports-heading" className="text-title font-semibold" style={{ color: 'var(--text)' }}>
+        Reports
+      </h2>
+      <p className="text-body mt-1 mb-5 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+        Most urgent first; select a report to see its full record.
       </p>
 
-      <ChartLegend
-        className="mb-3"
-        items={CAL_SERIES.map((sk) => ({ label: sk.label, color: sk.legend, hint: STATUS_STYLE[sk.key].hint }))}
-      />
+      {obligations.length === 0 ? (
+        <EmptyState reason="No reports are registered for this station." />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {groups.map((g) => {
+            const isFiled = g.status === 'submitted';
 
-      <ChartContainer className="h-52" label="Obligations due per month, stacked by status">
-        <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap="28%">
-          <defs>
-            <pattern id="obl-queued" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="6" height="6" fill="var(--watch)" opacity="0.35" />
-              <line x1="0" y1="0" x2="0" y2="6" stroke="var(--watch)" strokeWidth="3" />
-            </pattern>
-          </defs>
-          <CartesianGrid {...CHART_DEFAULTS.grid} />
-          <XAxis dataKey="month" {...CHART_DEFAULTS.axis} interval={0} />
-          <YAxis {...CHART_DEFAULTS.axis} width={28} allowDecimals={false} />
-          <Tooltip
-            cursor={{ fill: 'var(--panel-raised)' }}
-            content={
-              <ChartTooltipContent
-                hideZero
-                labelFormatter={(l) => rows.find((r) => r.month === l)?.full ?? String(l)}
-              />
+            if (isFiled && !showFiled) {
+              return (
+                <div key={g.status}>
+                  <button
+                    type="button"
+                    onClick={() => setShowFiled(true)}
+                    aria-expanded={false}
+                    className="inline-flex items-center gap-2.5 rounded-full min-h-10 px-4 text-body font-medium cursor-pointer hover:bg-[var(--panel-raised)]"
+                    style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+                  >
+                    <StatusDot status="ok" size={9} />
+                    <span>
+                      Show <span className="font-mono tabular-nums">{g.rows.length}</span>{' '}
+                      filed {plural(g.rows.length, 'report')}
+                    </span>
+                    <ChevronDown size={16} aria-hidden style={{ color: 'var(--text-3)' }} />
+                  </button>
+                </div>
+              );
             }
-          />
-          {CAL_SERIES.map((sk) => (
-            <Bar
-              key={sk.key}
-              dataKey={sk.key}
-              name={sk.label}
-              stackId="due"
-              fill={sk.fill}
-              maxBarSize={36}
-              isAnimationActive={false}
-            />
-          ))}
-        </BarChart>
-      </ChartContainer>
+
+            return (
+              <div key={g.status} id={isFiled ? filedListId : undefined}>
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-2 mb-3">
+                  <h3 className="flex items-center gap-2.5 text-body font-semibold" style={{ color: 'var(--text)' }}>
+                    <GroupMarker status={g.status} />
+                    <span>{g.title}</span>
+                    <span className="font-mono tabular-nums font-medium" style={{ color: 'var(--text-3)' }}>
+                      {g.rows.length}
+                    </span>
+                    {g.status === 'queued_offline' && (
+                      <span
+                        role="img"
+                        aria-label={WAITING_HINT}
+                        title={WAITING_HINT}
+                        className="inline-flex cursor-help"
+                        style={{ color: 'var(--watch-soft)' }}
+                      >
+                        <Info size={16} aria-hidden />
+                      </span>
+                    )}
+                  </h3>
+                  {isFiled && (
+                    <button
+                      type="button"
+                      onClick={() => setShowFiled(false)}
+                      aria-expanded
+                      aria-controls={filedListId}
+                      className="ml-auto inline-flex items-center gap-2 rounded-full min-h-10 px-4 text-body-sm font-medium cursor-pointer hover:bg-[var(--panel-raised)]"
+                      style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+                    >
+                      Hide filed reports
+                      <ChevronUp size={16} aria-hidden style={{ color: 'var(--text-3)' }} />
+                    </button>
+                  )}
+                </div>
+
+                <ul className="flex flex-col gap-2">
+                  {g.rows.map((o) => (
+                    <ReportRow key={o.id} o={o} now={now} onOpen={onOpen} onOpenAction={onOpenAction} />
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/** Group marker: a status dot, or a dashed amber ring for "waiting for the link". */
+function GroupMarker({ status }: { status: Status }) {
+  if (status === 'queued_offline') {
+    return (
+      <span
+        aria-hidden
+        className="inline-block rounded-full shrink-0"
+        style={{ width: 11, height: 11, border: '1.5px dashed var(--watch)' }}
+      />
+    );
+  }
+  const dot = status === 'overdue' ? 'warning' : status === 'due_soon' ? 'watch' : status === 'submitted' ? 'ok' : 'unknown';
+  return <StatusDot status={dot} size={9} />;
+}
+
+function ReportRow({
+  o, now, onOpen, onOpenAction,
+}: { o: Obligation; now: number; onOpen: Props['onOpen']; onOpenAction: Props['onOpenAction'] }) {
+  const waiting = o.status === 'queued_offline';
+  const overdue = o.status === 'overdue';
+  const due = dueWords(o, now);
+  const station = STATION_LABEL[o.stationId] ?? o.stationId;
+
+  return (
+    <li
+      className={
+        'relative flex flex-col gap-x-5 gap-y-3 px-4 py-3.5 hover:bg-[var(--panel-raised)] ' +
+        '@min-[40rem]:flex-row @min-[40rem]:items-center' +
+        (waiting ? ' bg-[color-mix(in_srgb,var(--watch)_6%,transparent)]' : '')
+      }
+      style={{
+        borderRadius: 'var(--r-inner)',
+        border: waiting ? '1px dashed var(--watch)' : '1px solid var(--line)',
+      }}
+    >
+      {/* The whole row opens the record: this button's ::after covers the row;
+          the action button below sits above it. */}
+      <button
+        type="button"
+        onClick={() => onOpen(o.id)}
+        title={waiting ? WAITING_HINT : undefined}
+        className="flex-1 min-w-0 text-left cursor-pointer after:absolute after:inset-0"
+      >
+        <span className="block text-body font-medium break-words" style={{ color: 'var(--text)' }}>
+          {o.name}
+        </span>
+        <span className="block text-body-sm mt-1 break-words" style={{ color: 'var(--text-3)' }}>
+          {station} · {categoryLabel(o.category)} · Owner: <span style={{ color: 'var(--text-2)' }}>{o.owner}</span>
+        </span>
+        {waiting && <span className="sr-only">. {WAITING_HINT}</span>}
+      </button>
+
+      <span
+        className="text-body font-medium shrink-0 @min-[40rem]:text-right"
+        style={{ color: TONE_COLOR[due.tone] }}
+      >
+        {due.before}
+        {due.value && <span className="font-mono tabular-nums">{due.value}</span>}
+        {due.after}
+      </span>
+
+      {o.linkedActionId ? (
+        <button
+          type="button"
+          onClick={() => onOpenAction(o.linkedActionId!)}
+          className="relative z-10 self-start @min-[40rem]:self-auto shrink-0 rounded-full min-h-10 px-4 text-body font-medium cursor-pointer hover:bg-[var(--panel-alt)]"
+          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+        >
+          Open action
+        </button>
+      ) : overdue ? (
+        <span
+          className="relative z-10 inline-flex items-center gap-2 shrink-0 text-body-sm font-medium"
+          style={{ color: 'var(--act-soft)' }}
+          title={NO_ACTION_HINT}
+        >
+          <AlertTriangle size={16} aria-hidden />
+          No action raised — data error
+        </span>
+      ) : null}
+    </li>
   );
 }

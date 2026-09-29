@@ -3,26 +3,27 @@
 // one panel. An action is never just a status: it carries what changed, why
 // it matters, who owns it, and what happens if nobody acts.
 //
-// The CausalTrace here is Dev A's component driven by the shared engine
-// through causalTraceInput(), so its numbers are identical to the Twin
-// page's for the same station and conditions (touchpoint #10). There is no
-// local approximation anywhere in this file.
+// "Why this matters" is Dev A's panel driven by the shared engine, built from
+// the same causalTraceInput(stationId) and zoneSubject() as the Twin's zone
+// inspector, so an action on a zone shows exactly the Twin's numbers for that
+// zone (touchpoint #10). There is no local approximation anywhere in this file.
 
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Paperclip, X } from 'lucide-react';
 import type { Action } from '@/shared/contracts';
 import { useActionTransitions } from '@/shared/contracts';
 import { CausalTrace } from '@/components/shared/CausalTrace';
+import { ZoneTrace } from '@/components/shared/ZoneTrace';
+import { zoneSubject } from '@/twin/zoneSubject';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { TierChip } from '@/components/shared/TierChip';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Modal } from '@/components/shared/Modal';
+import { StepDialog, type StepKind } from '@/components/shared/StepDialog';
 import { STEPS, StepTrack, nextStep } from '@/components/shared/ActionSteps';
-import {
-  causalTraceInput, getActions, ROSTER, type DerivedAction,
-} from '@/state/data';
+import { causalTraceInput, getActions, type DerivedAction } from '@/state/data';
 import { STATION_LABEL } from '@/state/stationScope';
-import { formatShortIST, formatDuration, addDays } from '@/lib/time';
+import { formatShortIST, formatDuration } from '@/lib/time';
 import { shortHash } from '@/lib/hashChain';
 import { findSimilar } from '@/engine/similarity';
 import { currentActor, useCan } from '@/state/auth';
@@ -36,7 +37,7 @@ interface Props {
   state?: 'open' | 'closed';
 }
 
-type Dialog = null | 'assign' | 'defer' | 'resolve' | 'evidence';
+type Dialog = null | StepKind | 'evidence';
 
 export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -55,9 +56,15 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
     }
   };
 
-  const traceInput = useMemo(
-    () => causalTraceInput(action.stationId, { resourceId: action.resourceId, zoneCode: action.zoneCode }),
-    [action.stationId, action.resourceId, action.zoneCode]
+  // The station as it is now, exactly as the Twin builds it. A zone's fault
+  // is modelled once, by its zone profile, never by nudging this input — and
+  // the action's resourceId stays out of it, because the chain is a fuel
+  // chain: fed a spares or medical stock, it reported "fuel will last" for
+  // the wrong thing.
+  const traceInput = useMemo(() => causalTraceInput(action.stationId), [action.stationId]);
+  const zone = useMemo(
+    () => (action.zoneCode ? zoneSubject(action.stationId, action.zoneCode) : undefined),
+    [action.stationId, action.zoneCode]
   );
 
   const similar = useSimilarActions(action);
@@ -195,7 +202,11 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
 
           {/* ---- Causal trace (FR-5.4) — Dev A's component, shared engine ---- */}
           <Section title="Why this matters">
-            <CausalTrace input={traceInput} hideHeading />
+            {zone?.trace ? (
+              <ZoneTrace input={traceInput} subject={zone} hideHeading />
+            ) : (
+              <CausalTrace input={traceInput} hideHeading />
+            )}
             {action.consequence && (
               <p className="text-body-sm mt-3" style={{ color: 'var(--text-3)' }}>
                 Cost if nobody acts:{' '}
@@ -371,11 +382,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
               <button
                 type="button"
                 disabled={!canWrite}
-                onClick={() =>
-                  next === 'ack'
-                    ? run(() => transitions.acknowledge(action.id, actor.name))
-                    : setDialog(next)
-                }
+                onClick={() => setDialog(next)}
                 className="px-6 min-h-10 rounded-full text-body font-semibold"
                 style={{ backgroundColor: 'var(--act)', color: 'var(--bg)', opacity: canWrite ? 1 : 0.4 }}
                 title={canWrite ? undefined : 'Your role cannot change action state'}
@@ -389,25 +396,10 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
         </footer>
       </aside>
 
-      <AssignDialog
-        open={dialog === 'assign'}
-        stationId={action.stationId}
-        error={error}
+      <StepDialog
+        request={dialog && dialog !== 'evidence' ? { kind: dialog, actionIds: [action.id] } : null}
+        actions={[action]}
         onClose={() => setDialog(null)}
-        onSubmit={(assignee) => run(() => transitions.assign(action.id, assignee))}
-      />
-      <DeferDialog
-        open={dialog === 'defer'}
-        error={error}
-        onClose={() => setDialog(null)}
-        onSubmit={(reason, reviewDate) => run(() => transitions.defer(action.id, reason, reviewDate))}
-      />
-      <ResolveDialog
-        open={dialog === 'resolve'}
-        action={action}
-        error={error}
-        onClose={() => setDialog(null)}
-        onSubmit={(note) => run(() => transitions.resolve(action.id, note, action.evidence.map((e) => e.id)))}
       />
       <EvidenceDialog
         open={dialog === 'evidence'}
@@ -524,142 +516,6 @@ function useSimilarActions(action: DerivedAction): NonNullable<Action['similar']
 // ---------------------------------------------------------------------------
 // Dialogs
 // ---------------------------------------------------------------------------
-
-function AssignDialog({
-  open, stationId, error, onClose, onSubmit,
-}: {
-  open: boolean; stationId: 'bharati' | 'maitri'; error: string | null;
-  onClose: () => void; onSubmit: (a: { id: string; name: string; role: string }) => void;
-}) {
-  const roster = ROSTER.filter((r) => r.stationId === stationId);
-  return (
-    <Modal open={open} onClose={onClose} title="Assign action">
-      <p className="text-body-sm mb-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
-        Assignment needs a named person or role from the station roster — an action owned by
-        "someone" is an action owned by nobody.
-      </p>
-      <ul className="flex flex-col gap-2">
-        {roster.map((member) => (
-          <li key={member.id}>
-            <button
-              type="button"
-              onClick={() => onSubmit({ id: member.id, name: member.name, role: member.role })}
-              className="w-full flex items-center gap-3 flex-wrap px-4 py-2.5 text-left rounded-lg min-h-10 hover:bg-[var(--panel-alt)]"
-              style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
-            >
-              <span className="text-body font-medium" style={{ color: 'var(--text)' }}>{member.name}</span>
-              <span className="text-body-sm ml-auto" style={{ color: 'var(--text-3)' }}>
-                {member.role}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {error && <p className="text-body-sm mt-4" style={{ color: 'var(--act-soft)' }}>{error}</p>}
-    </Modal>
-  );
-}
-
-function DeferDialog({
-  open, error, onClose, onSubmit,
-}: { open: boolean; error: string | null; onClose: () => void; onSubmit: (reason: string, reviewDate: string) => void }) {
-  const [reason, setReason] = useState('');
-  const [reviewDate, setReviewDate] = useState(addDays(new Date(), 14).slice(0, 10));
-  const invalid = !reason.trim() || !reviewDate;
-
-  return (
-    <Modal open={open} onClose={onClose} title="Defer action">
-      <p className="text-body-sm mb-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
-        A deferral needs a reason AND a review date. A deferral the next crew does not know about
-        is the classic handover failure, so both fields appear in the handover capsule.
-      </p>
-
-      <label htmlFor="defer-reason" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-        Reason
-      </label>
-      <textarea
-        id="defer-reason"
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        rows={3}
-        className="w-full px-4 py-2.5 text-body outline-none mb-4"
-        style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-      />
-
-      <label htmlFor="defer-review-date" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-        Review date
-      </label>
-      <input
-        id="defer-review-date"
-        type="date"
-        value={reviewDate}
-        onChange={(e) => setReviewDate(e.target.value)}
-        className="w-full px-4 min-h-10 text-body font-mono outline-none mb-4"
-        style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-      />
-
-      {invalid && (
-        <p className="text-body-sm mb-3" style={{ color: 'var(--watch-soft)' }}>
-          Both a reason and a review date are required.
-        </p>
-      )}
-      {error && <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }}>{error}</p>}
-
-      <button
-        type="button"
-        disabled={invalid}
-        onClick={() => onSubmit(reason, new Date(reviewDate).toISOString())}
-        className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
-        style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-3)' : 'var(--bg)' }}
-      >
-        Defer and record
-      </button>
-    </Modal>
-  );
-}
-
-function ResolveDialog({
-  open, action, error, onClose, onSubmit,
-}: { open: boolean; action: DerivedAction; error: string | null; onClose: () => void; onSubmit: (note: string) => void }) {
-  const [note, setNote] = useState('');
-  const needsEvidence = (action.tier === 'T0' || action.tier === 'T1') && action.evidence.length === 0;
-  const invalid = !note.trim() || needsEvidence;
-
-  return (
-    <Modal open={open} onClose={onClose} title="Resolve action">
-      <label htmlFor="resolve-note" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-        Resolution note
-      </label>
-      <textarea
-        id="resolve-note"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        rows={4}
-        placeholder="What was done, and how it was confirmed"
-        className="w-full px-4 py-2.5 text-body outline-none mb-4"
-        style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-      />
-
-      {needsEvidence && (
-        <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }}>
-          A {action.tier} action needs at least one evidence item before it can be resolved. Attach
-          one from the Evidence section first.
-        </p>
-      )}
-      {error && <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }}>{error}</p>}
-
-      <button
-        type="button"
-        disabled={invalid}
-        onClick={() => onSubmit(note)}
-        className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
-        style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-3)' : 'var(--bg)' }}
-      >
-        Resolve and record
-      </button>
-    </Modal>
-  );
-}
 
 function EvidenceDialog({
   open, error, onClose, onSubmit,

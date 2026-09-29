@@ -127,6 +127,23 @@ export function CausalTrace({ input, className = '', hideHeading = false, scope 
           ],
         };
 
+  // The ship window is an input, not a result, but "order within N days"
+  // reads as reassurance unless it sits next to when a ship can actually come.
+  const ship = input.shipWindow;
+  const shipWindow: Measurement | null =
+    ship.latestDay > 0
+      ? {
+          value: `${ship.earliestDay}–${ship.latestDay}`,
+          unit: 'd',
+          timestamp: autonomyStep?.value.timestamp ?? new Date().toISOString(),
+          source: 'voyage plan',
+          provenance: isSim ? 'SIM' : 'SYNTH',
+          freshnessSeconds: 0,
+          awaiting: 'NCPOR voyage schedule',
+        }
+      : null;
+  const runsOutBeforeShip = shipWindow !== null && result.autonomyDays < ship.earliestDay;
+
   const lsodColor =
     result.lsodDays === null ? 'var(--text)'
     : result.lsodDays <= 14 ? 'var(--act-soft)'
@@ -210,6 +227,25 @@ export function CausalTrace({ input, className = '', hideHeading = false, scope 
             <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
               The last safe day to order so it reaches the station before the tanks run dry.
             </span>
+          </div>
+        )}
+
+        {shipWindow && (
+          <div className="flex flex-col gap-1 pt-3" style={{ borderTop: '1px solid var(--line)' }}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-body" style={{ color: 'var(--text)' }}>
+                The next ship can arrive in{' '}
+                <span className="font-mono font-semibold tabular-nums whitespace-nowrap">
+                  {ship.earliestDay}–{ship.latestDay} days
+                </span>
+              </span>
+              <ProvenanceBadge measurement={shipWindow} label="Next ship's arrival window" align="right" />
+            </div>
+            {runsOutBeforeShip && (
+              <span className="text-body-sm font-medium" style={{ color: 'var(--act-soft)' }}>
+                At this rate the fuel runs out before the earliest ship can arrive.
+              </span>
+            )}
           </div>
         )}
       </div>

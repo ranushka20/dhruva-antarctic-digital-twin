@@ -1,53 +1,30 @@
 // OWNER: Dev B
-// Waste ledger — mass balance per stream, the monthly generation chart, and
-// the balance check that is this page's most useful integrity feature.
-//
-// CHART COLOUR NOTE. This design system reserves orange, mint, amber, grey
-// and violet for status meaning, and forbids any of them as a chart fill.
-// Eight nominal hues cannot be minted without colliding with that contract,
-// and the waste streams DO carry a real handling order under the
-// Environmental Protocol (general -> hazardous), so the stack is encoded as
-// an ORDINAL one-hue ramp rather than eight invented categorical hues.
-// The ramp is validated for this dark surface: monotone lightness, every
-// adjacent gap >= 0.06 L, light end 2.03:1 against #0F1413, hue spread 4 deg.
-// Identity is never colour-alone — legend, hover tooltip and a table view all
-// name the stream.
-//
-// Generation and cumulative stored mass are plotted as TWO PANELS SHARING ONE
-// X AXIS, never a dual-axis chart: a monthly figure and a running total are
-// different magnitudes and putting them on one scale would flatten one of them.
+// Waste — answers "Is all waste accounted for?". For each station and type of
+// waste, produced − shipped out should equal what is stored now (FR-3.4).
+// Rows that don't add up sort first and can raise an action. The monthly
+// chart and the full list of waste movements are folded away underneath.
+// Every weight is SYNTH until the station's feed exists (FR-3.7).
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
+import { ChevronDown } from 'lucide-react';
 import { CHART_DEFAULTS, ChartContainer, ChartLegend, ChartTooltipContent } from '@/components/shared/Chart';
-import { AlertTriangle, Table2, BarChart3 } from 'lucide-react';
-import type { WasteEvent } from '@/shared/contracts';
-import type { WasteBalanceRow } from '@/state/data';
+import type { Measurement, WasteEvent } from '@/shared/contracts';
+import { getVoyages, type WasteBalanceRow } from '@/state/data';
+import { useStoreValue } from '@/state/useStore';
+import { STATION_LABEL } from '@/state/stationScope';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
+import { StatusDot } from '@/components/shared/StatusDot';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDateIST } from '@/lib/time';
 import { synth } from '@/lib/provenance';
-import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
-/** Streams in regulatory handling order — the ramp encodes that order. */
+/** Waste types in regulatory handling order (general → hazardous). */
 export const STREAM_ORDER: WasteEvent['stream'][] = [
   'general', 'recyclable', 'food', 'sewage', 'scientific', 'medical', 'fuel_oily', 'hazardous',
 ];
 
-/** Validated ordinal ramp for surface #0F1413 (see the note above). */
-const STREAM_RAMP: Record<WasteEvent['stream'], string> = {
-  general: '#D6FBEE',
-  recyclable: '#ACEDD7',
-  food: '#82DCBE',
-  sewage: '#5BC8A5',
-  scientific: '#3AB18C',
-  medical: '#248F71',
-  fuel_oily: '#166F57',
-  hazardous: '#0C523F',
-};
-
-const STREAM_LABEL: Record<WasteEvent['stream'], string> = {
+export const STREAM_LABEL: Record<WasteEvent['stream'], string> = {
   general: 'General',
   recyclable: 'Recyclable',
   food: 'Food',
@@ -68,288 +45,274 @@ interface Props {
   canRaise: boolean;
 }
 
+const PANEL = {
+  backgroundColor: 'var(--panel)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--r-card)',
+} as const;
+
+const kg = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 1 });
+
 export function WasteLedger({
   balance, series, events, toleranceKg, onRaiseBalanceAction, onOpenVoyage, canRaise,
 }: Props) {
-  const [view, setView] = useState<'chart' | 'table'>('chart');
-  const failing = balance.filter((r) => !r.withinTolerance);
+  // One label for every weight on this tab; the timestamp is when it was shown.
+  const sample = useMemo(() => synth(0, 'kg', "the station's waste records feed"), []);
 
-  const th = 'pb-3 px-3 text-left text-body-sm font-medium whitespace-nowrap';
-  const thStyle = { color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' } as const;
-  const cell = { borderBottom: '1px solid var(--line)' } as const;
+  // Rows that don't add up first, then by station and handling order.
+  const rows = [...balance].sort(
+    (a, b) =>
+      Number(a.withinTolerance) - Number(b.withinTolerance)
+      || a.stationId.localeCompare(b.stationId)
+      || STREAM_ORDER.indexOf(a.stream) - STREAM_ORDER.indexOf(b.stream),
+  );
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* ---- Balance check (FR-3.4) ---- */}
-      {failing.length > 0 && (
-        <div
-          className="flex items-start gap-3 px-5 py-4"
-          role="alert"
-          style={{
-            backgroundColor: 'rgba(242,107,33,0.10)',
-            border: '1px solid var(--act)',
-            borderRadius: 'var(--r-card)',
-          }}
-        >
-          <AlertTriangle size={20} style={{ color: 'var(--act)' }} className="mt-0.5 shrink-0" aria-hidden />
-          <div className="flex-1 min-w-0">
-            <p className="text-body font-medium" style={{ color: 'var(--act-soft)' }}>
-              The waste books do not balance for{' '}
-              <span className="font-mono tabular-nums">{failing.length}</span> stream{failing.length === 1 ? '' : 's'}.
-            </p>
-            <p className="text-body-sm mt-1 mb-3 max-w-[70ch]" style={{ color: 'var(--text-2)' }}>
-              Generated minus shipped out should equal what is stored, within{' '}
-              <span className="font-mono tabular-nums">{toleranceKg}</span> kg. Raise an action for each gap.
-            </p>
-            <div className="flex flex-wrap gap-2.5">
-              {failing.map((row) => (
-                <button
+    <div className="flex flex-col gap-4">
+      {/* ---- Does each type of waste add up? (FR-3.1, FR-3.4) ---- */}
+      <section className="@container p-5" style={PANEL} aria-label="Waste balance">
+        <p className="text-body max-w-[70ch]" style={{ color: 'var(--text-2)' }}>
+          Everything produced should either still be stored at the station or have been shipped out — each
+          type of waste is checked.
+        </p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 mb-5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+          All weights are sample data until the station's feed is connected.
+          <ProvenanceBadge measurement={sample} label="Every waste weight on this tab" />
+        </p>
+
+        {rows.length === 0 ? (
+          <EmptyState reason="No waste has been recorded for this station yet." />
+        ) : (
+          <>
+            {/* Wide: one table. */}
+            <table className="hidden @min-[48rem]:table w-full border-collapse">
+              <caption className="sr-only">Waste balance by station and type of waste</caption>
+              <thead>
+                <tr>
+                  <th scope="col" className={TH} style={TH_STYLE}>Station</th>
+                  <th scope="col" className={TH} style={TH_STYLE}>Waste type</th>
+                  <MassHeader label="Produced" sample={sample} />
+                  <MassHeader label="Shipped out" sample={sample} />
+                  <MassHeader label="Stored now" sample={sample} />
+                  <th
+                    scope="col"
+                    className={TH + ' pl-8 min-w-[16rem]'}
+                    style={TH_STYLE}
+                    title={`Counts as adding up when the difference is ${toleranceKg} kg or less, to allow for weighing error.`}
+                  >
+                    Adds up?
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.stationId + row.stream}>
+                    <td className="py-3.5 px-3 text-body align-middle" style={{ ...CELL, color: 'var(--text-2)' }}>
+                      {STATION_LABEL[row.stationId]}
+                    </td>
+                    <td className="py-3.5 px-3 text-body font-medium align-middle" style={{ ...CELL, color: 'var(--text)' }}>
+                      {STREAM_LABEL[row.stream]}
+                    </td>
+                    <MassCell value={row.generatedKg} />
+                    <MassCell value={row.shippedKg} />
+                    <MassCell value={row.storedKg} />
+                    <td className="py-2.5 pl-8 pr-3 align-middle" style={CELL}>
+                      <AddsUp row={row} canRaise={canRaise} onRaise={onRaiseBalanceAction} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Narrow: the same rows as labelled cards — never a sideways scroll. */}
+            <ul className="flex flex-col gap-3 @min-[48rem]:hidden" aria-label="Waste balance by station and type of waste">
+              {rows.map((row) => (
+                <li
                   key={row.stationId + row.stream}
-                  type="button"
-                  disabled={!canRaise}
-                  onClick={() => onRaiseBalanceAction(row)}
-                  className="inline-flex items-center gap-2 text-body-sm font-medium px-4 min-h-9 rounded-full"
-                  style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
-                  title={`Raise a Tier 2 (T2) action · ${STATION_CODE[row.stationId]}`}
+                  className="p-4"
+                  style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
                 >
-                  Raise action — {STATION_LABEL[row.stationId]} {STREAM_LABEL[row.stream]}
-                  <span className="font-mono tabular-nums">
-                    {row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg
-                  </span>
-                </button>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-body">
+                    <span style={{ color: 'var(--text-2)' }}>{STATION_LABEL[row.stationId]}</span>
+                    <span aria-hidden style={{ color: 'var(--text-3)' }}>·</span>
+                    <span className="font-semibold" style={{ color: 'var(--text)' }}>{STREAM_LABEL[row.stream]}</span>
+                    {/* The column-header badges are hidden at this width, so each card carries its own. */}
+                    <span className="ml-auto">
+                      <ProvenanceBadge measurement={sample} label={`${STREAM_LABEL[row.stream]} weights — sample data`} abbreviated align="right" />
+                    </span>
+                  </div>
+                  <dl className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-3 mt-3">
+                    {([
+                      ['Produced', row.generatedKg],
+                      ['Shipped out', row.shippedKg],
+                      ['Stored now', row.storedKg],
+                    ] as const).map(([label, value]) => (
+                      <div key={label}>
+                        <dt className="text-body-sm" style={{ color: 'var(--text-3)' }}>{label}</dt>
+                        <dd className="font-mono text-body tabular-nums mt-0.5" style={{ color: 'var(--text)' }}>
+                          {kg(value)} <span style={{ color: 'var(--text-3)' }}>kg</span>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3"
+                    style={{ borderTop: '1px solid var(--line)' }}
+                  >
+                    <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Adds up?</span>
+                    <AddsUp row={row} canRaise={canRaise} onRaise={onRaiseBalanceAction} />
+                  </div>
+                </li>
               ))}
-            </div>
-          </div>
-        </div>
+            </ul>
+          </>
+        )}
+      </section>
+
+      {/* ---- Monthly chart (FR-3.3), folded away ---- */}
+      {series.length > 0 && (
+        <Disclosure show="Show monthly chart" hide="Hide monthly chart">
+          <MonthlyChart series={series} />
+        </Disclosure>
       )}
 
-      {/* ---- Chart / table ---- */}
-      <section
-        className="p-5"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
-      >
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
-          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
-            Waste produced each month
-          </h3>
-          <ProvenanceBadge
-            measurement={synth(0, 'kg', 'station waste record feed')}
-            label="All waste masses"
-          />
-          <div
-            data-segmented
-            role="group"
-            aria-label="Chart or table view"
-            className="relative isolate flex items-center gap-1 p-1 rounded-full ml-auto"
-            style={{ border: '1px solid var(--line-strong)' }}
-          >
-            <button
-              type="button"
-              onClick={() => setView('chart')}
-              aria-pressed={view === 'chart'}
-              className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
-              style={{ color: view === 'chart' ? 'var(--text)' : 'var(--text-3)' }}
-            >
-              <BarChart3 size={16} aria-hidden /> Chart
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('table')}
-              aria-pressed={view === 'table'}
-              className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
-              style={{ color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
-            >
-              <Table2 size={16} aria-hidden /> Table
-            </button>
-            <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
-          </div>
-        </div>
-
-        {series.length === 0 ? (
-          <EmptyState reason="No waste events recorded for this scope and period." />
-        ) : view === 'chart' ? (
-          <WasteChart series={series} />
-        ) : (
-          <WasteTable series={series} />
-        )}
-
-        {/* Stream legend for the table view; the chart carries its own. */}
-        {view === 'table' && series.length > 0 && (
-          <ul className="flex flex-wrap gap-x-6 gap-y-2.5 mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-            {STREAM_ORDER.map((stream) => (
-              <li key={stream} className="flex items-center gap-2">
-                <span className="shrink-0" style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: STREAM_RAMP[stream] }} aria-hidden />
-                <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>{STREAM_LABEL[stream]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* ---- Mass balance table (FR-3.1) ---- */}
-      <section
-        className="p-5"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
-      >
-        <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
-          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Mass balance</h3>
-          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
-            Generated − shipped out should equal stored.
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse">
-            <thead>
-              <tr>
-                {['Waste stream', 'Station', 'Generated', 'Shipped out', 'Stored', 'Balance check'].map((h) => (
-                  <th key={h} className={th} style={thStyle}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {balance.map((row) => (
-                <tr key={row.stationId + row.stream}>
-                  <td className="py-3 px-3" style={cell}>
-                    <span className="flex items-center gap-2.5">
-                      <span className="shrink-0" style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: STREAM_RAMP[row.stream] }} aria-hidden />
-                      <span className="text-body font-medium" style={{ color: 'var(--text)' }}>{STREAM_LABEL[row.stream]}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-body" style={{ ...cell, color: 'var(--text-2)' }} title={STATION_CODE[row.stationId]}>
-                    {STATION_LABEL[row.stationId]}
-                  </td>
-                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
-                    {row.generatedKg.toLocaleString()} kg
-                  </td>
-                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
-                    {row.shippedKg.toLocaleString()} kg
-                  </td>
-                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
-                    {row.storedKg.toLocaleString()} kg
-                  </td>
-                  <td className="py-3 px-3" style={cell}>
-                    {row.withinTolerance ? (
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-body-sm font-medium"
-                        style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)' }}
-                      >
-                        Balanced
-                      </span>
-                    ) : (
-                      <span
-                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-body-sm font-medium whitespace-nowrap"
-                        style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
-                      >
-                        Off by
-                        <span className="font-mono tabular-nums">{row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg</span>
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ---- Event rows (FR-3.5, FR-3.6) ---- */}
-      <section
-        className="p-5"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
-      >
-        <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
-          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Waste events</h3>
-          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
-            Most recent first. Shipments link to their voyage manifest.
-          </p>
-        </div>
-        <div className="overflow-x-auto max-h-[32rem] overflow-y-auto">
-          <table className="w-full min-w-[54rem] border-collapse">
-            <thead className="sticky top-0 z-[1]" style={{ backgroundColor: 'var(--panel)' }}>
-              <tr>
-                {['Date', 'Waste stream', 'Movement', 'Mass', 'Handled by', 'Destination', 'Sync'].map((h) => (
-                  <th key={h} className={th} style={thStyle}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {events.slice(0, 60).map((e) => (
-                <tr key={e.id}>
-                  <td className="py-3 px-3 font-mono text-body-sm tabular-nums whitespace-nowrap align-top" style={{ ...cell, color: 'var(--text-2)' }}>
-                    {formatDateIST(e.at)}
-                  </td>
-                  <td className="py-3 px-3 align-top" style={cell}>
-                    <span className="flex items-center gap-2">
-                      <span className="shrink-0" style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: STREAM_RAMP[e.stream] }} aria-hidden />
-                      <span className="text-body" style={{ color: 'var(--text)' }}>{STREAM_LABEL[e.stream]}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-body-sm align-top whitespace-nowrap" style={{ ...cell, color: 'var(--text-3)' }}
-                    title={e.direction === 'generated' ? 'GEN' : 'SHIP'}>
-                    {e.direction === 'generated' ? 'Generated' : 'Shipped out'}
-                  </td>
-                  <td className="py-3 px-3 align-top" style={cell}>
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono text-body tabular-nums whitespace-nowrap" style={{ color: 'var(--text)' }}>
-                        {typeof e.massKg.value === 'number' ? e.massKg.value.toLocaleString() : '—'} kg
-                      </span>
-                      <ProvenanceBadge measurement={e.massKg} label={STREAM_LABEL[e.stream] + ' mass'} />
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 align-top" style={cell}>
-                    <span className="block text-body-sm" style={{ color: 'var(--text-2)' }}>{e.handler}</span>
-                    <span className="block text-caption mt-0.5" style={{ color: 'var(--text-3)' }}>
-                      Container <span className="font-mono">{e.containerId ?? '—'}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-body-sm align-top" style={{ ...cell, color: 'var(--text-3)' }}>
-                    {e.voyageId ? (
-                      <button
-                        type="button"
-                        onClick={() => onOpenVoyage(e.voyageId!)}
-                        className="inline-flex items-center text-left underline underline-offset-4 min-h-9"
-                        style={{ color: 'var(--text-2)' }}
-                      >
-                        {e.destination ?? e.voyageId}
-                      </button>
-                    ) : (
-                      e.destination ?? '—'
-                    )}
-                  </td>
-                  <td className="py-3 px-3 align-top" style={cell}>
-                    {e.pendingSync && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-body-sm whitespace-nowrap"
-                        style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}
-                        title="Recorded at the station; waiting on the link to reach HQ">
-                        Waiting to sync
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* ---- Every waste movement (FR-3.5, FR-3.6), folded away ---- */}
+      {events.length > 0 && (
+        <Disclosure
+          show={<>Show all waste movements (<span className="font-mono tabular-nums">{events.length}</span>)</>}
+          hide="Hide waste movements"
+        >
+          <Movements events={events} sample={sample} onOpenVoyage={onOpenVoyage} />
+        </Disclosure>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Chart — one question: how much waste was produced each month, and of what
-// kind. Eight near-identical greens could not be told apart, so the chart
-// stacks three plain groups; the table view keeps all eight streams. The
-// running total stored is a single number, so it is a headline, not a panel.
+// Balance table pieces
+// ---------------------------------------------------------------------------
+
+const TH = 'pb-3 px-3 text-left text-body-sm font-medium whitespace-nowrap align-bottom';
+const TH_STYLE = { color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' } as const;
+const CELL = { borderBottom: '1px solid var(--line)' } as const;
+
+/** Mass column header — carries the one SYNTH badge for every figure below it. */
+function MassHeader({ label, sample }: { label: string; sample: Measurement }) {
+  return (
+    <th scope="col" className={TH + ' text-right'} style={TH_STYLE}>
+      <span className="inline-flex items-center justify-end gap-2">
+        {label}
+        <ProvenanceBadge measurement={sample} label={`${label} — sample weights`} abbreviated align="right" />
+      </span>
+    </th>
+  );
+}
+
+function MassCell({ value }: { value: number }) {
+  return (
+    <td
+      className="py-3.5 px-3 text-right font-mono text-body tabular-nums whitespace-nowrap align-middle"
+      style={{ ...CELL, color: 'var(--text)' }}
+    >
+      {kg(value)} <span style={{ color: 'var(--text-3)' }}>kg</span>
+    </td>
+  );
+}
+
+/** "Yes" in mint, or the gap in orange with the one action it earns. */
+function AddsUp({
+  row, canRaise, onRaise,
+}: { row: WasteBalanceRow; canRaise: boolean; onRaise: (row: WasteBalanceRow) => void }) {
+  if (row.withinTolerance) {
+    return (
+      <span className="inline-flex items-center gap-2 text-body font-medium" style={{ color: 'var(--ok-soft)' }}>
+        <StatusDot status="ok" size={9} />
+        Yes
+      </span>
+    );
+  }
+
+  const missing = row.discrepancyKg > 0;
+  const what = `${STATION_LABEL[row.stationId]} ${STREAM_LABEL[row.stream].toLowerCase()} waste`;
+  return (
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span
+        className="inline-flex items-center gap-2 text-body font-medium"
+        style={{ color: 'var(--act-soft)' }}
+        title={
+          missing
+            ? 'Less is stored and shipped out than was produced.'
+            : 'More is stored and shipped out than was produced.'
+        }
+      >
+        <StatusDot status="warning" size={9} />
+        <span>
+          <span className="font-mono tabular-nums">{kg(Math.abs(row.discrepancyKg))}</span> kg {missing ? 'missing' : 'extra'}
+        </span>
+      </span>
+      {canRaise && (
+        <button
+          type="button"
+          onClick={() => onRaise(row)}
+          className="inline-flex items-center px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
+          aria-label={`Raise action: ${what} doesn't add up`}
+        >
+          Raise action
+        </button>
+      )}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Disclosure — a panel whose whole header row opens and closes it
+// ---------------------------------------------------------------------------
+
+function Disclosure({ show, hide, children }: { show: ReactNode; hide: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <section className="@container" style={PANEL}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        className="w-full flex items-center gap-3 px-5 min-h-14 text-left text-body font-medium hover:bg-[var(--panel-alt)]"
+        style={{
+          color: 'var(--text)',
+          borderRadius: open ? 'var(--r-card) var(--r-card) 0 0' : 'var(--r-card)',
+        }}
+      >
+        <ChevronDown
+          size={18}
+          aria-hidden
+          className="shrink-0 transition-transform"
+          style={{ color: 'var(--text-3)', transform: open ? 'rotate(180deg)' : undefined }}
+        />
+        <span>{open ? hide : show}</span>
+      </button>
+      {open && (
+        <div id={id} className="m-fade px-5 pb-5 pt-1">
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Monthly chart — how much was produced each month, stacked in three plain
+// groups (eight types would be eight near-identical fills). Series colours
+// are the chart tokens, never a status colour.
 // ---------------------------------------------------------------------------
 
 const WASTE_GROUPS = [
   { key: 'everyday', label: 'Everyday', streams: ['general', 'recyclable', 'food'], color: 'var(--chart-1)',
     hint: 'General, recyclable and food waste' },
-  { key: 'sewage_lab', label: 'Sewage & lab', streams: ['sewage', 'scientific'], color: 'var(--chart-3)',
+  { key: 'sewage_lab', label: 'Sewage and lab', streams: ['sewage', 'scientific'], color: 'var(--chart-3)',
     hint: 'Sewage and scientific waste' },
   { key: 'hazardous', label: 'Hazardous', streams: ['medical', 'fuel_oily', 'hazardous'], color: 'var(--chart-2)',
     hint: 'Medical, fuel / oily and hazardous waste' },
@@ -357,47 +320,26 @@ const WASTE_GROUPS = [
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function WasteChart({ series }: { series: Props['series'] }) {
-  const rows = useMemo(
-    () => series.map((m) => {
-      const [yy, mm] = m.month.split('-');
-      const row: Record<string, string | number> = {
-        month: MONTHS[Number(mm) - 1] ?? m.month,
-        full: `${MONTHS[Number(mm) - 1] ?? ''} ${yy}`,
-      };
-      for (const g of WASTE_GROUPS) {
-        row[g.key] = g.streams.reduce((sum, st) => sum + (m.byStream[st] ?? 0), 0);
-      }
-      return row;
-    }),
-    [series],
-  );
-  const stored = series[series.length - 1]?.cumulativeStoredKg ?? 0;
-  const lastMonth = rows[rows.length - 1];
-  const lastTotal = lastMonth ? WASTE_GROUPS.reduce((s, g) => s + Number(lastMonth[g.key] ?? 0), 0) : 0;
+function MonthlyChart({ series }: { series: Props['series'] }) {
+  const rows = series.map((m) => {
+    const [yy, mm] = m.month.split('-');
+    const row: Record<string, string | number> = {
+      month: MONTHS[Number(mm) - 1] ?? m.month,
+      full: `${MONTHS[Number(mm) - 1] ?? ''} ${yy}`,
+    };
+    for (const g of WASTE_GROUPS) {
+      row[g.key] = Math.round(g.streams.reduce((sum, st) => sum + (m.byStream[st] ?? 0), 0));
+    }
+    return row;
+  });
 
   return (
-    <div>
-      <div className="flex items-end gap-x-10 gap-y-2 flex-wrap mb-4">
-        <div>
-          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>Stored at stations now</p>
-          <p className="font-mono text-headline font-medium tabular-nums" style={{ color: 'var(--text)' }}>
-            {stored.toLocaleString()} <span className="text-body-sm font-normal" style={{ color: 'var(--text-3)' }}>kg</span>
-          </p>
-        </div>
-        <div>
-          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>Produced last month</p>
-          <p className="font-mono text-headline font-medium tabular-nums" style={{ color: 'var(--text)' }}>
-            {lastTotal.toLocaleString()} <span className="text-body-sm font-normal" style={{ color: 'var(--text-3)' }}>kg</span>
-          </p>
-        </div>
-        <ChartLegend
-          className="ml-auto"
-          items={WASTE_GROUPS.map((g) => ({ label: g.label, color: g.color, hint: g.hint }))}
-        />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>Kilograms produced each month, by kind of waste.</p>
+        <ChartLegend items={WASTE_GROUPS.map((g) => ({ label: g.label, color: g.color, hint: g.hint }))} />
       </div>
-
-      <ChartContainer className="h-60" label="Waste produced per month in kilograms, stacked by type">
+      <ChartContainer className="h-60" label="Kilograms of waste produced each month, stacked by kind of waste">
         <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap="30%">
           <CartesianGrid {...CHART_DEFAULTS.grid} />
           <XAxis dataKey="month" {...CHART_DEFAULTS.axis} interval={0} />
@@ -425,48 +367,89 @@ function WasteChart({ series }: { series: Props['series'] }) {
   );
 }
 
-/** The table view the accessibility pass requires. */
-function WasteTable({ series }: { series: Props['series'] }) {
-  const rows = useMemo(() => series.slice().reverse(), [series]);
+// ---------------------------------------------------------------------------
+// Waste movements — one plain row each, newest first. A grid once the panel
+// is wide enough; below that each row simply wraps.
+// ---------------------------------------------------------------------------
+
+const MOVE_GRID =
+  '@min-[48rem]:grid @min-[48rem]:grid-cols-[8rem_minmax(7rem,1fr)_7rem_8rem_minmax(8rem,1fr)] @min-[48rem]:gap-x-4 @min-[48rem]:items-baseline';
+
+function Movements({
+  events, sample, onOpenVoyage,
+}: { events: WasteEvent[]; sample: Measurement; onOpenVoyage: (voyageId: string) => void }) {
+  const voyages = useStoreValue(getVoyages);
+  const voyageName = (id: string) =>
+    voyages.find((v) => v.id === id)?.name.replace(/^voyage\s+/i, '') ?? id;
+
   return (
-    <div className="overflow-x-auto max-h-[24rem] overflow-y-auto">
-      <table className="w-full min-w-[48rem] border-collapse">
-        <thead className="sticky top-0 z-[1]" style={{ backgroundColor: 'var(--panel)' }}>
-          <tr>
-            <th className="pb-3 px-3 text-left text-body-sm font-medium"
-              style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>Month</th>
-            {STREAM_ORDER.map((s) => (
-              <th key={s} className="pb-3 px-3 text-right text-body-sm font-medium whitespace-nowrap"
-                style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>
-                {STREAM_LABEL[s]}
-              </th>
-            ))}
-            <th className="pb-3 px-3 text-right text-body-sm font-medium whitespace-nowrap"
-              style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>Stored (kg)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((m) => (
-            <tr key={m.month}>
-              <td className="py-3 px-3 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
-                {m.month}
-              </td>
-              {STREAM_ORDER.map((s) => (
-                <td key={s} className="py-3 px-3 text-right font-mono text-body-sm tabular-nums"
-                  style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
-                  {(m.byStream[s] ?? 0).toLocaleString()}
-                </td>
-              ))}
-              <td className="py-3 px-3 text-right font-mono text-body-sm tabular-nums"
-                style={{ borderBottom: '1px solid var(--line)', color: 'var(--text)' }}>
-                {m.cumulativeStoredKg.toLocaleString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <div
+        className={`hidden ${MOVE_GRID} pb-2.5 text-body-sm`}
+        style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}
+      >
+        <span>Date</span>
+        <span>Waste type</span>
+        <span className="flex items-center justify-end gap-2">
+          Weight
+          <ProvenanceBadge measurement={sample} label="Waste movement weights — sample data" abbreviated align="right" />
+        </span>
+        <span>Movement</span>
+        <span>Handled by</span>
+      </div>
+
+      <ul aria-label="Waste movements, newest first">
+        {events.map((e) => {
+          const mass = typeof e.massKg.value === 'number' ? kg(e.massKg.value) : '—';
+          const shipped = e.direction === 'shipped';
+          return (
+            <li key={e.id} className="flex flex-col gap-1.5 py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+              <div className={`flex flex-wrap items-baseline gap-x-4 gap-y-1 ${MOVE_GRID}`}>
+                <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
+                  {formatDateIST(e.at)}
+                </span>
+                <span className="text-body" style={{ color: 'var(--text)' }}>{STREAM_LABEL[e.stream]}</span>
+                <span className="font-mono text-body tabular-nums whitespace-nowrap @min-[48rem]:text-right" style={{ color: 'var(--text)' }}>
+                  {mass} <span style={{ color: 'var(--text-3)' }}>kg</span>
+                </span>
+                <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>
+                  {shipped ? 'Shipped out' : 'Produced'}
+                </span>
+                <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+                  <span className="@min-[48rem]:hidden">by </span>{e.handler}
+                </span>
+              </div>
+
+              {(shipped || e.pendingSync) && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 @min-[48rem]:pl-[9rem]">
+                  {shipped && (e.voyageId ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenVoyage(e.voyageId!)}
+                      className="inline-flex items-center gap-1.5 min-h-10 text-body-sm text-left underline underline-offset-4 hover:text-[var(--text)]"
+                      style={{ color: 'var(--text-2)' }}
+                      title="Open this voyage's manifest in Logistics"
+                    >
+                      Shipped on voyage <span className="font-mono tabular-nums">{voyageName(e.voyageId)}</span> →
+                    </button>
+                  ) : (
+                    <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>No voyage recorded</span>
+                  ))}
+                  {e.pendingSync && (
+                    <span
+                      className="inline-flex items-center px-3 py-1 rounded-full text-body-sm"
+                      style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}
+                      title="Filed at the station; waiting for the satellite link to reach HQ. Not late."
+                    >
+                      Waiting for the link
+                    </span>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
-
-export { STREAM_LABEL, STREAM_RAMP };

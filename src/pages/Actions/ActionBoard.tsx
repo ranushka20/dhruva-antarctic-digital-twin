@@ -1,8 +1,9 @@
 // OWNER: Dev B
-// Board view — six columns matching the state machine. Dragging a card
-// performs the transition and writes to the audit chain; an illegal move is
-// rejected inline with the reason rather than silently snapping back
-// (FR-4.3).
+// Board view — six columns matching the state machine. Dropping a card opens
+// the step dialog for that column (a note, and an owner / review date /
+// evidence where the step needs one); the card moves once that is recorded.
+// An illegal move is rejected inline with the reason rather than silently
+// snapping back (FR-4.3).
 
 import { useState } from 'react';
 import type { Action } from '@/shared/contracts';
@@ -22,14 +23,15 @@ interface Props {
   actions: DerivedAction[];
   canWrite: boolean;
   onOpen: (id: string) => void;
-  onMove: (id: string, to: Action['state']) => Promise<void>;
+  /** A legal drop — the page opens the matching step dialog. */
+  onMove: (id: string, to: Action['state']) => void;
 }
 
 export function ActionBoard({ actions, canWrite, onOpen, onMove }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [rejection, setRejection] = useState<{ column: Action['state']; reason: string } | null>(null);
 
-  const handleDrop = async (to: Action['state']) => {
+  const handleDrop = (to: Action['state']) => {
     const id = dragId;
     setDragId(null);
     if (!id) return;
@@ -42,13 +44,8 @@ export function ActionBoard({ actions, canWrite, onOpen, onMove }: Props) {
       setTimeout(() => setRejection(null), 4000);
       return;
     }
-    try {
-      await onMove(id, to);
-      setRejection(null);
-    } catch (e) {
-      setRejection({ column: to, reason: e instanceof Error ? e.message : 'Transition failed' });
-      setTimeout(() => setRejection(null), 5000);
-    }
+    setRejection(null);
+    onMove(id, to);
   };
 
   return (

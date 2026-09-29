@@ -877,10 +877,13 @@ export function useActionTransitions(
   const apply = async (
     actionId: string,
     to: Action['state'],
-    note: string | undefined,
+    note: string,
     mutate: (a: Action) => void,
     payload: Record<string, unknown>
   ): Promise<Action> => {
+    // Nothing moves without a line in the log saying why. Who and when are
+    // filled in here; the note is the one thing a person has to supply.
+    if (!note?.trim()) throw new Error('Every step needs a short note for the log.');
     const actions = readActions(namespace);
     const a = actions[actionId];
     if (!a) throw new Error(`No action ${actionId} in ${namespace} store`);
@@ -896,8 +899,9 @@ export function useActionTransitions(
       actor: actor.name, actorRole: actor.role,
       objectType: 'action', objectId: actionId,
       transition: `${from} -> ${to}`,
-      payload: { from, to, ...payload },
-      payloadSummary: note ?? `${from} -> ${to}`,
+      // The note sits inside the hashed payload, so editing it later breaks the chain.
+      payload: { from, to, note, ...payload },
+      payloadSummary: note,
       atStation: namespace === 'station' ? new Date().toISOString() : undefined,
     });
 
@@ -918,14 +922,17 @@ export function useActionTransitions(
   };
 
   return {
-    acknowledge: (actionId: string, actorName: string = actor.name) =>
-      apply(actionId, 'ACKNOWLEDGED', `acknowledged by ${actorName}`, () => {}, { by: actorName }),
+    /** "HQ has seen this" — stops the response clock. The note says what happens next. */
+    acknowledge: (actionId: string, note: string) =>
+      apply(actionId, 'ACKNOWLEDGED', note, () => {}, {}),
 
-    assign: (actionId: string, assignee: { id: string; name: string; role: string }) =>
-      apply(actionId, 'ASSIGNED', `assigned to ${assignee.name}`, (a) => { a.assignee = assignee; }, { assignee }),
+    /** A named owner, plus what they are being asked to do. */
+    assign: (actionId: string, assignee: { id: string; name: string; role: string }, note: string) =>
+      apply(actionId, 'ASSIGNED', note?.trim() ? `To ${assignee.name} — ${note.trim()}` : '',
+        (a) => { a.assignee = assignee; }, { assignee }),
 
-    start: (actionId: string, note?: string) =>
-      apply(actionId, 'IN_PROGRESS', note ?? 'work started', () => {}, {}),
+    start: (actionId: string, note: string) =>
+      apply(actionId, 'IN_PROGRESS', note, () => {}, {}),
 
     /** FR-6.4: rejected without BOTH a reason and a review date. */
     defer: (actionId: string, reason: string, reviewDate: string) => {
@@ -949,9 +956,18 @@ export function useActionTransitions(
         { note, evidenceIds });
     },
 
-    /** Generic mover for the board view — same validation, same chain write. */
-    transitionTo: (actionId: string, to: Action['state'], note?: string) =>
-      apply(actionId, to, note, () => {}, {}),
+    /**
+     * Generic mover — same validation, same chain write. It refuses the three
+     * states that carry required fields (an owner, a reason + review date, a
+     * resolution + evidence); those go through assign / defer / resolve, so no
+     * UI path can skip what they check.
+     */
+    transitionTo: (actionId: string, to: Action['state'], note: string) => {
+      if (to === 'ASSIGNED' || to === 'DEFERRED' || to === 'RESOLVED') {
+        return Promise.reject(new Error(`Use ${to === 'ASSIGNED' ? 'assign' : to === 'DEFERRED' ? 'defer' : 'resolve'}() — ${to} needs more than a note.`));
+      }
+      return apply(actionId, to, note, () => {}, {});
+    },
 
     raise: async (
       draft: Pick<Action, 'stationId' | 'tier' | 'title' | 'reason' | 'trigger'> & Partial<Action>

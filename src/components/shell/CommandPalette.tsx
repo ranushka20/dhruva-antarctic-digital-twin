@@ -25,7 +25,7 @@ const PAGES: Hit[] = [
   { kind: 'Page', id: 'p-logistics', title: 'Logistics & Resupply', sub: '/logistics', to: '/logistics' },
   { kind: 'Page', id: 'p-comms', title: 'Sync & Comms', sub: '/comms', to: '/comms' },
   { kind: 'Page', id: 'p-station', title: 'Station Console', sub: '/station', to: '/station' },
-  { kind: 'Page', id: 'p-compliance', title: 'Compliance & Audit', sub: '/compliance', to: '/compliance' },
+  { kind: 'Page', id: 'p-compliance', title: 'Compliance', sub: '/compliance', to: '/compliance' },
   { kind: 'Page', id: 'p-handover', title: 'Crew Handover', sub: '/handover', to: '/handover' },
   { kind: 'Page', id: 'p-settings', title: 'Settings & Parameters', sub: '/settings', to: '/settings' },
 ];

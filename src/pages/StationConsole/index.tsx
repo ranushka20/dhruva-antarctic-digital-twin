@@ -653,7 +653,10 @@ function StationForms({
                 },
               });
               const member = ROSTER.find((m) => m.id === assetId);
-              if (member) await transitions.assign(id, { id: member.id, name: member.name, role: member.role });
+              if (member) {
+                await transitions.assign(id, { id: member.id, name: member.name, role: member.role },
+                  'Owner chosen when the action was recorded at the station');
+              }
             })
           }
         />

@@ -1,27 +1,30 @@
 // OWNER: Dev A
 // Route: /stations/:id/twin
 
-import { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy, type RefObject } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, GripVertical } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { IsoStationModel } from '@/components/viz/IsoStationModel';
-import { CausalTrace } from '@/components/shared/CausalTrace';
+import { ZoneTrace } from '@/components/shared/ZoneTrace';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { PanelLoader } from '@/components/shared/Loading';
+import { StepDialog } from '@/components/shared/StepDialog';
 import {
-  useActionTransitions,
   type Action,
-  type CausalTraceInput,
-  type Provenance,
+  type Measurement,
   type ZoneModel,
   type ZoneStatus,
 } from '@/shared/contracts';
-import { getActions, getResources } from '@/state/data';
+import { causalTraceInput, getActions, getResources } from '@/state/data';
 import { useStoreValue } from '@/state/useStore';
-import { currentActor, useCan } from '@/state/auth';
+import { useCan } from '@/state/auth';
+import { useSyncInfo } from '@/state/connectivity';
+import { formatAge } from '@/lib/time';
 import { FLOORS, floorsForZone, getRoom, roomsForZone, twinZoneStatus, zoneForRoom } from '@/twin/zoneRooms';
+import { roomTraceProfile, zoneTraceProfile } from '@/twin/roomProfiles';
+import { runZoneTrace, type ZoneTraceProfile } from '@/engine/zoneTrace';
 
 // Lazy load the existing 3D model
 const Bharati3D = lazy(() => import('@/twin/Bharati3D'));
@@ -72,6 +75,15 @@ function ageInWords(seconds: number): string {
 // "COIL TEMP MAX" → "Coil temp max"
 const sentenceCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
+// How much the 3D fades as HQ's picture of the station ages (0 = crisp).
+const STALENESS: Record<'LIVE' | 'LAGGING' | 'DARK', number> = { LIVE: 0, LAGGING: 0.4, DARK: 0.85 };
+
+// Side panels can be dragged wider or narrower. Until someone does, they keep
+// their responsive default widths; the viewport-width cap keeps the 3D usable
+// on smaller screens even with a remembered width.
+const LEFT_PANEL = { key: 'twin.leftPanelWidth', min: 224, max: 448, maxVw: 0.3, className: 'w-[17rem] xl:w-[19rem]' };
+const RIGHT_PANEL = { key: 'twin.rightPanelWidth', min: 320, max: 672, maxVw: 0.42, className: 'w-[22rem] xl:w-[24rem] 2xl:w-[27rem]' };
+
 export default function TwinPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -85,6 +97,9 @@ export default function TwinPage() {
   const [stationData, setStationData] = useState<any>(null); // Full mock data
   const [renderMode, setRenderMode] = useState<'svg' | '3d'>(has3D ? '3d' : 'svg');
   const [floor, setFloor] = useState('ground');
+  // Which floor's zone list is open. Separate from `floor` so the list can be
+  // folded away while the 3D keeps showing that floor.
+  const [expandedFloor, setExpandedFloor] = useState<string | null>('ground');
   const [selectedZone, setSelectedZone] = useState<string | undefined>();
   // Set only when a room is clicked in the 3D; otherwise the selected zone's
   // own room on this floor is the one highlighted.
@@ -107,7 +122,9 @@ export default function TwinPage() {
         setRenderMode(has3D ? '3d' : 'svg');
         setSelectedZone(initial?.code);
         setSelectedRoomId(undefined);
-        setFloor((initial && floorsForZone(initial.code)[0]) ?? 'ground');
+        const startFloor = (initial && floorsForZone(initial.code)[0]) ?? 'ground';
+        setFloor(startFloor);
+        setExpandedFloor(startFloor);
       } catch (err) {
         console.error("Failed to load mock data:", err);
       }
@@ -121,9 +138,23 @@ export default function TwinPage() {
   // --- Live store: open actions and supplies agree with / and /logistics ---
   const actions = useStoreValue(() => getActions(stationId));
   const resources = useStoreValue(() => getResources(stationId));
-  const actor = currentActor();
   const canAck = useCan('action.transition');
-  const transitions = useActionTransitions('hq', { name: actor.name, role: actor.role });
+  // Acknowledging asks for a note like everywhere else (touchpoint #1).
+  const [ackId, setAckId] = useState<string | null>(null);
+
+  // --- Link state from /comms: the 3D fades and bannered when HQ is behind ---
+  const syncInfo = useSyncInfo(stationId);
+  const twinSync = {
+    state: syncInfo.state.toLowerCase(),
+    staleness: STALENESS[syncInfo.state],
+    label: formatAge(syncInfo.ageSeconds),
+  };
+
+  // --- Resizable side panels ---
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+  const [leftWidth, setLeftWidth] = usePanelWidth(LEFT_PANEL);
+  const [rightWidth, setRightWidth] = usePanelWidth(RIGHT_PANEL);
 
   // --- Derived Data ---
   const zones: ZoneModel[] = useMemo(() => stationData?.zones ?? [], [stationData]);
@@ -137,6 +168,11 @@ export default function TwinPage() {
   const activeZone = zones.find((z) => z.code === selectedZone) ?? null;
   const clickedRoom = selectedRoomId ? getRoom(selectedRoomId) : undefined;
 
+  // Bharati's zones are the sum of their rooms; Maitri has no room model, so
+  // its zones carry their own profile in mock/maitri.json.
+  const zoneProfile = (zone: ZoneModel) =>
+    has3D ? zoneTraceProfile(zone.code) : (zone as ZoneModel & { trace?: ZoneTraceProfile }).trace;
+
   const highlightRoom = useMemo(() => {
     const room = selectedRoomId ? getRoom(selectedRoomId) : undefined;
     if (room?.floorId === floor) return room;
@@ -147,18 +183,19 @@ export default function TwinPage() {
   const zoneActions = activeZone ? openActionsFor(activeZone.code) : [];
   const shortestSupply = [...resources].sort((a, b) => a.autonomyDays - b.autonomyDays)[0];
 
-  const causalInput: CausalTraceInput | null = useMemo(() => {
-    if (!stationData) return null;
-    return {
-      ambientTempC: stationData.engineInputs.ambientTempC,
-      windKmh: stationData.engineInputs.windKmh,
-      uValue: stationData.engineInputs.uValue,
-      areaM2: stationData.engineInputs.areaM2,
-      stockUnits: stationData.engineInputs.stockUnits,
-      shipWindow: stationData.engineInputs.shipWindow,
-      provenanceOverride: 'MODELED' as Provenance
-    };
-  }, [stationData]);
+  // The one shared builder (touchpoint #10), so the station figures here match
+  // the Action Centre drawer, Environment and the Sandbox baseline.
+  const traceInput = useStoreValue(() => causalTraceInput(stationId));
+
+  // Each of the zone's rooms with its share of the station's fuel, from the engine.
+  type TwinRoom = { id: string; name: string; floorId: string };
+  const zoneRoomList: { room: TwinRoom; share: Measurement }[] =
+    activeZone && has3D
+      ? roomsForZone(activeZone.code).flatMap((room: TwinRoom) => {
+          const profile = roomTraceProfile(room.id);
+          return profile ? [{ room, share: runZoneTrace(traceInput, profile).zone.sharePct }] : [];
+        })
+      : [];
 
   // --- Selection: one shared state for the list and the 3D (FR-3.4) ---
   const chooseZone = (code: string) => {
@@ -166,11 +203,20 @@ export default function TwinPage() {
     setSelectedRoomId(undefined);
     setAckError(null);
     const floors = floorsForZone(code);
-    if (showFloors && floors.length && !floors.includes(floor)) setFloor(floors[0]);
+    if (showFloors && floors.length && !floors.includes(floor)) {
+      setFloor(floors[0]);
+      setExpandedFloor(floors[0]);
+    }
   };
 
   const chooseFloor = (next: string) => {
+    // The floor already in view just opens or folds its zone list.
+    if (next === floor) {
+      setExpandedFloor(expandedFloor === next ? null : next);
+      return;
+    }
     setFloor(next);
+    setExpandedFloor(next);
     setSelectedRoomId(undefined);
     setAckError(null);
     if (selectedZone && floorsForZone(selectedZone).includes(next)) return;
@@ -181,19 +227,32 @@ export default function TwinPage() {
     setRenderMode(mode);
     if (mode !== '3d' || !selectedZone) return;
     const floors = floorsForZone(selectedZone);
-    if (floors.length && !floors.includes(floor)) setFloor(floors[0]);
+    if (floors.length && !floors.includes(floor)) {
+      setFloor(floors[0]);
+      setExpandedFloor(floors[0]);
+    }
   };
 
-  const onRoomSelect = useCallback((room: { id: string } | null) => {
+  const chooseRoom = (room: { id: string; floorId: string }) => {
+    setSelectedRoomId(room.id);
+    setAckError(null);
+    if (showFloors && room.floorId !== floor) {
+      setFloor(room.floorId);
+      setExpandedFloor(room.floorId);
+    }
+  };
+
+  const onRoomSelect = useCallback((room: { id: string; floorId?: string } | null) => {
     if (!room) return; // a click on empty space keeps the inspector as it was
     setSelectedRoomId(room.id);
     setSelectedZone(zoneForRoom(room.id));
+    if (room.floorId) setExpandedFloor(room.floorId);
     setAckError(null);
   }, []);
 
   const acknowledge = (actionId: string) => {
     setAckError(null);
-    transitions.acknowledge(actionId, actor.name).catch((err: Error) => setAckError(err.message));
+    setAckId(actionId);
   };
 
   if (!stationData) return <PanelLoader label="Loading station twin" />;
@@ -276,30 +335,53 @@ export default function TwinPage() {
       <div className="flex-1 flex overflow-hidden">
 
         {/* Left Column: floors and their zones, then supplies */}
-        <div className="w-[17rem] xl:w-[19rem] border-r border-[var(--line)] bg-[var(--panel)] flex flex-col shrink-0">
-          <div className="flex-1 overflow-y-auto p-4">
+        <div
+          ref={leftRef}
+          style={panelStyle(leftWidth, LEFT_PANEL)}
+          className={`relative ${leftWidth ? '' : LEFT_PANEL.className} border-r border-[var(--line)] bg-[var(--panel)] flex flex-col shrink-0`}
+        >
+          <ResizeHandle
+            edge="right"
+            panelRef={leftRef}
+            limits={LEFT_PANEL}
+            onResize={setLeftWidth}
+            label="Resize the floors and zones panel"
+          />
+          <div className="flex-1 min-h-0 overflow-y-auto p-4">
             {showFloors ? (
               <>
                 <h2 className="text-body-sm font-medium text-[var(--text-3)] px-1 mb-2">Floors</h2>
                 <ul className="flex flex-col gap-2">
                   {FLOORS.map((f) => {
                     const here = zonesOnFloor(f.id);
-                    const open = floor === f.id;
+                    const inView = floor === f.id;
+                    const open = expandedFloor === f.id;
                     const worst = here[0]?.status;
                     return (
                       <li
                         key={f.id}
                         className={`rounded-xl border ${
-                          open ? 'border-[var(--line-strong)] bg-[var(--bg)]' : 'border-[var(--line)]'
+                          inView ? 'border-[var(--line-strong)] bg-[var(--bg)]' : 'border-[var(--line)]'
                         }`}
                       >
                         <button
                           type="button"
                           onClick={() => chooseFloor(f.id)}
                           aria-expanded={open}
+                          aria-current={inView ? 'true' : undefined}
+                          title={
+                            inView
+                              ? open ? 'Hide this floor’s zones' : 'Show this floor’s zones'
+                              : `Show the ${f.label.toLowerCase()} in the model`
+                          }
                           className="w-full flex items-center gap-3 px-4 min-h-12 text-left rounded-xl hover:bg-[var(--panel-raised)]"
                         >
-                          <span className="flex-1 text-body font-semibold text-[var(--text)]">{f.label}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-body font-semibold text-[var(--text)]">{f.label}</span>
+                            {inView && !open && (
+                              <span className="block text-body-sm text-[var(--text-3)]">Shown in the model</span>
+                            )}
+                          </span>
                           {!open && worst && worst !== 'ok' && (
                             <span title={`A zone on this floor: ${STATUS_WORD[worst]}`}>
                               <StatusDot status={worst} size={9} />
@@ -370,7 +452,9 @@ export default function TwinPage() {
 
         {/* Centre Column: Render Viewport */}
         <div className="flex-1 min-w-[20rem] relative bg-[var(--bg)] overflow-hidden flex flex-col">
-          <div className="absolute top-4 left-4 z-10 bg-[var(--panel)] border border-[var(--line)] rounded-full px-4 py-2 text-body-sm text-[var(--text-2)] flex items-center gap-4 flex-wrap">
+          {/* Capped short of the 3D's top-right "Zone model" badge, so on a
+              narrow viewport the legend wraps instead of sliding under it. */}
+          <div className="absolute top-4 left-4 z-10 max-w-[calc(100%-18rem)] bg-[var(--panel)] border border-[var(--line)] rounded-xl px-4 py-2 text-body-sm text-[var(--text-2)] flex items-center gap-x-4 gap-y-1 flex-wrap">
             {(['ok', 'watch', 'warning', 'unknown'] as const).map((s) => (
               <span key={s} className="flex items-center gap-2">
                 <StatusDot status={s} size={10} />
@@ -395,6 +479,7 @@ export default function TwinPage() {
                    onSelectAsset={onRoomSelect}
                    selectedAsset={highlightRoom}
                    zoneStatus={twinStatus}
+                   sync={twinSync}
                  />
                </Suspense>
             </div>
@@ -402,37 +487,130 @@ export default function TwinPage() {
         </div>
 
         {/* Right Column: Zone Inspector */}
-        <div className="w-[22rem] xl:w-[24rem] 2xl:w-[27rem] border-l border-[var(--line)] bg-[var(--panel)] flex flex-col shrink-0 overflow-y-auto">
-          {activeZone ? (
+        <div
+          ref={rightRef}
+          style={panelStyle(rightWidth, RIGHT_PANEL)}
+          className={`relative ${rightWidth ? '' : RIGHT_PANEL.className} border-l border-[var(--line)] bg-[var(--panel)] shrink-0`}
+        >
+          <ResizeHandle
+            edge="left"
+            panelRef={rightRef}
+            limits={RIGHT_PANEL}
+            onResize={setRightWidth}
+            label="Resize the zone details panel"
+          />
+          <div className="h-full overflow-y-auto">
+          {activeZone || clickedRoom ? (
             <div className="p-5 flex flex-col gap-6">
               <header>
                 <p className="text-body-sm text-[var(--text-3)]">
-                  {has3D && `${floorsInWords(floorsForZone(activeZone.code))} · `}
-                  Zone <span className="font-mono">{activeZone.code}</span>
+                  {clickedRoom ? (
+                    <>
+                      {floorLabel(clickedRoom.floorId)}
+                      {activeZone ? (
+                        <>
+                          {' · in '}
+                          <button
+                            type="button"
+                            onClick={() => chooseZone(activeZone.code)}
+                            className="underline underline-offset-2 hover:text-[var(--text-2)]"
+                            title={`Show all of ${activeZone.name}`}
+                          >
+                            {activeZone.name}
+                          </button>
+                        </>
+                      ) : (
+                        ' · not in a monitored zone'
+                      )}
+                    </>
+                  ) : (
+                    activeZone && (
+                      <>
+                        {has3D && `${floorsInWords(floorsForZone(activeZone.code))} · `}
+                        Zone <span className="font-mono">{activeZone.code}</span>
+                      </>
+                    )
+                  )}
                 </p>
                 <h2
                   className="mt-1 text-display font-semibold text-[var(--text)]"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  {activeZone.name}
+                  {clickedRoom?.name ?? activeZone?.name}
                 </h2>
-                <p className="mt-2 flex items-center gap-2 text-body font-medium" style={{ color: STATUS_COLOR[activeZone.status] }}>
-                  <StatusDot status={activeZone.status} size={10} />
-                  {STATUS_WORD[activeZone.status]}
-                  {zoneActions.length > 0 && (
-                    <span className="font-normal text-[var(--text-3)]">
-                      · <span className="font-mono">{zoneActions.length}</span> open action
-                      {zoneActions.length === 1 ? '' : 's'} below
-                    </span>
-                  )}
-                </p>
+                {activeZone ? (
+                  <p className="mt-2 flex items-center gap-2 text-body font-medium" style={{ color: STATUS_COLOR[activeZone.status] }}>
+                    <StatusDot status={activeZone.status} size={10} />
+                    {STATUS_WORD[activeZone.status]}
+                    {zoneActions.length > 0 && (
+                      <span className="font-normal text-[var(--text-3)]">
+                        · <span className="font-mono">{zoneActions.length}</span> open action
+                        {zoneActions.length === 1 ? '' : 's'} below
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="mt-2 flex items-center gap-2 text-body font-medium text-[var(--text-3)]">
+                    <StatusDot status="unknown" size={10} />
+                    Not monitored yet
+                  </p>
+                )}
               </header>
 
-              {/* Engine Coupling: Causal Trace */}
-              {causalInput && (
-                <CausalTrace input={causalInput} scope={`all of ${stationName} — the same for every zone`} />
+              {/* Engine Coupling: this zone's or room's own trace */}
+              <ZoneTrace
+                input={traceInput}
+                subject={
+                  clickedRoom
+                    ? { status: activeZone?.status ?? 'unknown', trace: roomTraceProfile(clickedRoom.id) }
+                    : { status: activeZone?.status ?? 'unknown', trace: activeZone ? zoneProfile(activeZone) : undefined }
+                }
+                kind={clickedRoom ? 'room' : 'zone'}
+              />
+
+              {!clickedRoom && zoneRoomList.length > 1 && (
+                <section>
+                  <h3 className="text-title font-medium text-[var(--text)] mb-3">Rooms</h3>
+                  <ul className="rounded-xl border border-[var(--line)] bg-[var(--bg)] divide-y divide-[var(--line)]">
+                    {zoneRoomList.map(({ room, share }) => (
+                      <li key={room.id} className="flex items-center gap-2 pr-4">
+                        <button
+                          type="button"
+                          onClick={() => chooseRoom(room)}
+                          className="flex-1 min-w-0 flex flex-col items-start px-4 py-2.5 min-h-12 text-left rounded-xl hover:bg-[var(--panel-raised)]"
+                        >
+                          <span className="text-body font-medium text-[var(--text)]">{room.name}</span>
+                          <span className="text-body-sm text-[var(--text-3)]">{floorLabel(room.floorId)}</span>
+                        </button>
+                        <span
+                          className="font-mono text-body tabular-nums text-[var(--text)] whitespace-nowrap"
+                          title="Share of the station's fuel"
+                        >
+                          {Math.round(Number(share.value))}%
+                        </span>
+                        <ProvenanceBadge
+                          measurement={share}
+                          label={`${room.name}: share of the station's fuel`}
+                          abbreviated
+                          align="right"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-body-sm text-[var(--text-3)]">
+                    Each room's share of the station's fuel. Choose one for its own figures.
+                  </p>
+                </section>
               )}
 
+              {!activeZone && (
+                <p className="text-body text-[var(--text-2)]">
+                  This room is not part of a monitored zone, so there are no readings or actions for it yet.
+                </p>
+              )}
+
+              {activeZone && (
+              <>
               <section>
                 <h3 className="text-title font-medium text-[var(--text)] mb-3">Equipment</h3>
                 {activeZone.assets.length === 0 ? (
@@ -514,24 +692,14 @@ export default function TwinPage() {
                     {ackError}
                   </p>
                 )}
+                <StepDialog
+                  request={ackId ? { kind: 'ack', actionIds: [ackId] } : null}
+                  actions={zoneActions}
+                  onClose={() => setAckId(null)}
+                />
               </section>
-            </div>
-          ) : clickedRoom ? (
-            <div className="p-5 flex flex-col gap-3">
-              <p className="text-body-sm text-[var(--text-3)]">{floorLabel(clickedRoom.floorId)}</p>
-              <h2
-                className="text-display font-semibold text-[var(--text)]"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                {clickedRoom.name}
-              </h2>
-              <p className="flex items-center gap-2 text-body font-medium text-[var(--text-3)]">
-                <StatusDot status="unknown" size={10} />
-                Not monitored yet
-              </p>
-              <p className="text-body text-[var(--text-2)]">
-                This room is not part of a monitored zone, so there are no readings or actions for it yet.
-              </p>
+              </>
+              )}
             </div>
           ) : (
             <div className="p-5 flex items-center justify-center h-full">
@@ -540,9 +708,124 @@ export default function TwinPage() {
               </span>
             </div>
           )}
+          </div>
         </div>
 
       </div>
+    </div>
+  );
+}
+
+type PanelLimits = typeof LEFT_PANEL;
+
+/** A dragged panel width, remembered per viewer. `null` means "use the default". */
+function usePanelWidth(limits: PanelLimits) {
+  const [width, setWidth] = useState<number | null>(() => {
+    try {
+      const saved = Number(localStorage.getItem(limits.key));
+      return saved >= limits.min && saved <= limits.max ? saved : null;
+    } catch {
+      return null;
+    }
+  });
+  const update = useCallback(
+    (next: number | null) => {
+      setWidth(next);
+      try {
+        if (next == null) localStorage.removeItem(limits.key);
+        else localStorage.setItem(limits.key, String(Math.round(next)));
+      } catch {
+        // Storage unavailable: the width still applies, it just isn't remembered.
+      }
+    },
+    [limits.key],
+  );
+  return [width, update] as const;
+}
+
+function panelStyle(width: number | null, limits: PanelLimits) {
+  return width ? { width: `min(${width}px, ${limits.maxVw * 100}vw)` } : undefined;
+}
+
+/**
+ * Drag handle on a panel's inner edge. Pointer drag, arrow keys (Shift for
+ * bigger steps) and double-click to reset.
+ */
+function ResizeHandle({
+  edge,
+  panelRef,
+  limits,
+  onResize,
+  label,
+}: {
+  /** The panel edge the handle sits on. */
+  edge: 'left' | 'right';
+  panelRef: RefObject<HTMLDivElement | null>;
+  limits: PanelLimits;
+  onResize: (width: number | null) => void;
+  label: string;
+}) {
+  const clamp = (w: number) =>
+    Math.round(Math.min(limits.max, window.innerWidth * limits.maxVw, Math.max(limits.min, w)));
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const panel = panelRef.current;
+    if (!panel || e.button !== 0) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const startX = e.clientX;
+    const startWidth = panel.offsetWidth;
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      onResize(clamp(edge === 'right' ? startWidth + dx : startWidth - dx));
+    };
+    const end = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const step = e.shiftKey ? 64 : 16;
+    const grow = edge === 'right' ? 'ArrowRight' : 'ArrowLeft';
+    const shrink = edge === 'right' ? 'ArrowLeft' : 'ArrowRight';
+    if (e.key === grow) onResize(clamp(panel.offsetWidth + step));
+    else if (e.key === shrink) onResize(clamp(panel.offsetWidth - step));
+    else return;
+    e.preventDefault();
+  };
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={label}
+      tabIndex={0}
+      title={`${label}: drag, or use the arrow keys. Double-click to reset.`}
+      onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
+      onDoubleClick={() => onResize(null)}
+      className={`group absolute inset-y-0 z-20 w-3 cursor-col-resize touch-none outline-none ${
+        edge === 'right' ? '-right-1.5' : '-left-1.5'
+      }`}
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-colors group-hover:bg-[var(--line-strong)] group-focus-visible:bg-[var(--ok)] group-active:bg-[var(--ok)]"
+      />
+      <span
+        aria-hidden
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-10 rounded-full border border-[var(--line-strong)] bg-[var(--panel)] text-[var(--text-3)] group-hover:text-[var(--text)]"
+      >
+        <GripVertical className="size-3" />
+      </span>
     </div>
   );
 }

@@ -208,6 +208,76 @@
   - FR-8.1/8.2: status is shown in words (Normal / Watch / Needs action / No data). The tier chip is gone. The latest-reading box and the asset progress bars are replaced by plain rows showing the value, its limit, and a badge.
 - Notes for the other developer: nothing needed. Open-action counts on the Twin now come from the live store, so they change when an action is acknowledged or resolved in the Action Centre.
 
+### [2026-09-30 00:30] Shared (at the user's request, agreed with Dev B's session) — Provenance hover card no longer clipped
+- Status: done. `tsc` shows no errors in the touched files. The user is checking visually.
+- Files changed: `src/components/shared/ProvenanceBadge.tsx` (Dev B's file; the Dev B session agreed to this change).
+- Summary: The user's screenshot showed the MODELED hover card in the Twin inspector with its left third cut off. Any `overflow-y-auto` ancestor clips the x axis too, so the card, rendered in place with `position: absolute`, could not escape the inspector or the Action Centre drawer. The card is now portalled to `<body>` with `position: fixed`, placed from the badge's `getBoundingClientRect()`. It is clamped 8px inside the viewport, flips above the badge when there is no room below, and follows the badge when any ancestor scrolls or the window resizes. It sits at `z-[60]`, above the drawer and modal layers. It is placed in a layout effect, so it never paints at a stale spot.
+- Touches shared contract? no. The props API (`measurement`, `label`, `abbreviated`, `align`, `className`), the four styles, the card contents and the aria wiring are unchanged. `align` still sets the preferred side.
+- Touchpoint completed? none
+- Notes for the other developer: the per-zone "Why this matters" item was started here, then handed to the Twin session mid-way, at its request. Already written: `src/engine/zoneTrace.ts` (new; `runZoneTrace(input, profile)`, built on `runCausalTrace` and the `compute*` functions) and one additive `"trace"` line per zone in `src/mock/bharati.json` / `maitri.json`. That session owns the rest and may keep or replace both.
+
+### [2026-09-29 23:34] Dev A (at the user's request) — Twin: each zone gets its own "Why this matters"; foldable floors; resizable panels; link state
+- Status: done. `tsc` shows no errors in the touched files. Checked in Chrome: Bharati Power House / Storage & Workshop / Fuel Storage / Labs & Science, Maitri Fuel Depot, panel drag and reset, and the hover card inside the inspector.
+- Files changed: `src/components/shared/ZoneTrace.tsx` (new), `src/components/shared/CausalTrace.tsx` (ship-window row), `src/pages/Twin/index.tsx`. Kept the Dev B session's `src/engine/zoneTrace.ts` and the mock `trace` lines as they were.
+- Summary: The user pointed out that every zone and floor showed the same station fuel panel. Each zone's panel now answers that zone's own question, with numbers from `runZoneTrace()` (the engine on the zone's share of heat and load):
+  - A zone with a fault gives a verdict ("Needs attention" / "Worth watching"), the days of fuel the fault costs, and fuel now vs. once fixed. Bharati: Generator #2 costs ≈7 d, the workshop door seal ≈2 d.
+  - A healthy zone says "All right", with its share of the station's fuel.
+  - The zone that holds the fuel keeps the station fuel story (`CausalTrace`).
+- The Twin now builds its engine input with `causalTraceInput(stationId)` instead of hand-copying `mock/*.json` `engineInputs`. Bharati's fuel therefore reads 140 d, the figure Dev B measured in the drawer.
+- `CausalTrace` also shows the next ship's arrival window, with a badge. When the fuel runs out before the earliest ship it says so in `--act-soft`. Maitri today: 70 d of fuel against a 107–114 d window, which "order within 27 days" alone hid.
+- Floors: the floor already in view folds and unfolds its zone list. The side panels can be dragged wider or narrower, via pointer or arrow keys; double-click resets. Widths are remembered per viewer in `localStorage`.
+- Touches shared contract? no existing signature. See "Contract changes" for the adopted `engine/zoneTrace.ts` and the mock `trace` field.
+- Touchpoint completed? #9 (Twin side only). The 3D fades and shows the "No contact / HQ behind" banner from `useSyncInfo()`. Assets and Environment still don't read connectivity. #10: see the note on the tracker row.
+- Notes for the other developer: the drawer calls `causalTraceInput(stationId, { zoneCode })`, which models a warning zone as extra envelope loss. `runZoneTrace` models Generator #2 as an efficiency loss. So for an A1 action, the drawer's "days of fuel" and the Twin's "fuel lasts … now" differ. The station figure without a zone (140 d) matches. One of the two fault models should win; ask the user before changing either.
+
+### [2026-09-30 00:30] Dev B (at the user's request) — Compliance page rewritten for a government audience
+- Status: done. `tsc` is clean for every Compliance file; the 2 errors left are the known IsoStationModel/Assets ones. The user is checking visuals. Built by four parallel sub-agents from one shared brief (shell, Reports, Waste, Inspections + Record history), then integrated here.
+- Files changed: `src/pages/Compliance/{index,Obligations,WasteLedger,Inspections,AuditLog}.tsx`, `src/components/shell/CommandPalette.tsx` (entry title "Compliance").
+- Summary: The user asked "what even is this page?". Its job is the stations' official paperwork under the Antarctic Treaty's environmental rules and India's Antarctic Act, plus proof nobody changed it afterwards. The page is now built around four plain questions. Each is a card that shows its own answer and acts as the tab:
+  - **Reports:** are reports filed on time?
+  - **Waste:** is all waste accounted for?
+  - **Inspections:** were inspections passed?
+  - **Record history:** are the records untouched?
+  - These cards replace the header count chips, the "Chain verified" chip and the tab bar. One line shows the whole pipeline: station writes a record → reaches HQ, or waits for the satellite link → locked into the record history.
+  - **Reports:** grouped by urgency; "waiting for the link" is visibly not overdue; "Filed" is collapsed.
+  - **Waste:** one table checking that produced = stored + shipped out, with "Adds up?" and "Raise action".
+  - **Inspections:** one card per inspection, failed items listed inline with their action.
+  - **Record history:** a plain newest-first timeline. Fingerprints (hashes) appear only under per-row "Technical details". The JSON export and the tamper demo sit in a collapsed "For auditors" section.
+- Removed as redundant or engineer-only: the monthly "what falls due" chart, the chain-strip visual, the actor filter, always-visible hashes and "SHA-256" labels, and the per-row tamper buttons. Actions this page raises now read in plain words ("Hazardous waste doesn't add up").
+- **Spec deviations (user-directed):**
+  - FR-1.1: title is "Compliance", not "Compliance & Audit".
+  - FR-1.3/1.4: the counts and chain chip are folded into the cards.
+  - FR-2.1: no calendar strip.
+  - FR-5.4: no chain strip; the changed record is marked in the timeline instead.
+  - FR-5.8's label now appears as the plain explanation "sealed together with the one before it", with "tamper-evident, not signed" under "For auditors".
+- Kept: `?tab=` (obligations / waste / inspections / audit), `?record=` and `?seq=` deep links; QUEUED OFFLINE ≠ OVERDUE; SYNTH on every waste figure; superseded entries greyed, never hidden; JSON export with hashes; no "blockchain" anywhere.
+- Touches shared contract? no.
+- Touchpoint completed? #8 unchanged: shipped waste still links to its voyage.
+- Notes for the other developer: `Inspections` gained an optional `onOpen` prop. `STREAM_RAMP` is no longer exported from WasteLedger; nothing imported it. On your #10 note: agreed that the zone-level fuel figures must match; that choice is with the user.
+
+### [2026-09-29 23:44] Dev A (at the user's request) — Twin: per-room figures, shorter "Why this matters"
+- Status: done. `tsc` shows no errors in the touched files. Checked in Chrome: Power House, Living Quarters (its five rooms add up to the zone's 24%), Galley, Control Room (no zone), and the workshop door seal (same cost in the room and in the zone).
+- Files changed: `src/twin/roomProfiles.js` (new), `src/components/shared/ZoneTrace.tsx` (rewritten shorter), `src/pages/Twin/index.tsx`, `src/mock/bharati.json` (removed the six `trace` lines added earlier today; Maitri keeps its lines).
+- Summary: The user asked for figures that follow the room. Each of Bharati's 18 indoor rooms now has a hand-set share of the station's equipment load, and a share of the heated shell taken from its floor area in the 3D, weighted for roof and underside exposure. Both sum to 1, so rooms always add up to exactly the station. Faults sit in their rooms: Generator #2 in the CHP room, the door seal in the workshop. A Bharati zone is the sum of its rooms. Clicking any room, including the five outside a zone, shows that room's own panel; a zone lists its rooms with each room's share.
+- "Why this matters" is now one sentence with the answer and its badge, one line of context, and the workings folded behind "How we worked it out", which starts closed. The fuel zone uses the same short shape.
+- Deviation: FR-10.2 wants the chain rows visible. They are now one click away, at the user's request ("make this concise").
+- Touches shared contract? no. Bharati's zone profiles now come from `twin/roomProfiles.js` rather than `mock/bharati.json`.
+- Touchpoint completed? none.
+- Notes for the other developer: none.
+
+### [2026-09-30 01:00] Shared (at the user's request, agreed with Dev B's session) — Action Centre drawer uses the Twin's zone model
+- Status: done. `tsc` shows no errors in the touched files. The other 4 errors are in files other sessions are editing (Actions/index, StationConsole, Assets, IsoStationModel). Not checked in a browser.
+- Files changed: `src/twin/zoneSubject.ts` (new), `src/components/shared/ZoneTrace.tsx` (optional `hideHeading`), `src/pages/Actions/ActionDrawer.tsx` (the trace input and the "Why this matters" render only; the Dev B session agreed).
+- Summary: The user chose one zone-fault model, resolving the open #10 note in the entry above. The drawer used `causalTraceInput(stationId, { resourceId, zoneCode })`, which adds a flat +8% heat loss to any warning zone. The Twin uses `runZoneTrace` with each zone's actual fault. So an A1 action showed different "days of fuel" in the two places. Now:
+  - **Input:** the drawer builds `causalTraceInput(action.stationId)`, the same call as the Twin.
+  - **Zone actions:** when the action has a zone with a profile, the drawer renders `<ZoneTrace subject={zoneSubject(stationId, zoneCode)} hideHeading />`. Otherwise it keeps `CausalTrace`.
+  - **One lookup:** `zoneSubject()` is the single place that picks a zone's profile and status: Bharati from `twin/roomProfiles.js`, Maitri from `mock/maitri.json`. An action on a zone now shows the Twin's numbers for that zone by construction.
+- Also fixed: the drawer passed the action's `resourceId` into the fuel chain. For act-mtr-004 (generator spares) and the RO/science/medical actions, "fuel will last" was computed from that resource's stock. The chain now always uses the station's fuel.
+- Still on the old model: `state/sandbox.ts` `zoneImpacts()` uses `causalTraceInput(…, { zoneCode })` for its per-zone risk chips. It is a what-if risk label, not a "days now" figure, so it was left alone; worth aligning later.
+- Touches shared contract? no. `ZoneTrace` `hideHeading` is additive; `data.ts` is unchanged.
+- Touchpoint completed? #10: the drawer and the Twin now share one input and one zone model. The Twin could use `zoneSubject()` instead of its inline copy of the same rule (`Twin/index.tsx`, `zoneProfile`); suggested to the Twin session.
+- Notes for the other developer: none beyond the above.
+
 ---
 
 ## Integration & Review
@@ -230,7 +300,7 @@ checklist at the bottom) before either side merges to `main`.
 | 6 | Logistics ledger row → "Raise action" | n/a | Owns both ends (pre-fill + route) | ✅ reviewed & merged — pre-fills resource, consequence and LSOD, routes to `/actions/:id` |
 | 7 | Overview "View all" → Action Centre | n/a | Owns both ends (query-param filter) | ✅ reviewed & merged — `/actions?station=&tier=&state=` all pre-fill the filters |
 | 8 | Compliance waste shipped → voyage link | n/a | Owns both ends (`voyageId`) | ✅ reviewed & merged — shipped rows link through to the voyage manifest |
-| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | 🟡 one side done (Dev B) — toggle + demo outage scenario live; Dev A's branch still marks this side not started, so Twin/Assets/Environment have yet to read it |
+| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | 🟡 one side done (Dev B) — toggle + demo outage scenario live. Twin now reads it (3D fades + "No contact / HQ behind" banner, 2026-09-29); Assets and Environment have yet to |
 | 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | 🟢 both sides done, needs review — each side verified its own pages in isolation. **The cross-page comparison the checklist asks for has NOT been run:** Dev B measured 140 d for Bharati HSD in the drawer; nobody has checked the Twin against that number. |
 
 Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides done, needs review` → `✅ reviewed & merged`.
@@ -266,6 +336,7 @@ Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides d
 | 2026-09-20 | Dev B | New module `src/engine/similarity.ts` (TF-IDF cosine, top 5, min score 0.35) | `engine/similarity.ts` is listed in FRONTEND.md §12 but did not exist, and both `/actions` (similar past faults) and `/handover` (recurring faults) need it. **This sits in Dev A's `engine/` folder — please adopt or replace it rather than writing a second one.** |
 | 2026-09-20 | Dev B | New parameters: `energy.fuelEnergyKwhPerL`, `thermal.zoneWarningLossPct`, `thermal.zoneWatchLossPct`, `logistics.targetCoverDays` | NFR-B1: every constant the engine consumes must be editable on `/settings`. The first converts the engine's kW-equivalent burn into the litres the fuel ledger uses. |
 | 2026-09-20 | Dev B | Added `tsconfig.json` and `typescript` as a dev dependency (`bun add -d typescript`) | The `@/*` alias existed only in `vite.config.js`, so the IDE and any type-check could not resolve it. `.js`/`.jsx` are included but unchecked, so the 3D twin is unaffected. |
+| 2026-09-29 | Dev A | New module `src/engine/zoneTrace.ts`: `runZoneTrace(input, profile)`, `ZoneTraceProfile`, `ZoneCondition`, `ZoneTraceResult`. Additive optional `trace` field per zone in `mock/maitri.json` (not yet on the `ZoneModel` type). Bharati's comes from its rooms in `src/twin/roomProfiles.js` | Per-zone "Why this matters" on the Twin. Built on `runCausalTrace` + `compute*`, with no existing signature changed. `result.station` is exactly `runCausalTrace(input)`. |
 
 #### ⚠ Open question for Dev A — suspected sign bug in `computeMarginDays`
 

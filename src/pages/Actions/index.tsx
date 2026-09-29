@@ -9,18 +9,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Rows3, Search } from 'lucide-react';
 import type { Action, Tier } from '@/shared/contracts';
-import { useActionTransitions } from '@/shared/contracts';
 import { TierFilter } from './TierRail';
 import { ActionTable } from './ActionTable';
 import { ActionBoard } from './ActionBoard';
 import { ActionDrawer } from './ActionDrawer';
-import { Modal } from '@/components/shared/Modal';
+import { StepDialog, STEP_FOR_STATE, type StepRequest } from '@/components/shared/StepDialog';
 import { useChainBroken } from '@/components/shared/ChainBanner';
-import { getActions, getActionCounts, OPEN_STATES, ROSTER, type ActionCounts, type DerivedAction } from '@/state/data';
+import { getActions, getActionCounts, OPEN_STATES, type ActionCounts } from '@/state/data';
 import { useStoreValue, useTick } from '@/state/useStore';
 import { STATION_LABEL, type StationFilter } from '@/state/stationScope';
-import { currentActor, useCan } from '@/state/auth';
-import { addDays } from '@/lib/time';
+import { useCan } from '@/state/auth';
 import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 import { usePresence, useLastWhileOpen } from '@/hooks/usePresence';
 
@@ -81,16 +79,14 @@ export default function ActionsPage() {
   const [breachOnly, setBreachOnly] = useState(false);
   const [view, setView] = useState<'table' | 'board'>('table');
   const [cursorId, setCursorId] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<{ kind: 'assign' | 'defer' | 'resolve'; id: string } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  // Every state change goes through StepDialog, which asks for the note the log needs.
+  const [step, setStep] = useState<StepRequest | null>(null);
 
   useTick(60_000);
 
-  const actor = currentActor();
   const canWrite = useCan('action.transition');
   const canBulk = useCan('action.bulk');
   const chainBroken = useChainBroken();
-  const transitions = useActionTransitions('hq', { name: actor.name, role: actor.role });
 
   const allActions = useStoreValue(useCallback(() => getActions(scope), [scope]));
   const counts = useStoreValue(useCallback(() => getActionCounts(scope), [scope]));
@@ -121,6 +117,7 @@ export default function ActionsPage() {
   // ---- Keyboard (NFR-3.6): j/k move, a acknowledge, Enter open, Esc close ---
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (step) return; // the step dialog has the keyboard while it is open
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -140,18 +137,14 @@ export default function ActionsPage() {
         navigate('/actions/' + cursorId);
       } else if (e.key === 'a' && cursorId && canWrite) {
         e.preventDefault();
-        transitions.acknowledge(cursorId, actor.name).catch((err) => setToast(err.message));
+        if (filtered.find((a) => a.id === cursorId)?.state === 'RAISED') {
+          setStep({ kind: 'ack', actionIds: [cursorId] });
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [filtered, cursorId, actionId, navigate, canWrite, transitions, actor.name]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const id = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(id);
-  }, [toast]);
+  }, [filtered, cursorId, actionId, navigate, canWrite, step]);
 
   const applyScope = (next: StationFilter) => {
     setScope(next);
@@ -166,15 +159,11 @@ export default function ActionsPage() {
     return next;
   };
 
-  const guarded = async (fn: () => Promise<unknown>) => {
-    try { await fn(); } catch (e) { setToast(e instanceof Error ? e.message : 'Transition failed'); }
-  };
-
   // FR-3.6: bulk acknowledge only — never bulk resolve, which needs per-action evidence.
-  const bulkAck = async () => {
-    for (const a of filtered) {
-      if (a.state === 'RAISED') await guarded(() => transitions.acknowledge(a.id, actor.name));
-    }
+  // One note covers the batch; each action still gets its own log entry.
+  const bulkAck = () => {
+    const ids = filtered.filter((a) => a.state === 'RAISED').map((a) => a.id);
+    if (ids.length) setStep({ kind: 'ack', actionIds: ids });
   };
 
   const applyStepView = (next: StepView) => {
@@ -266,13 +255,6 @@ export default function ActionsPage() {
         </div>
       </div>
 
-      {toast && (
-        <div key={toast} data-tone="error" className="m-toast px-6 py-2.5 shrink-0" role="alert"
-          style={{ backgroundColor: 'rgba(242,107,33,0.10)', borderBottom: '1px solid var(--act)' }}>
-          <span className="text-body-sm" style={{ color: 'var(--act-soft)' }}>{toast}</span>
-        </div>
-      )}
-
       {/* ---- Step tabs: what is waiting, by step (list layout only) ---- */}
       {view === 'table' && (
         <div className="px-6 pt-4 shrink-0">
@@ -357,17 +339,20 @@ export default function ActionsPage() {
               canWrite={canWrite}
               emptyReason={stepView === 'open' ? 'No open actions match these filters.' : 'Nothing is waiting at this step.'}
               onOpen={(id) => navigate('/actions/' + id)}
-              onAck={(id) => guarded(() => transitions.acknowledge(id, actor.name))}
-              onAssign={(id) => setDialog({ kind: 'assign', id })}
-              onDefer={(id) => setDialog({ kind: 'defer', id })}
-              onResolve={(id) => setDialog({ kind: 'resolve', id })}
+              onAck={(id) => setStep({ kind: 'ack', actionIds: [id] })}
+              onAssign={(id) => setStep({ kind: 'assign', actionIds: [id] })}
+              onDefer={(id) => setStep({ kind: 'defer', actionIds: [id] })}
+              onResolve={(id) => setStep({ kind: 'resolve', actionIds: [id] })}
             />
           ) : (
             <ActionBoard
               actions={filtered}
               canWrite={canWrite}
               onOpen={(id) => navigate('/actions/' + id)}
-              onMove={(id, to) => transitions.transitionTo(id, to).then(() => undefined)}
+              onMove={(id, to) => {
+                const kind = STEP_FOR_STATE[to];
+                if (kind) setStep({ kind, actionIds: [id] });
+              }}
             />
           )}
           </div>
@@ -378,141 +363,7 @@ export default function ActionsPage() {
         <ActionDrawer action={drawerAction} state={drawer.state} onClose={() => navigate('/actions')} />
       )}
 
-      <QuickDialog
-        dialog={dialog}
-        actions={allActions}
-        onClose={() => setDialog(null)}
-        onAssign={(id, a) => guarded(() => transitions.assign(id, a)).then(() => setDialog(null))}
-        onDefer={(id, r, d) => guarded(() => transitions.defer(id, r, d)).then(() => setDialog(null))}
-        onResolve={(id, note, ev) => guarded(() => transitions.resolve(id, note, ev)).then(() => setDialog(null))}
-      />
+      <StepDialog request={step} actions={allActions} onClose={() => setStep(null)} />
     </div>
-  );
-}
-
-/** Row-level Assign / Defer / Resolve without opening the full drawer. */
-function QuickDialog({
-  dialog, actions, onClose, onAssign, onDefer, onResolve,
-}: {
-  dialog: { kind: 'assign' | 'defer' | 'resolve'; id: string } | null;
-  actions: DerivedAction[];
-  onClose: () => void;
-  onAssign: (id: string, assignee: { id: string; name: string; role: string }) => void;
-  onDefer: (id: string, reason: string, reviewDate: string) => void;
-  onResolve: (id: string, note: string, evidenceIds: string[]) => void;
-}) {
-  const [reason, setReason] = useState('');
-  const [reviewDate, setReviewDate] = useState(addDays(new Date(), 14).slice(0, 10));
-  const [note, setNote] = useState('');
-
-  useEffect(() => { setReason(''); setNote(''); }, [dialog?.id, dialog?.kind]);
-
-  if (!dialog) return null;
-  const action = actions.find((a) => a.id === dialog.id);
-  if (!action) return null;
-
-  if (dialog.kind === 'assign') {
-    const roster = ROSTER.filter((r) => r.stationId === action.stationId);
-    return (
-      <Modal open onClose={onClose} title={'Assign — ' + action.title}>
-        <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
-          Choose someone from the {STATION_LABEL[action.stationId]} roster.
-        </p>
-        <ul className="flex flex-col gap-2">
-          {roster.map((m) => (
-            <li key={m.id}>
-              <button
-                type="button"
-                onClick={() => onAssign(action.id, { id: m.id, name: m.name, role: m.role })}
-                className="w-full flex items-center gap-3 flex-wrap px-4 py-2.5 text-left rounded-lg min-h-10 hover:bg-[var(--panel-alt)]"
-                style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
-              >
-                <span className="text-body font-medium" style={{ color: 'var(--text)' }}>{m.name}</span>
-                <span className="text-body-sm ml-auto" style={{ color: 'var(--text-3)' }}>{m.role}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Modal>
-    );
-  }
-
-  if (dialog.kind === 'defer') {
-    const invalid = !reason.trim() || !reviewDate;
-    return (
-      <Modal open onClose={onClose} title={'Defer — ' + action.title}>
-        <p className="text-body-sm mb-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
-          A deferral without a reason and a review date is rejected — it would vanish from the
-          next crew's handover.
-        </p>
-        <label htmlFor="quick-defer-reason" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-          Reason
-        </label>
-        <textarea
-          id="quick-defer-reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={3}
-          placeholder="Why is this safe to defer?"
-          className="w-full px-4 py-2.5 text-body outline-none mb-4"
-          style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-        />
-        <label htmlFor="quick-defer-date" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-          Review date
-        </label>
-        <input
-          id="quick-defer-date"
-          type="date"
-          value={reviewDate}
-          onChange={(e) => setReviewDate(e.target.value)}
-          className="w-full px-4 min-h-10 text-body font-mono outline-none mb-4"
-          style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-        />
-        <button
-          type="button"
-          disabled={invalid}
-          onClick={() => onDefer(action.id, reason, new Date(reviewDate).toISOString())}
-          className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
-          style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-3)' : 'var(--bg)' }}
-        >
-          Defer and record
-        </button>
-      </Modal>
-    );
-  }
-
-  const needsEvidence = (action.tier === 'T0' || action.tier === 'T1') && action.evidence.length === 0;
-  return (
-    <Modal open onClose={onClose} title={'Resolve — ' + action.title}>
-      <label htmlFor="quick-resolve-note" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
-        Resolution note
-      </label>
-      <textarea
-        id="quick-resolve-note"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        rows={4}
-        placeholder="What was done, and how it was confirmed"
-        className="w-full px-4 py-2.5 text-body outline-none mb-4"
-        style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
-      />
-      {needsEvidence && (
-        <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }}>
-          A {action.tier} action needs evidence before it can be resolved — open the action and attach one first.
-        </p>
-      )}
-      <button
-        type="button"
-        disabled={!note.trim() || needsEvidence}
-        onClick={() => onResolve(action.id, note, action.evidence.map((e) => e.id))}
-        className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
-        style={{
-          backgroundColor: !note.trim() || needsEvidence ? 'var(--panel-raised)' : 'var(--act)',
-          color: !note.trim() || needsEvidence ? 'var(--text-3)' : 'var(--bg)',
-        }}
-      >
-        Resolve and record
-      </button>
-    </Modal>
   );
 }

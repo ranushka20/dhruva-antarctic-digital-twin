@@ -168,6 +168,46 @@
 - Touchpoint completed? none
 - Notes for the other developer: new charts use `ChartContainer` + `CHART_DEFAULTS` from `components/shared/Chart.tsx`. Status colours (`--ok`, `--watch`, `--act`) are for statuses only; a measured series uses `--chart-1/2/3`. This fixed 11 of the 17 pre-existing `tsc` errors, and the Environment tiles and charts now render; the remaining 6 are Twin/Assets/IsoStationModel prop mismatches.
 
+### [2026-09-29 23:20] Dev B (at the user's request) — Action pipeline made legible; Overview and Action Centre decluttered
+- Status: done (`tsc` clean for every file touched; the 6 remaining errors are the pre-existing Twin/Assets/IsoStationModel ones). The user is checking the screens visually.
+- Files changed: `src/components/shared/ActionSteps.tsx` (new), `src/pages/Overview/{index,NeedsAttention,ResourceWatch,ZonesToWatch}.tsx` (`ZonesToWatch` new, `StationZonesPanel.tsx` deleted), `src/pages/Actions/{index,ActionTable,ActionDrawer,TierRail}.tsx`, `src/mock/seed.ts`, `src/state/bootstrap.ts`. Part of this is already in `74d86f6`.
+- Summary: The user asked where an acknowledgement goes and why the pipeline was hard to follow. The spec's intent is three human steps: **Acknowledge** ("HQ has seen it"; stops the per-tier response clock, FR-7.1), **Assign** (a named owner, FR-6.3) and **Resolve** (a note, plus evidence for T0/T1). `ActionSteps.tsx` is now the one source for "where this stands / what's next". The Overview flag, the Action Centre rows and the drawer all read from it.
+  - **Bug fixed:** the drawer offered **Resolve** on an ACKNOWLEDGED action, which `canTransition` rejects. The primary button is now always the one legal next step. The table's "…" menu takes its enablement from `canTransition`, so it no longer offers Assign on an ASSIGNED action.
+  - **Overview:** Needs attention is now a flag beside the title. It opens a panel of the top 3 read-only items, each linking to `/actions/:id`. The page is two rows. Row 1 is the comparator, map and sync queue. Row 2 is "Supplies to watch" (top 5, linking to Logistics) and "Zones to watch" (both stations; non-normal zones only, each opening that station's twin on the zone). Title-row search, Filter and Reports were removed as duplicates of the nav search, Action Centre and Compliance.
+  - **Action Centre:** the left rail and the three header count pills are replaced by step tabs (All open · To acknowledge · To assign · To resolve · Deferred · Resolved) and a one-line tier chip filter. Each count now appears once. Rows drop checkboxes, zone/metric text and "no consequence modelled". Bulk ACK becomes "Acknowledge all n" on the To-acknowledge tab. `?state=RAISED` deep links still work.
+  - **Seed:** `act-mtr-002` was ACKNOWLEDGED with an assignee, which the state machine can't produce. The assignee was removed (V. Chandran's version still arrives as the seeded sync conflict), and `SEED_VERSION` moved to `devb-4`, so local demo data reseeds once.
+- **Spec deviations, all user-directed:** FR-4.3/4.5 (the ACK button on the Overview card is gone; acting happens only in the Action Centre). FR-2.4 (the state filter is grouped by step; Board still shows all six columns). FR-7.1/7.2 (the light-cone zone grid for the primary station is replaced by a non-normal-zones list for both stations). FR-9 (the selection summary is gone; a zone opens the twin instead). FR-8 (ambient and wind appear in the zones card header; the SYNTH load tile was dropped). FR-2.2/2.4 (title-row search and Filter removed).
+- Touches shared contract? no — `contracts.ts` untouched; `ActionSteps` only reads `Action`.
+- Touchpoint completed? none. Touchpoint #7 still holds: `?state=` pre-fills the matching step tab.
+- Notes for the other developer: if Twin or Asset detail needs to show action progress, import `StepBars` / `describeStanding` / `nextStep` from `components/shared/ActionSteps` rather than mapping states locally. The shared `ActionCard` was not changed.
+
+### [2026-09-29 23:55] Dev A (at the user's request) — "Why this matters" reads as our model's estimate
+- Status: done. `tsc` shows no errors in `CausalTrace.tsx`. A server-side render with Bharati's mock inputs gives the same numbers as before (220 ±18 d, order within 177 d). The user is checking the screens visually.
+- Files changed: `src/components/shared/CausalTrace.tsx` only. Twin page call site left to the session rewriting `src/pages/Twin/index.tsx` (agreed over cross-session message).
+- Summary: The user said the panel didn't read as our model's insight. It was a column of engine labels (`AMBIENT`, `↓ HEATING`, `HDD`, `LSOD`) with five identical MODELED chips. The panel now reads answer-first, in plain language:
+  1. A framing line: "Our model's estimate for {scope}. Calculated, not read from a sensor." In a Sandbox run it says "A Sandbox what-if… Not a forecast."
+  2. An answer card: "Fuel will last about 220 days ±18", then "Order more fuel within 177 days" with one plain sentence explaining the deadline.
+  3. "How the model got there": a one-line causal summary and the four engine steps with plain labels. The engine label goes in the tooltip. Last comes one line tying stock ÷ burn to the headline.
+  4. A note that insulation, generator efficiency and shipping times are assumptions, linking to `/settings`. Hidden in SIM.
+- Also fixed: every step badge's hover card showed the orange "derived value with no declared parents — report this" warning, because `runCausalTrace` returns steps without `parents`. The component now attaches each step's parents for display only. The latest safe order date also gets its own badge.
+- Touches shared contract? no. Every number still comes from `runCausalTrace()`. The new optional `scope?: string` prop is additive; `hideHeading` still works.
+- Touchpoint completed? none. Touchpoint #10 is unaffected: same engine call, same numbers on every page.
+- Spec deviation, user-directed: FR-10.3 puts the operational consequence in the final row. It now sits at the top, so older users see the answer first. FR-10.2's per-value badges are kept.
+- Notes for the other developer: the Action Centre drawer picks up the new layout automatically. It needs no change, but `scope` is available if the drawer wants to say what the estimate covers.
+
+### [2026-09-29 23:18] Dev A (at the user's request) — Twin page: floors are back, zones follow the floor, page simplified
+- Status: done. `tsc` shows no errors in the Twin page (this also clears 4 old ones there: `openActionCount`, `compact`, missing `Bharati3D` props). Checked in Chrome on Bharati 3D (all three floors, room clicks), Bharati Diagram and Maitri. No console errors.
+- Files changed: `src/pages/Twin/index.tsx` (rewritten), `src/twin/zoneRooms.js` (new).
+- Summary: The 20 Sep Twin page rendered `<Bharati3D />` with no `floor` prop, so the model was stuck on the ground floor. The page was also `h-screen` inside the shell, which clipped its bottom 56px. The left rail is now a Floors list (Ground / First / Second). Opening a floor shows the zones on it, most urgent first. Choosing a zone jumps to its floor and highlights its room; clicking a room in 3D selects its zone. The 3D rooms are tinted by zone status. A room outside any zone says "Not monitored yet" instead of showing a status. `?zone=A1` from the Overview opens that zone on the right floor.
+- `zoneRooms.js` is the one join between the six mock zones and the 17 rooms in `stationData.js`. Control room, briefing room, main entry and the RO and wastewater plants belong to no zone yet.
+- Touches shared contract? no. It reads `getActions()`/`getResources()` and calls `useActionTransitions().acknowledge()`, all unchanged.
+- Touchpoint completed? #1: Acknowledge now calls the real `useActionTransitions('hq')`. It replaces the `alert()` placeholders. Assign and Defer need a person or a date, so they moved behind "Open in Action Centre".
+- Spec deviations, user-directed ("UI seems too complex… it's a government website"):
+  - FR-4: the Colour-by radios (Status / Provenance / Freshness) are removed. They only ever affected the Diagram view, not the 3D, and the labels were jargon. Provenance is still on every value via its badge.
+  - FR-5: the autonomy strip is now one line: the shortest-lasting supply, from the same `getResources()` as `/` and `/logistics`, plus a "See all" link.
+  - FR-8.1/8.2: status is shown in words (Normal / Watch / Needs action / No data). The tier chip is gone. The latest-reading box and the asset progress bars are replaced by plain rows showing the value, its limit, and a badge.
+- Notes for the other developer: nothing needed. Open-action counts on the Twin now come from the live store, so they change when an action is acknowledged or resolved in the Action Centre.
+
 ---
 
 ## Integration & Review

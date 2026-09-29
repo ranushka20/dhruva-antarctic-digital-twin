@@ -52,8 +52,6 @@ interface Props {
 const WINDOW_THRESHOLD = 200;
 const WINDOW_SIZE = 120;
 
-const CELL_BORDER = { borderBottom: '1px solid var(--line)' } as const;
-
 export function ActionTable({
   actions, cursorId, canWrite, emptyReason, onOpen, onAck, onAssign, onDefer, onResolve,
 }: Props) {

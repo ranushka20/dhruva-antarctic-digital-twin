@@ -4,7 +4,7 @@
 // LAGGING/DARK station's LSOD cell reads "stale" rather than inventing a
 // confident deadline (FR-6.6).
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { DerivedResource } from '@/state/data';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { ProgressBar } from '@/components/shared/ProgressBar';
@@ -29,8 +29,13 @@ const COLUMN_HINT = {
   lsod: 'Last Safe Order Date (LSOD) — days left to place an order that still arrives in time',
 };
 
-export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
+/**
+ * `limit` keeps the Overview to a summary — the most urgent few, with the
+ * full ranked list one click away in Logistics, where it is acted on.
+ */
+export function ResourceWatch({ resources: all, limit }: { resources: DerivedResource[]; limit?: number }) {
   const navigate = useNavigate();
+  const resources = limit ? all.slice(0, limit) : all;
 
   return (
     <section
@@ -45,18 +50,28 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
       }}
       aria-label="Resource watch"
     >
-      <div className="mb-4">
-        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
-          Resource watch
-        </h2>
-        <p
-          className="text-body-sm mt-1 max-w-[70ch]"
-          style={{ color: 'var(--text-3)' }}
-          title="Sort order: unresolvable deadlines first, then by Last Safe Order Date (LSOD)"
-        >
-          Both stations, most urgent first. Items whose order deadline can’t be worked out yet are
-          listed at the top. Select a row to open it in Logistics.
-        </p>
+      <div className="flex items-start flex-wrap gap-x-4 gap-y-2 mb-4">
+        <div className="min-w-0">
+          <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
+            Supplies to watch
+          </h2>
+          <p
+            className="text-body-sm mt-1 max-w-[70ch]"
+            style={{ color: 'var(--text-3)' }}
+            title="Sort order: unresolvable deadlines first, then by Last Safe Order Date (LSOD)"
+          >
+            Both stations, the ones that need ordering soonest first.
+          </p>
+        </div>
+        {limit && all.length > resources.length && (
+          <Link
+            to="/logistics"
+            className="ml-auto inline-flex items-center min-h-9 px-4 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+            style={{ color: 'var(--text-2)', border: '1px solid var(--line-strong)' }}
+          >
+            See all <span className="font-mono tabular-nums mx-1.5">{all.length}</span> in Logistics →
+          </Link>
+        )}
       </div>
 
       {resources.length === 0 ? (

@@ -339,7 +339,8 @@ const ACTION_SEEDS: ActionSeed[] = [
     state: 'ACKNOWLEDGED',
     zoneCode: 'B2',
     ageHours: 2.1,
-    assigneeId: 'mtr-eng-1',
+    // No assignee on purpose: HQ has only acknowledged it. The station's
+    // IN_PROGRESS by V. Chandran arrives as the seeded sync conflict.
     trigger: {
       metricName: 'Zone B2 air temperature',
       measurement: synth(15.4, '°C', 'station BMS adapter'),

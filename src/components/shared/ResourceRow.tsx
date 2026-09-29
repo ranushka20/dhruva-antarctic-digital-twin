@@ -16,7 +16,7 @@ export function ResourceRow({ resource, onClick, className = '' }: ResourceRowPr
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-lg transition-colors hover:bg-[var(--panel-alt)] ${className}`}
+      className={`flex items-center gap-4 w-full text-left py-3 px-4 rounded-xl hover:bg-[var(--panel-alt)] ${className}`}
       style={{ borderBottom: '1px solid var(--line)' }}
     >
       <StatusDot status={resource.risk === 'critical' ? 'warning' : resource.risk} />

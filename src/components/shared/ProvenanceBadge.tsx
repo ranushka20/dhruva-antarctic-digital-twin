@@ -114,7 +114,7 @@ export function ProvenanceBadge({
         <span
           id={id}
           role="tooltip"
-          className={'absolute top-full mt-1 z-50 block w-64 p-2.5 ' + (align === 'right' ? 'right-0' : 'left-0')}
+          className={'absolute top-full mt-1.5 z-50 block w-80 p-3.5 ' + (align === 'right' ? 'right-0' : 'left-0')}
           style={cardStyle}
         >
           <span
@@ -135,38 +135,38 @@ export function ProvenanceBadge({
           )}
 
           {measurement.awaiting && (
-            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-caption mb-1" style={{ color: 'var(--text-3)' }}>
               awaiting: {measurement.awaiting}
             </span>
           )}
 
           {measurement.model && (
-            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-caption mb-1" style={{ color: 'var(--text-3)' }}>
               model: {measurement.model}
             </span>
           )}
 
           {measurement.parents?.map((p) => (
-            <span key={p.name} className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span key={p.name} className="block font-mono text-caption mb-1" style={{ color: 'var(--text-3)' }}>
               parent: {p.name} ({p.provenance})
             </span>
           ))}
 
           {missingParents && (
-            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--act-soft)' }}>
+            <span className="block font-mono text-caption mb-1" style={{ color: 'var(--act-soft)' }}>
               derived value with no declared parents — report this
             </span>
           )}
 
           {measurement.confidence !== undefined && (
-            <span className="block font-mono text-micro mb-0.5" style={{ color: 'var(--text-3)' }}>
+            <span className="block font-mono text-caption mb-1" style={{ color: 'var(--text-3)' }}>
               confidence: {(measurement.confidence * 100).toFixed(0)}%
             </span>
           )}
 
           <span
-            className="block font-mono text-micro pt-1.5 mt-1.5"
-            style={{ color: 'var(--text-4)', borderTop: '1px solid var(--line)' }}
+            className="block text-caption pt-2 mt-2"
+            style={{ color: 'var(--text-3)', borderTop: '1px solid var(--line)' }}
           >
             {measurement.source} · {formatShortIST(measurement.timestamp)} IST ·{' '}
             {formatDuration(measurement.freshnessSeconds)} old

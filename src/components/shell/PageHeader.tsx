@@ -26,20 +26,20 @@ export function PageHeader({
 
   return (
     <div
-      className={`flex items-center gap-3 h-[48px] px-5 shrink-0 ${className}`}
+      className={`flex items-center gap-4 min-h-[3.75rem] py-2.5 px-6 shrink-0 flex-wrap ${className}`}
       style={{ borderBottom: '1px solid var(--line)' }}
     >
       {backTo && (
         <button
           onClick={() => navigate(backTo)}
-          className="m-back flex items-center gap-1 px-2.5 py-1 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+          className="m-back flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
           style={{
             color: 'var(--text-2)',
             fontFamily: 'var(--font-body)',
-            border: '1px solid var(--line)',
+            border: '1px solid var(--line-strong)',
           }}
         >
-          <ArrowLeft size={12} />
+          <ArrowLeft size={14} />
           {backLabel}
         </button>
       )}

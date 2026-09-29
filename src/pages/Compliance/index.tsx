@@ -157,19 +157,25 @@ export default function CompliancePage() {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
-      <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
+      <div className="flex items-center gap-x-5 gap-y-3 flex-wrap px-6 py-4 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
         <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Compliance &amp; Audit
         </h1>
 
-        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div
+          data-segmented
+          role="group"
+          aria-label="Station scope"
+          className="relative isolate flex items-center gap-1 p-1 rounded-full"
+          style={{ border: '1px solid var(--line-strong)' }}
+        >
           {SCOPES.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setScope(s.id)}
               aria-pressed={scope === s.id}
-              className="px-3 py-1.5 rounded-full text-body-sm"
+              className="px-4 min-h-9 rounded-full text-body-sm font-medium"
               style={{
                 color: scope === s.id ? 'var(--bg)' : 'var(--text-3)',
               }}
@@ -180,32 +186,51 @@ export default function CompliancePage() {
           <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-body-sm uppercase tabular-nums">
-          <span style={{ color: 'var(--text-2)' }}>{counts.dueIn30} due in 30 d</span>
-          <span style={{ color: counts.overdue > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.overdue} overdue
-          </span>
-          <span style={{ color: 'var(--watch-soft)' }}>{counts.queued} queued offline</span>
-        </div>
+        {/* Plain-language counts — each one its own chip, never a joined string. */}
+        <ul className="flex items-center gap-2.5 flex-wrap" aria-label="Obligation summary">
+          <CountChip
+            n={counts.dueIn30}
+            label="due within 30 days"
+            color="var(--text-2)"
+            border="var(--line-strong)"
+          />
+          <CountChip
+            n={counts.overdue}
+            label="overdue"
+            color={counts.overdue > 0 ? 'var(--act-soft)' : 'var(--text-3)'}
+            border={counts.overdue > 0 ? 'var(--act)' : 'var(--line)'}
+          />
+          <CountChip
+            n={counts.queued}
+            label="waiting to sync"
+            color="var(--watch-soft)"
+            border="var(--watch)"
+            dashed
+            title="Queued offline: the evidence exists at the station and is waiting on the link. It is not overdue."
+          />
+        </ul>
 
         <button
           type="button"
           onClick={() => setTab('audit')}
-          className="flex items-center gap-1.5 ml-auto px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
+          className="flex items-center gap-2 ml-auto px-4 min-h-9 rounded-full text-body-sm font-medium"
           style={{
             border: `1px solid ${status?.ok === false ? 'var(--act)' : 'var(--ok)'}`,
             color: status?.ok === false ? 'var(--act-soft)' : 'var(--ok-soft)',
             fontFamily: 'var(--font-body)',
           }}
+          title="Open the audit log"
         >
-          {status?.ok === false ? <ShieldAlert size={11} /> : <ShieldCheck size={11} />}
-          {status?.ok === false ? `Chain broken at entry ${status.brokenAt}` : 'Chain verified'}
+          {status?.ok === false ? <ShieldAlert size={16} aria-hidden /> : <ShieldCheck size={16} aria-hidden />}
+          {status?.ok === false ? (
+            <span>Chain broken at entry <span className="font-mono tabular-nums">{status.brokenAt}</span></span>
+          ) : 'Chain verified'}
         </button>
       </div>
 
       {/* ---- Tabs ---- */}
-      <div className="px-6 py-2 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <div role="tablist" className="relative isolate flex items-center gap-1 w-fit">
+      <div className="px-6 py-3 shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div role="tablist" aria-label="Compliance sections" className="relative isolate flex items-center gap-1.5 w-fit">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -213,7 +238,7 @@ export default function CompliancePage() {
               role="tab"
               onClick={() => setTab(t.id)}
               aria-selected={tab === t.id}
-              className="px-3.5 py-1.5 rounded-full text-body hover:text-[var(--text-2)]"
+              className="px-4 min-h-9 rounded-full text-body font-medium whitespace-nowrap hover:text-[var(--text-2)]"
               style={{
                 color: tab === t.id ? 'var(--text)' : 'var(--text-3)',
                 border: '1px solid transparent',
@@ -229,50 +254,52 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      <div key={tab} className="m-panel flex-1 min-h-0 overflow-y-auto p-5">
-        {tab === 'obligations' && (
-          <Obligations
-            obligations={obligations}
-            onOpen={openRecord}
-            onOpenAction={(id) => navigate('/actions/' + id)}
-          />
-        )}
+      <div key={tab} className="m-panel flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <div className="max-w-[100rem] mx-auto">
+          {tab === 'obligations' && (
+            <Obligations
+              obligations={obligations}
+              onOpen={openRecord}
+              onOpenAction={(id) => navigate('/actions/' + id)}
+            />
+          )}
 
-        {tab === 'waste' && (
-          <WasteLedger
-            balance={balance}
-            series={monthly}
-            events={wasteEvents}
-            toleranceKg={tolerance}
-            onRaiseBalanceAction={(row) => { void raiseBalanceAction(row); }}
-            onOpenVoyage={(voyageId) => navigate('/logistics/manifest/' + voyageId)}
-            canRaise={canRaise}
-          />
-        )}
+          {tab === 'waste' && (
+            <WasteLedger
+              balance={balance}
+              series={monthly}
+              events={wasteEvents}
+              toleranceKg={tolerance}
+              onRaiseBalanceAction={(row) => { void raiseBalanceAction(row); }}
+              onOpenVoyage={(voyageId) => navigate('/logistics/manifest/' + voyageId)}
+              canRaise={canRaise}
+            />
+          )}
 
-        {tab === 'inspections' && (
-          <Inspections
-            records={inspections}
-            onRaiseForFinding={(r, itemId, label) => { void raiseForFinding(r, itemId, label); }}
-            onOpenAction={(id) => navigate('/actions/' + id)}
-            canRaise={canRaise}
-          />
-        )}
+          {tab === 'inspections' && (
+            <Inspections
+              records={inspections}
+              onRaiseForFinding={(r, itemId, label) => { void raiseForFinding(r, itemId, label); }}
+              onOpenAction={(id) => navigate('/actions/' + id)}
+              canRaise={canRaise}
+            />
+          )}
 
-        {tab === 'audit' && (
-          <AuditLog
-            chain={chain}
-            status={status}
-            verifying={verifying}
-            onVerify={verify}
-            onExport={() =>
-              downloadText('antarasetu-audit-chain.json', exportChainJSON('hq'), 'application/json')
-            }
-            onTamper={(seq) => { tamperWithEntryForDemo(seq, 'hq'); void verify(); }}
-            canTamper={canExport}
-            focusSeq={searchParams.get('seq') ? Number(searchParams.get('seq')) : null}
-          />
-        )}
+          {tab === 'audit' && (
+            <AuditLog
+              chain={chain}
+              status={status}
+              verifying={verifying}
+              onVerify={verify}
+              onExport={() =>
+                downloadText('antarasetu-audit-chain.json', exportChainJSON('hq'), 'application/json')
+              }
+              onTamper={(seq) => { tamperWithEntryForDemo(seq, 'hq'); void verify(); }}
+              canTamper={canExport}
+              focusSeq={searchParams.get('seq') ? Number(searchParams.get('seq')) : null}
+            />
+          )}
+        </div>
       </div>
 
       {/* ---- Record detail drawer (FR-6) ---- */}
@@ -280,29 +307,34 @@ export default function CompliancePage() {
         open={record !== null}
         onClose={closeRecord}
         title={record?.kind === 'obligation' ? 'Obligation' : 'Inspection record'}
-        className="w-[460px]"
+        className="w-[32rem] max-w-full"
       >
         {record?.kind === 'obligation' && (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-5">
             <h3 className="text-title font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
               {record.obligation.name}
             </h3>
-            <Field k="Station" v={STATION_LABEL[record.obligation.stationId]} />
-            <Field k="Category" v={record.obligation.category} />
-            <Field k="Cadence" v={record.obligation.cadence} />
-            <Field k="Due" v={formatDateIST(record.obligation.dueDate)} />
-            <Field k="Owner" v={record.obligation.owner} />
-            <Field k="Status" v={record.obligation.status.replace('_', ' ')} />
-            <Field k="Template" v={`${record.obligation.templateId} v${record.obligation.templateVersion}`} />
+            <dl>
+              <Field k="Station" v={STATION_LABEL[record.obligation.stationId]} />
+              <Field k="Category" v={sentence(record.obligation.category)} />
+              <Field k="How often" v={sentence(record.obligation.cadence.replace('-', ' '))} />
+              <Field k="Due" v={formatDateIST(record.obligation.dueDate)} mono />
+              <Field k="Owner" v={record.obligation.owner} />
+              <Field k="Status" v={sentence(record.obligation.status.replace('_', ' '))} />
+              <Field k="Template" v={`${record.obligation.templateId} v${record.obligation.templateVersion}`} mono />
+            </dl>
             {record.obligation.status === 'queued_offline' && (
-              <p className="text-body-sm" style={{ color: 'var(--watch-soft)' }}>
+              <p
+                className="text-body px-4 py-3"
+                style={{ color: 'var(--watch-soft)', backgroundColor: 'rgba(217,164,65,0.08)', border: '1px dashed var(--watch)', borderRadius: 'var(--r-inner)' }}
+              >
                 Evidence for this obligation is queued in the station outbox. It is not overdue —
                 the record exists, the link does not.
               </p>
             )}
-            <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid var(--line)' }}>
-              <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
-                Class
+            <div className="flex items-center gap-3">
+              <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+                Data class
               </span>
               <ProvenanceBadge
                 measurement={synth(record.obligation.name, '', 'NCPOR compliance register')}
@@ -319,7 +351,7 @@ export default function CompliancePage() {
                   'application/json'
                 )
               }
-              className="w-full py-2.5 rounded-full text-body min-h-[44px]"
+              className="w-full py-3 rounded-full text-body font-medium min-h-10 hover:bg-[var(--panel-raised)]"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canExport ? 1 : 0.4 }}
             >
               Download record
@@ -328,16 +360,18 @@ export default function CompliancePage() {
         )}
 
         {record?.kind === 'inspection' && (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-5">
             <h3 className="text-title font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
               {record.inspection.type}
             </h3>
-            <Field k="Station" v={STATION_LABEL[record.inspection.stationId as 'bharati' | 'maitri']} />
-            <Field k="Inspector" v={record.inspection.inspector} />
-            <Field k="Date" v={formatShortIST(record.inspection.at)} />
-            <Field k="Result" v={record.inspection.result.replace(/_/g, ' ')} />
-            <Field k="Template" v={`${record.inspection.templateId} v${record.inspection.templateVersion}`} />
-            <Field k="Chain entry" v={shortHash(record.inspection.auditHash || '—')} />
+            <dl>
+              <Field k="Station" v={STATION_LABEL[record.inspection.stationId as 'bharati' | 'maitri']} />
+              <Field k="Inspector" v={record.inspection.inspector} />
+              <Field k="Date" v={formatShortIST(record.inspection.at)} mono />
+              <Field k="Result" v={sentence(record.inspection.result.replace(/_/g, ' '))} />
+              <Field k="Template" v={`${record.inspection.templateId} v${record.inspection.templateVersion}`} mono />
+              <Field k="Chain entry" v={shortHash(record.inspection.auditHash || '—')} mono />
+            </dl>
           </div>
         )}
       </Drawer>
@@ -345,13 +379,35 @@ export default function CompliancePage() {
   );
 }
 
-function Field({ k, v }: { k: string; v: string }) {
+function CountChip({
+  n, label, color, border, dashed, title,
+}: { n: number; label: string; color: string; border: string; dashed?: boolean; title?: string }) {
   return (
-    <div className="flex items-baseline gap-2 py-1" style={{ borderTop: '1px solid var(--line)' }}>
-      <span className="font-mono text-micro uppercase tracking-label w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
+    <li
+      className="inline-flex items-baseline gap-2 px-4 py-2 rounded-full text-body-sm"
+      style={{ color, border: `1px ${dashed ? 'dashed' : 'solid'} ${border}` }}
+      title={title}
+    >
+      <span className="font-mono font-medium tabular-nums">{n}</span>
+      <span>{label}</span>
+    </li>
+  );
+}
+
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function Field({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
+  return (
+    <div className="flex items-baseline gap-4 py-3" style={{ borderTop: '1px solid var(--line)' }}>
+      <dt className="text-body-sm w-28 shrink-0" style={{ color: 'var(--text-3)' }}>
         {k}
-      </span>
-      <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>{v}</span>
+      </dt>
+      <dd
+        className={`${mono ? 'font-mono tabular-nums ' : ''}text-body min-w-0 break-words`}
+        style={{ color: 'var(--text)' }}
+      >
+        {v}
+      </dd>
     </div>
   );
 }

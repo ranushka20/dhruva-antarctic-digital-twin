@@ -82,7 +82,7 @@ function SessionNotice() {
   return (
     <div
       role="status"
-      className="m-toast flex items-center gap-2.5 px-5 py-1.5 shrink-0"
+      className="m-toast flex items-center gap-3 flex-wrap px-6 py-3 shrink-0"
       style={{ backgroundColor: 'rgba(217,164,65,0.12)', borderBottom: '1px solid var(--watch)' }}
     >
       <span className="text-body" style={{ color: 'var(--watch-soft)' }}>
@@ -92,7 +92,7 @@ function SessionNotice() {
       <button
         type="button"
         onClick={() => renewSession()}
-        className="ml-auto text-body-sm font-medium px-3 py-1 rounded-full"
+        className="ml-auto text-body-sm font-medium px-4 min-h-10 rounded-full"
         style={{ border: '1px solid var(--watch)', color: 'var(--watch-soft)', fontFamily: 'var(--font-body)' }}
       >
         Renew

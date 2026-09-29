@@ -5,15 +5,17 @@
 // an operator for.
 
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, ChevronDown, Snowflake, LogOut } from 'lucide-react';
+import { Search, Bell, ChevronDown, Snowflake, LogOut, ALargeSmall } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { hasUrgentUnacked } from '@/state/data';
 import { useStoreValue } from '@/state/useStore';
 import { useSession, logout, ROLE_LABEL } from '@/state/auth';
 import { usePresence } from '@/hooks/usePresence';
 import { NAV_TABS, getActiveTab } from './navTabs';
+import { TEXT_SIZES, setTextSize, useTextSize } from '@/state/textSize';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 
-const TAB_CLASS = 'px-3.5 py-1.5 rounded-full text-body font-medium whitespace-nowrap';
+const TAB_CLASS = 'px-3.5 py-1.5 rounded-full text-body-sm font-medium whitespace-nowrap';
 
 export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const location = useLocation();
@@ -42,7 +44,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
 
   return (
     <nav
-      className="glow-nav flex items-center h-[52px] px-5 gap-3 shrink-0 z-30"
+      className="glow-nav flex items-center h-[3.5rem] px-6 gap-3 shrink-0 z-30"
       style={{ borderBottom: '1px solid var(--line)' }}
     >
       <NavLink to="/" className="flex items-center gap-2 mr-4">
@@ -59,26 +61,28 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
 
       <div className="flex-1" />
 
+      <TextSizeControl />
+
       <button
         type="button"
         onClick={onOpenSearch}
         data-press="icon"
-        className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--panel-alt)]"
+        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--panel-alt)]"
         style={{ color: 'var(--text-3)' }}
         aria-label="Search assets, actions, records"
       >
-        <Search size={16} />
+        <Search size={18} />
       </button>
 
       <button
         type="button"
         onClick={() => navigate('/actions?state=RAISED')}
         data-press="icon"
-        className="relative w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--panel-alt)]"
+        className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--panel-alt)]"
         style={{ color: 'var(--text-3)' }}
         aria-label={urgent ? 'Alerts — unacknowledged T0/T1 action open' : 'Alerts — none unacknowledged'}
       >
-        <Bell size={16} />
+        <Bell size={18} />
         {urgent && (
           <span
             className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
@@ -121,7 +125,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
         {menu.mounted && (
           <div
             data-state={menu.state}
-            className="m-pop absolute right-0 mt-1.5 w-52 p-1.5 z-50"
+            className="m-pop absolute right-0 mt-2 w-64 p-2 z-50"
             style={{
               backgroundColor: 'var(--panel-alt)',
               border: '1px solid var(--line-strong)',
@@ -136,7 +140,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
             <button
               type="button"
               onClick={() => { setMenuOpen(false); navigate('/settings'); }}
-              className="w-full text-left px-2.5 py-1.5 rounded text-body hover:bg-[var(--panel-raised)]"
+              className="w-full text-left px-3 py-2.5 rounded-lg text-body hover:bg-[var(--panel-raised)]"
               style={{ color: 'var(--text-2)' }}
             >
               Settings &amp; parameters
@@ -144,7 +148,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
             <button
               type="button"
               onClick={() => { setMenuOpen(false); navigate('/station'); }}
-              className="w-full text-left px-2.5 py-1.5 rounded text-body hover:bg-[var(--panel-raised)]"
+              className="w-full text-left px-3 py-2.5 rounded-lg text-body hover:bg-[var(--panel-raised)]"
               style={{ color: 'var(--text-2)' }}
             >
               Station console
@@ -152,7 +156,7 @@ export function NavBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
             <button
               type="button"
               onClick={() => { logout(); setMenuOpen(false); navigate('/login'); }}
-              className="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded text-body hover:bg-[var(--panel-raised)]"
+              className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-lg text-body hover:bg-[var(--panel-raised)]"
               style={{ color: 'var(--text-2)' }}
             >
               <LogOut size={12} /> Sign out
@@ -230,6 +234,93 @@ function NavTabs({ activeTab }: { activeTab: string }) {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Reading-comfort control. A visible "Aa" button rather than a buried
+ * setting: the people who need larger text are the least likely to go
+ * looking for it in a menu.
+ */
+function TextSizeControl() {
+  const size = useTextSize();
+  const [open, setOpen] = useState(false);
+  const pop = usePresence(open, 120);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        data-press="icon"
+        className="h-10 px-3 flex items-center gap-1.5 rounded-full hover:bg-[var(--panel-alt)]"
+        style={{ color: 'var(--text-2)' }}
+        aria-expanded={open}
+        aria-label="Text size"
+        title="Text size"
+      >
+        <ALargeSmall size={18} />
+        <span className="text-body-sm hidden xl:inline">Text size</span>
+      </button>
+
+      {pop.mounted && (
+        <div
+          data-state={pop.state}
+          role="dialog"
+          aria-label="Text size"
+          className="m-pop absolute right-0 mt-2 p-4 z-50 w-[19rem]"
+          style={{
+            backgroundColor: 'var(--panel-alt)',
+            border: '1px solid var(--line-strong)',
+            borderRadius: 'var(--r-card)',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+            ['--pop-origin' as string]: 'top right',
+          }}
+        >
+          <p className="text-body font-medium mb-1" style={{ color: 'var(--text)' }}>Text size</p>
+          <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
+            Makes all text and spacing larger. Saved on this computer.
+          </p>
+          <div
+            data-segmented
+            className="relative isolate grid grid-cols-3 gap-1 p-1 rounded-2xl"
+            style={{ border: '1px solid var(--line)' }}
+          >
+            {TEXT_SIZES.map((t, i) => (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={size === t.id}
+                onClick={() => setTextSize(t.id)}
+                className="flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-xl"
+                style={{ color: size === t.id ? 'var(--bg)' : 'var(--text-2)' }}
+              >
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: `${1 + i * 0.25}rem`, lineHeight: 1 }} aria-hidden>
+                  A
+                </span>
+                <span className="text-caption">{t.label}</span>
+              </button>
+            ))}
+            <ActiveIndicator className="rounded-xl" style={{ backgroundColor: 'var(--text)' }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

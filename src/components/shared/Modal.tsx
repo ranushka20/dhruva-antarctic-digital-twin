@@ -47,7 +47,7 @@ export function Modal({ open, onClose, title: titleProp, children: childrenProp,
           data-state={state}
           role="dialog"
           aria-modal="true"
-          className={`m-dialog rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto ${className}`}
+          className={`m-dialog rounded-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto ${className}`}
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',
@@ -56,14 +56,14 @@ export function Modal({ open, onClose, title: titleProp, children: childrenProp,
           onClick={(e) => e.stopPropagation()}
         >
           {title && (
-            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+            <div className="flex items-center justify-between gap-4 px-5 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
               <h3 className="text-title font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
                 {title}
               </h3>
               <button
                 onClick={onClose}
                 data-press="icon"
-                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--panel-raised)]"
+                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full text-body hover:bg-[var(--panel-raised)]"
                 style={{ color: 'var(--text-3)' }}
                 aria-label="Close modal"
               >
@@ -71,7 +71,7 @@ export function Modal({ open, onClose, title: titleProp, children: childrenProp,
               </button>
             </div>
           )}
-          <div className="p-5">{children}</div>
+          <div className="p-5 text-body">{children}</div>
         </div>
       </div>
     </>

@@ -21,7 +21,7 @@ import { StatusDot } from '@/components/shared/StatusDot';
 import { Sparkline } from '@/components/shared/Sparkline';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE } from '@/state/stationScope';
+import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { SYNC_OPACITY } from '@/lib/freshness';
 import { lsodColor, lsodUrgency } from '@/lib/risk';
 
@@ -55,7 +55,7 @@ export function ResupplyTable({
   if (resources.length === 0) {
     return (
       <section
-        className="p-4"
+        className="p-5"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
         <EmptyState reason="No resources in scope. Resupply is a shared constraint — set the scope to All to see both stations on one ship." />
@@ -69,28 +69,49 @@ export function ResupplyTable({
       style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       aria-label="Resupply table"
     >
+      {/* ---- Card heading + legend for the timeline column ---- */}
+      <div className="px-5 pt-5 pb-4 shrink-0">
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
+          Supplies until the next ship
+        </h2>
+        <p className="text-body-sm mt-1 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+          Select any row to see stock, daily usage and to raise an action.
+        </p>
+        <ul className="flex items-center gap-x-6 gap-y-2 flex-wrap mt-3.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+          <LegendItem label="Days of supply (lighter band = likely range)">
+            <span className="block w-7 h-1.5 rounded-full" style={{ backgroundColor: 'var(--ok)' }} />
+          </LegendItem>
+          <LegendItem label="When the ship can arrive">
+            <span className="block w-7 h-4 rounded-sm" style={{ backgroundColor: 'var(--glow)', opacity: 0.3 }} />
+          </LegendItem>
+          <LegendItem label="Last safe date to order">
+            <span className="block w-0.5 h-4" style={{ backgroundColor: 'var(--text-2)' }} />
+          </LegendItem>
+          <LegendItem label="Station not reporting">
+            <span
+              className="block w-7 h-1.5 rounded-full"
+              style={{ backgroundImage: 'repeating-linear-gradient(45deg, var(--text-3) 0 3px, transparent 3px 6px)' }}
+            />
+          </LegendItem>
+        </ul>
+      </div>
+
       {/* ---- Column header, with the shared day axis over the bar column ---- */}
       <div
-        className="hidden md:flex items-end gap-3 px-4 pt-3 pb-2 shrink-0"
-        style={{ borderBottom: '1px solid var(--line-strong)' }}
+        className="hidden lg:flex items-end gap-5 px-5 pt-3 pb-2.5 shrink-0 text-body-sm"
+        style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line-strong)', color: 'var(--text-3)' }}
       >
-        <span className="w-[13px] shrink-0" />
-        <span className="font-mono text-micro uppercase tracking-label w-[190px] shrink-0" style={{ color: 'var(--text-4)' }}>
-          Resource
-        </span>
-        <span className="font-mono text-micro uppercase tracking-label w-[96px] shrink-0" style={{ color: 'var(--text-4)' }}>
-          Autonomy
-        </span>
-        <span className="flex-1 min-w-[180px]">
-          <span className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
-            Cover, and when the ship can reach it
-          </span>
+        <span className="w-4 shrink-0" />
+        <span className="w-[15rem] xl:w-[17rem] shrink-0">Resource</span>
+        <span className="w-[8.5rem] shrink-0">Days of supply</span>
+        <span className="flex-1 min-w-[12rem]">
+          <span className="block mb-1.5">Supply compared with ship arrival</span>
           <Axis horizonDays={horizonDays} />
         </span>
-        <span className="font-mono text-micro uppercase tracking-label w-[58px] shrink-0 text-right" style={{ color: 'var(--text-4)' }}>
-          Order by
+        <span className="w-[7.5rem] shrink-0 text-right" title="Last safe order date — the latest an order can be placed and still arrive before stock runs out">
+          Order within
         </span>
-        <span className="w-4 shrink-0" />
+        <span className="w-5 shrink-0" />
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -108,25 +129,39 @@ export function ResupplyTable({
         ))}
       </div>
 
-      <p className="font-mono text-micro px-4 py-2.5 shrink-0" style={{ color: 'var(--text-4)', borderTop: '1px solid var(--line)' }}>
-        Autonomy always carries its ± band. A station we cannot currently reach gets a hatched
-        bar and no order-by date — a stale input never produces a confident deadline.
+      <p className="text-body-sm px-5 py-3.5 shrink-0 max-w-[76ch]" style={{ color: 'var(--text-3)' }}>
+        Days of supply always show a likely range, not a single number. When we cannot reach a
+        station, its bar is hatched and no order date is given — old data never produces a
+        confident deadline.
       </p>
     </section>
+  );
+}
+
+function LegendItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-2.5">
+      <span className="flex items-center justify-center w-7 h-4 shrink-0" aria-hidden>{children}</span>
+      {label}
+    </li>
   );
 }
 
 function Axis({ horizonDays }: { horizonDays: number }) {
   const ticks = [0, 90, 180, 270, 365].filter((t) => t <= horizonDays);
   return (
-    <span className="relative block h-3">
+    <span className="relative block h-5" aria-hidden>
       {ticks.map((t) => (
         <span
           key={t}
-          className="absolute font-mono text-micro -translate-x-1/2"
-          style={{ left: (t / horizonDays) * 100 + '%', color: 'var(--text-4)' }}
+          className="absolute text-caption whitespace-nowrap"
+          style={{
+            left: (t / horizonDays) * 100 + '%',
+            transform: t === 0 ? undefined : t >= horizonDays ? 'translateX(-100%)' : 'translateX(-50%)',
+            color: 'var(--text-3)',
+          }}
         >
-          {t === 0 ? 'today' : t + 'd'}
+          {t === 0 ? 'Today' : <><span className="font-mono tabular-nums">{t}</span> days</>}
         </span>
       ))}
     </span>
@@ -152,49 +187,71 @@ function Row({
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
-        className="w-full flex flex-wrap md:flex-nowrap items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--panel-raised)]"
+        className="w-full flex flex-wrap lg:flex-nowrap items-center gap-x-5 gap-y-2.5 px-5 py-3 text-left hover:bg-[var(--panel-raised)]"
         style={{ backgroundColor: expanded ? 'var(--panel-raised)' : 'transparent' }}
       >
-        <span className="w-[13px] shrink-0 flex justify-center">
-          <StatusDot status={resource.risk === 'critical' ? 'warning' : resource.risk} size={7} />
+        <span className="w-4 shrink-0 flex justify-center">
+          <StatusDot status={resource.risk === 'critical' ? 'warning' : resource.risk} size={9} />
         </span>
 
-        <span className="w-[190px] shrink-0 min-w-0">
-          <span className="flex items-center gap-1.5">
-            <span className="text-body truncate" style={{ color: 'var(--text)' }}>{resource.name}</span>
+        <span className="flex-1 lg:flex-none lg:w-[15rem] xl:w-[17rem] lg:shrink-0 min-w-0">
+          <span className="block text-body font-medium break-words" style={{ color: 'var(--text)' }}>
+            {resource.name}
+          </span>
+          <span className="flex items-center gap-2 flex-wrap mt-1">
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption"
+              style={{ backgroundColor: 'var(--panel-alt)', border: '1px solid var(--line)', color: 'var(--text-2)' }}
+              title={STATION_CODE[resource.stationId]}
+            >
+              {STATION_LABEL[resource.stationId]}
+            </span>
             {resource.belowReorder && (
               <span
-                className="font-mono text-micro uppercase tracking-[0.06em] px-1 py-0.5 rounded shrink-0"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
                 style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
+                title="Stock is below the reorder point"
               >
-                Reorder
+                Reorder now
               </span>
             )}
           </span>
-          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
-            {STATION_CODE[resource.stationId]}
+        </span>
+
+        <span
+          className="lg:w-[8.5rem] shrink-0 flex items-baseline gap-1.5 flex-wrap"
+          title={`Autonomy: ${Math.round(resource.autonomyDays)} days, ±${Math.round(resource.autonomyBandDays)} days uncertainty`}
+        >
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+            {Math.round(resource.autonomyDays)}
+          </span>
+          <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+            days <span className="font-mono tabular-nums">±{Math.round(resource.autonomyBandDays)}</span>
           </span>
         </span>
 
-        <span className="w-[96px] shrink-0 font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
-          {Math.round(resource.autonomyDays)} ±{Math.round(resource.autonomyBandDays)} d
-        </span>
-
-        <span className="flex-1 min-w-[180px] w-full md:w-auto">
+        <span className="order-last lg:order-none basis-full lg:basis-auto flex-1 min-w-[12rem] pl-9 lg:pl-0">
           <CoverBar resource={resource} window={window} horizonDays={horizonDays} />
         </span>
 
         <span
-          className="w-[58px] shrink-0 text-right font-mono text-body tabular-nums"
+          className="lg:w-[7.5rem] shrink-0 text-right text-body"
           style={{ color: lsodColor(resource.lsodDays) }}
+          title={
+            resource.lsodDays === null
+              ? resource.lsodUnavailableReason === 'no-voyage'
+                ? 'No voyage is planned this season, so there is no order deadline'
+                : 'Station link is stale — no order-by date can be computed'
+              : 'Last safe order date'
+          }
         >
           {resource.lsodDays === null
-            ? (resource.lsodUnavailableReason === 'no-voyage' ? 'no ship' : 'stale')
-            : Math.round(resource.lsodDays) + ' d'}
+            ? (resource.lsodUnavailableReason === 'no-voyage' ? 'No ship' : 'Unknown')
+            : <><span className="font-mono font-medium tabular-nums">{Math.round(resource.lsodDays)}</span> days</>}
         </span>
 
-        <span className="w-4 shrink-0" style={{ color: 'var(--text-4)' }}>
-          {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        <span className="w-5 shrink-0" style={{ color: 'var(--text-3)' }} aria-hidden>
+          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </span>
       </button>
 
@@ -227,12 +284,12 @@ function CoverBar({
   return (
     <span
       className="relative block w-full"
-      style={{ height: 18 }}
+      style={{ height: 24 }}
       title={
         stale
           ? 'Station link is stale — cover shown from last known state, no order-by date'
-          : `Cover ${Math.round(bandLow)}–${Math.round(bandHigh)} d` +
-            (window ? ` · ship arrives day ${window.earliestDay}–${window.latestDay}` : '')
+          : `Supply lasts ${Math.round(bandLow)}–${Math.round(bandHigh)} days` +
+            (window ? ` · ship arrives between day ${window.earliestDay} and ${window.latestDay}` : '')
       }
     >
       {/* Ship window — the thing the bar has to reach */}
@@ -243,8 +300,9 @@ function CoverBar({
             left: pct(window.earliestDay) + '%',
             width: Math.max(1.2, pct(window.latestDay) - pct(window.earliestDay)) + '%',
             backgroundColor: 'var(--glow)',
-            opacity: 0.14,
-            borderLeft: '1px solid rgba(79,209,165,0.45)',
+            opacity: 0.16,
+            borderLeft: '1px solid rgba(79,209,165,0.5)',
+            borderRadius: 3,
           }}
         />
       )}
@@ -252,7 +310,7 @@ function CoverBar({
       {/* Track */}
       <span
         className="absolute left-0 right-0"
-        style={{ top: 7, height: 4, backgroundColor: 'var(--track)', borderRadius: 999 }}
+        style={{ top: 9, height: 6, backgroundColor: 'var(--track)', borderRadius: 999 }}
       />
 
       {/* Uncertainty band — never a bare point estimate */}
@@ -261,8 +319,8 @@ function CoverBar({
         style={{
           left: pct(bandLow) + '%',
           width: Math.max(0.6, pct(bandHigh) - pct(bandLow)) + '%',
-          top: 4, height: 10,
-          backgroundColor: color, opacity: 0.2, borderRadius: 3,
+          top: 5, height: 14,
+          backgroundColor: color, opacity: 0.2, borderRadius: 4,
         }}
       />
 
@@ -271,7 +329,7 @@ function CoverBar({
         className="absolute left-0"
         style={{
           width: pct(resource.autonomyDays) + '%',
-          top: 7, height: 4,
+          top: 9, height: 6,
           borderRadius: 999,
           backgroundColor: stale ? 'transparent' : color,
           backgroundImage: stale
@@ -286,7 +344,7 @@ function CoverBar({
           className="absolute"
           style={{
             left: pct(Math.max(0, resource.lsodDays)) + '%',
-            top: 1, width: 2, height: 16,
+            top: 1, width: 3, height: 22, borderRadius: 2,
             backgroundColor: TICK_COLOR[lsodUrgency(resource.lsodDays)],
           }}
         />
@@ -303,68 +361,70 @@ function RowDetail({
   const trend = burnTrend(series);
 
   return (
-    <div className="px-4 pb-3.5 pt-0.5" style={{ backgroundColor: 'var(--panel-raised)' }}>
-      <div className="flex flex-wrap items-start gap-x-8 gap-y-3 pl-[16px]">
-        <Detail label="Stock">
-          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
-            {typeof resource.stock.value === 'number' ? resource.stock.value.toLocaleString() : '—'}{' '}
-            <span style={{ color: 'var(--text-4)' }}>{resource.unit}</span>
+    <div className="px-5 pb-5 pt-1" style={{ backgroundColor: 'var(--panel-raised)' }}>
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-4 pl-9">
+        <Detail label="In stock">
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+            {typeof resource.stock.value === 'number' ? resource.stock.value.toLocaleString() : '—'}
           </span>
+          <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>{resource.unit}</span>
           <ProvenanceBadge measurement={resource.stock} label={resource.name + ' stock'} />
         </Detail>
 
-        <Detail label="Burn / day">
-          <span className="font-mono text-body tabular-nums" style={{ color: TREND_COLOR[trend] }}>
+        <Detail label="Used per day" hint="Burn rate, with its 12-week trend">
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: TREND_COLOR[trend] }}>
             {typeof resource.burnRate.value === 'number' ? resource.burnRate.value.toLocaleString() : '—'}
           </span>
-          <Sparkline series={series} width={56} height={18} />
+          <Sparkline series={series} width={72} height={20} />
           <ProvenanceBadge measurement={resource.burnRate} label={resource.name + ' burn rate'} />
         </Detail>
 
-        <Detail label="Margin to ship">
-          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <Detail label="Spare days when ship arrives" hint="Margin to ship, worst case">
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
             {resource.marginDays
-              ? `${resource.marginDays.min < 0 ? '−' : '+'}${Math.abs(Math.round(resource.marginDays.min))} d`
+              ? `${resource.marginDays.min < 0 ? '−' : '+'}${Math.abs(Math.round(resource.marginDays.min))}`
               : '—'}
           </span>
+          {resource.marginDays && <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>days</span>}
         </Detail>
 
         <Detail label="Reorder point">
-          <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
-            {resource.reorderPoint?.toLocaleString() ?? '—'}{' '}
-            <span style={{ color: 'var(--text-4)' }}>{resource.unit}</span>
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+            {resource.reorderPoint?.toLocaleString() ?? '—'}
           </span>
+          <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>{resource.unit}</span>
         </Detail>
 
         <button
           type="button"
           disabled={!canRaise}
           onClick={onRaiseAction}
-          className="ml-auto text-body-sm font-medium px-3 py-1.5 rounded-full self-center min-h-[34px]"
+          className="ml-auto text-body-sm font-semibold px-5 min-h-10 rounded-full"
           style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
+          title={canRaise ? 'Create an action to order this resource' : 'Your role cannot raise actions'}
         >
           Raise action
         </button>
       </div>
 
       {resource.lsodDays === null && (
-        <p className="text-body-sm mt-2.5 pl-[16px]" style={{ color: 'var(--watch-soft)' }}>
+        <p className="text-body-sm mt-4 pl-9 max-w-[70ch]" style={{ color: 'var(--watch-soft)' }}>
           {resource.lsodUnavailableReason === 'no-voyage'
-            ? 'No voyage configured for this season, so there is no date to be late for. Autonomy still computes.'
-            : `${STATION_CODE[resource.stationId]} has not reported since its last sync. Cover above is last-known; an order-by date from a stale input would be a guess presented as a deadline.`}
+            ? 'No voyage is planned for this season, so there is no order deadline to miss. Days of supply still compute.'
+            : `${STATION_LABEL[resource.stationId]} has not reported since its last sync. The supply shown is the last known figure — an order date worked out from old data would be a guess presented as a deadline.`}
         </p>
       )}
     </div>
   );
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
+    <div title={hint}>
+      <p className="text-body-sm mb-1" style={{ color: 'var(--text-3)' }}>
         {label}
       </p>
-      <div className="flex items-center gap-2">{children}</div>
+      <div className="flex items-center gap-2.5">{children}</div>
     </div>
   );
 }

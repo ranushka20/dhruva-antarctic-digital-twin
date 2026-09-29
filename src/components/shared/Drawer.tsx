@@ -44,7 +44,7 @@ export function Drawer({ open, onClose, title: titleProp, children: childrenProp
       <aside
         data-overlay
         data-state={state}
-        className={`m-sheet fixed top-0 right-0 bottom-0 z-50 w-96 max-w-[90vw] overflow-y-auto ${className}`}
+        className={`m-sheet fixed top-0 right-0 bottom-0 z-50 w-[32rem] max-w-[92vw] overflow-y-auto ${className}`}
         style={{
           backgroundColor: 'var(--panel-alt)',
           borderLeft: '1px solid var(--line-strong)',
@@ -52,14 +52,14 @@ export function Drawer({ open, onClose, title: titleProp, children: childrenProp
         }}
       >
         {title && (
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
             <h3 className="text-title font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
               {title}
             </h3>
             <button
               onClick={onClose}
               data-press="icon"
-              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--panel-raised)]"
+              className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full text-body hover:bg-[var(--panel-raised)]"
               style={{ color: 'var(--text-3)' }}
               aria-label="Close drawer"
             >
@@ -67,7 +67,7 @@ export function Drawer({ open, onClose, title: titleProp, children: childrenProp
             </button>
           </div>
         )}
-        <div className="p-4">{children}</div>
+        <div className="p-5 text-body">{children}</div>
       </aside>
     </>
   );

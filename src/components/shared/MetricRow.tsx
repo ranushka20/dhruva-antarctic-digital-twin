@@ -23,9 +23,9 @@ const TONE: Record<NonNullable<MetricRowProps['tone']>, string> = {
 
 export function MetricRow({ label, measurement, digits = 1, tone = 'default', className = '' }: MetricRowProps) {
   return (
-    <div className={'flex items-center gap-2 py-1 ' + className}>
+    <div className={'flex items-center gap-3 py-2 ' + className}>
       <span
-        className="font-mono text-micro uppercase tracking-label shrink-0"
+        className="font-mono text-caption uppercase tracking-label shrink-0"
         style={{ color: 'var(--text-3)' }}
       >
         {label}

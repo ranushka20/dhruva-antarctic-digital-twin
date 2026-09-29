@@ -10,25 +10,29 @@ import { ProvenanceBadge } from './ProvenanceBadge';
 interface CausalTraceProps {
   input: CausalTraceInput;
   className?: string;
+  /** Omit the built-in "Why this matters" label when the host already titles the section. Presentation only. */
+  hideHeading?: boolean;
 }
 
-export function CausalTrace({ input, className = '' }: CausalTraceProps) {
+export function CausalTrace({ input, className = '', hideHeading = false }: CausalTraceProps) {
   const result = runCausalTrace(input);
 
   return (
     <div
-      className={`rounded-xl p-3 ${className}`}
+      className={`rounded-xl p-4 ${className}`}
       style={{
         backgroundColor: 'var(--panel-raised)',
         border: '1px solid rgba(79,174,133,0.25)',
       }}
     >
-      <h4
-        className="font-mono text-micro uppercase tracking-label mb-3"
-        style={{ color: 'var(--ok-soft)' }}
-      >
-        Why this matters
-      </h4>
+      {!hideHeading && (
+        <h4
+          className="font-mono text-micro uppercase tracking-label mb-3"
+          style={{ color: 'var(--ok-soft)' }}
+        >
+          Why this matters
+        </h4>
+      )}
 
       <div className="space-y-1.5">
         {result.steps.map((step: CausalTraceStep, i: number) => (

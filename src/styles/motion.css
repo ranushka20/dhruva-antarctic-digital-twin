@@ -239,7 +239,8 @@
 }
 .m-indicator[data-ready] {
   transition: transform 240ms var(--ease-out), width 240ms var(--ease-out),
-    height 240ms var(--ease-out), opacity var(--dur-fast) ease;
+    height 240ms var(--ease-out), opacity var(--dur-fast) ease,
+    background-color 200ms ease, box-shadow 200ms ease;
 }
 
 /* Segments ride on a pill that does not scale, so the press is the slide. */

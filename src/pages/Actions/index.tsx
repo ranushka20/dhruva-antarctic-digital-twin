@@ -147,119 +147,168 @@ export default function ActionsPage() {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
-      <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
-          Action Centre
-        </h1>
+      <div className="px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div className="flex items-end gap-x-6 gap-y-3 flex-wrap mb-4">
+          <div className="min-w-0">
+            <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+              Action Centre
+            </h1>
+            <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
+              Everything that needs a decision, most urgent first. Click any row for the full picture.
+            </p>
+          </div>
 
-        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
-          {STATION_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => applyScope(tab.id)}
-              aria-pressed={scope === tab.id}
-              className="px-3 py-1.5 rounded-full text-body-sm"
-              style={{
-                color: scope === tab.id ? 'var(--bg)' : 'var(--text-3)',
-              }}
+          <div className="flex items-center gap-2.5 flex-wrap text-body-sm">
+            <span
+              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
+              style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', color: 'var(--text-3)' }}
             >
-              {tab.label}
+              <span className="font-mono text-body-sm font-medium tabular-nums" style={{ color: 'var(--text)' }}>{counts.open}</span>
+              open
+            </span>
+            <span
+              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
+              style={{
+                backgroundColor: counts.unacked > 0 ? 'rgba(242,107,33,0.08)' : 'var(--panel-raised)',
+                border: `1px solid ${counts.unacked > 0 ? 'rgba(242,107,33,0.45)' : 'var(--line)'}`,
+                color: counts.unacked > 0 ? 'var(--act-soft)' : 'var(--text-3)',
+              }}
+              title="Raised, but nobody has acknowledged them yet (unacked)"
+            >
+              <span className="font-mono text-body-sm font-medium tabular-nums">{counts.unacked}</span>
+              not yet acknowledged
+            </span>
+            <span
+              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
+              style={{
+                backgroundColor: counts.breaching > 0 ? 'rgba(242,107,33,0.08)' : 'var(--panel-raised)',
+                border: `1px solid ${counts.breaching > 0 ? 'rgba(242,107,33,0.45)' : 'var(--line)'}`,
+                color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)',
+              }}
+              title="Past their response-time target (breaching SLA)"
+            >
+              <span className="font-mono text-body-sm font-medium tabular-nums">{counts.breaching}</span>
+              overdue
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          <div
+            data-segmented
+            role="group"
+            aria-label="Station"
+            className="relative isolate flex items-center gap-1 p-1 rounded-full"
+            style={{ border: '1px solid var(--line-strong)' }}
+          >
+            {STATION_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => applyScope(tab.id)}
+                aria-pressed={scope === tab.id}
+                className="px-4 min-h-9 rounded-full text-body-sm font-medium"
+                style={{
+                  color: scope === tab.id ? 'var(--bg)' : 'var(--text-2)',
+                }}
+              >
+                {tab.label === 'All' ? 'All stations' : tab.label}
+              </button>
+            ))}
+            <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
+          </div>
+
+          <label className="flex items-center gap-2.5 px-4 min-h-10 rounded-full flex-1 min-w-[14rem] max-w-md"
+            style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line-strong)' }}>
+            <Search size={16} style={{ color: 'var(--text-3)' }} aria-hidden />
+            <span className="sr-only">Search actions</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by title, asset, zone or person"
+              className="flex-1 bg-transparent outline-none text-body min-w-0"
+              style={{ color: 'var(--text)' }}
+            />
+          </label>
+
+          <div
+            data-segmented
+            role="group"
+            aria-label="Layout"
+            className="relative isolate flex items-center gap-1 p-1 rounded-full ml-auto"
+            style={{ border: '1px solid var(--line-strong)' }}
+          >
+            <button
+              type="button"
+              onClick={() => setView('table')}
+              aria-pressed={view === 'table'}
+              className="flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium"
+              style={{ color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
+            >
+              <Rows3 size={15} aria-hidden /> List
             </button>
-          ))}
-          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
-        </div>
-
-        <label className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-1 min-w-[180px] max-w-xs"
-          style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)' }}>
-          <Search size={13} style={{ color: 'var(--text-4)' }} aria-hidden />
-          <span className="sr-only">Search actions</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Title, asset, zone, assignee"
-            className="flex-1 bg-transparent outline-none text-body min-w-0"
-            style={{ color: 'var(--text)' }}
-          />
-        </label>
-
-        <div className="flex items-center gap-3 font-mono text-body-sm uppercase tabular-nums">
-          <span style={{ color: 'var(--text-2)' }}>{counts.open} open</span>
-          <span style={{ color: counts.unacked > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.unacked} unacked
-          </span>
-          <span style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-            {counts.breaching} breaching SLA
-          </span>
-        </div>
-
-        <div data-segmented className="relative isolate flex items-center gap-0.5 p-0.5 rounded-full ml-auto" style={{ border: '1px solid var(--line)' }}>
-          <button
-            type="button"
-            onClick={() => setView('table')}
-            aria-pressed={view === 'table'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
-            style={{ color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
-          >
-            <Rows3 size={12} /> Table
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('board')}
-            aria-pressed={view === 'board'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
-            style={{ color: view === 'board' ? 'var(--text)' : 'var(--text-3)' }}
-          >
-            <LayoutGrid size={12} /> Board
-          </button>
-          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
+            <button
+              type="button"
+              onClick={() => setView('board')}
+              aria-pressed={view === 'board'}
+              className="flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium"
+              style={{ color: view === 'board' ? 'var(--text)' : 'var(--text-3)' }}
+            >
+              <LayoutGrid size={15} aria-hidden /> Board
+            </button>
+            <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
+          </div>
         </div>
       </div>
 
       {/* ---- Bulk bar (FR-3.6): bulk ACK and assign only. No bulk resolve. ---- */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-6 py-2 shrink-0"
+        <div className="flex items-center gap-x-5 gap-y-2 flex-wrap px-6 py-2.5 shrink-0"
           style={{ backgroundColor: 'var(--panel-raised)', borderBottom: '1px solid var(--line)' }}>
-          <span className="font-mono text-caption" style={{ color: 'var(--text-2)' }}>
-            {selectedIds.size} selected
+          <span className="text-body-sm font-medium" style={{ color: 'var(--text)' }}>
+            <span className="font-mono tabular-nums">{selectedIds.size}</span> selected
           </span>
           <button
             type="button"
             disabled={!canBulk || chainBroken}
             onClick={bulkAck}
-            className="px-3 py-1.5 rounded-full text-body-sm font-medium"
+            className="px-4 min-h-9 rounded-full text-body-sm font-medium"
             style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
           >
-            Bulk acknowledge
+            Acknowledge selected
           </button>
-          <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
-            Bulk resolve is deliberately unavailable — a resolution needs per-action evidence.
+          <span
+            className="text-body-sm max-w-[60ch]"
+            style={{ color: 'var(--text-3)' }}
+            title="Bulk resolve is deliberately unavailable — a resolution needs per-action evidence."
+          >
+            Resolving is one at a time — each one needs its own evidence.
           </span>
           {chainBroken && (
-            <span className="font-mono text-micro" style={{ color: 'var(--act-soft)' }}>
+            <span className="text-body-sm" style={{ color: 'var(--act-soft)' }}>
               Bulk operations disabled while the audit chain is broken.
             </span>
           )}
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="ml-auto text-body-sm font-medium"
-            style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
+            className="ml-auto px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+            style={{ color: 'var(--text-2)', border: '1px solid var(--line-strong)', fontFamily: 'var(--font-body)' }}
           >
-            Clear
+            Clear selection
           </button>
         </div>
       )}
 
       {toast && (
-        <div key={toast} data-tone="error" className="m-toast px-6 py-2 shrink-0" role="alert"
+        <div key={toast} data-tone="error" className="m-toast px-6 py-2.5 shrink-0" role="alert"
           style={{ backgroundColor: 'rgba(242,107,33,0.10)', borderBottom: '1px solid var(--act)' }}>
-          <span className="font-mono text-caption" style={{ color: 'var(--act-soft)' }}>{toast}</span>
+          <span className="text-body-sm" style={{ color: 'var(--act-soft)' }}>{toast}</span>
         </div>
       )}
 
       {/* ---- Rail + content ---- */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-5">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-5 px-6 py-5">
         <TierRail
           counts={counts}
           tiers={tiers}
@@ -271,7 +320,7 @@ export default function ActionsPage() {
         />
 
         <section
-          className="flex-1 min-w-0 min-h-0 p-3"
+          className="flex-1 min-w-0 min-h-0 p-4"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
         >
           <div key={view} className="m-panel h-full">
@@ -344,20 +393,20 @@ function QuickDialog({
     const roster = ROSTER.filter((r) => r.stationId === action.stationId);
     return (
       <Modal open onClose={onClose} title={'Assign — ' + action.title}>
-        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
-          {STATION_LABEL[action.stationId]} roster
+        <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
+          Choose someone from the {STATION_LABEL[action.stationId]} roster.
         </p>
-        <ul className="space-y-1.5">
+        <ul className="flex flex-col gap-2">
           {roster.map((m) => (
             <li key={m.id}>
               <button
                 type="button"
                 onClick={() => onAssign(action.id, { id: m.id, name: m.name, role: m.role })}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left rounded-lg min-h-[44px]"
+                className="w-full flex items-center gap-3 flex-wrap px-4 py-2.5 text-left rounded-lg min-h-10 hover:bg-[var(--panel-alt)]"
                 style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
               >
-                <span className="text-body" style={{ color: 'var(--text)' }}>{m.name}</span>
-                <span className="font-mono text-micro ml-auto" style={{ color: 'var(--text-3)' }}>{m.role}</span>
+                <span className="text-body font-medium" style={{ color: 'var(--text)' }}>{m.name}</span>
+                <span className="text-body-sm ml-auto" style={{ color: 'var(--text-3)' }}>{m.role}</span>
               </button>
             </li>
           ))}
@@ -370,31 +419,39 @@ function QuickDialog({
     const invalid = !reason.trim() || !reviewDate;
     return (
       <Modal open onClose={onClose} title={'Defer — ' + action.title}>
-        <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
           A deferral without a reason and a review date is rejected — it would vanish from the
           next crew's handover.
         </p>
+        <label htmlFor="quick-defer-reason" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
+          Reason
+        </label>
         <textarea
+          id="quick-defer-reason"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Why is this safe to defer?"
-          className="w-full px-3 py-2 text-body outline-none mb-3"
+          className="w-full px-4 py-2.5 text-body outline-none mb-4"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
+        <label htmlFor="quick-defer-date" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
+          Review date
+        </label>
         <input
+          id="quick-defer-date"
           type="date"
           value={reviewDate}
           onChange={(e) => setReviewDate(e.target.value)}
-          className="w-full px-3 py-2 text-body font-mono outline-none mb-3"
+          className="w-full px-4 min-h-10 text-body font-mono outline-none mb-4"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
         />
         <button
           type="button"
           disabled={invalid}
           onClick={() => onDefer(action.id, reason, new Date(reviewDate).toISOString())}
-          className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
-          style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-4)' : 'var(--bg)' }}
+          className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
+          style={{ backgroundColor: invalid ? 'var(--panel-raised)' : 'var(--act)', color: invalid ? 'var(--text-3)' : 'var(--bg)' }}
         >
           Defer and record
         </button>
@@ -405,27 +462,31 @@ function QuickDialog({
   const needsEvidence = (action.tier === 'T0' || action.tier === 'T1') && action.evidence.length === 0;
   return (
     <Modal open onClose={onClose} title={'Resolve — ' + action.title}>
+      <label htmlFor="quick-resolve-note" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
+        Resolution note
+      </label>
       <textarea
+        id="quick-resolve-note"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={4}
         placeholder="What was done, and how it was confirmed"
-        className="w-full px-3 py-2 text-body outline-none mb-3"
+        className="w-full px-4 py-2.5 text-body outline-none mb-4"
         style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)' }}
       />
       {needsEvidence && (
-        <p className="font-mono text-caption mb-2" style={{ color: 'var(--act-soft)' }}>
-          {action.tier} needs evidence — open the action and attach one first.
+        <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }}>
+          A {action.tier} action needs evidence before it can be resolved — open the action and attach one first.
         </p>
       )}
       <button
         type="button"
         disabled={!note.trim() || needsEvidence}
         onClick={() => onResolve(action.id, note, action.evidence.map((e) => e.id))}
-        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
+        className="w-full py-2.5 rounded-full text-body font-semibold min-h-10"
         style={{
           backgroundColor: !note.trim() || needsEvidence ? 'var(--panel-raised)' : 'var(--act)',
-          color: !note.trim() || needsEvidence ? 'var(--text-4)' : 'var(--bg)',
+          color: !note.trim() || needsEvidence ? 'var(--text-3)' : 'var(--bg)',
         }}
       >
         Resolve and record

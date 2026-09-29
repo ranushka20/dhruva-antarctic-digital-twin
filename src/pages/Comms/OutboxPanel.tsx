@@ -12,7 +12,7 @@ import { ProgressBar } from '@/components/shared/ProgressBar';
 import { TierChip } from '@/components/shared/TierChip';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE } from '@/state/stationScope';
+import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDuration } from '@/lib/time';
 import { synth } from '@/lib/provenance';
 import type { DrainState } from '@/state/sync';
@@ -35,6 +35,14 @@ function formatBytes(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 }
 
+/** Plain-language tier names, per FRONTEND.md tier definitions. */
+const TIER_NAME: Record<Tier, string> = {
+  T0: 'Life safety & medical',
+  T1: 'Critical operations',
+  T2: 'Logistics & records',
+  T3: 'Science & bulk data',
+};
+
 export function OutboxPanel({
   tiers, order, drain, throughputKbps, secondsToClear, onDrain, canDrain, linkDown,
 }: Props) {
@@ -49,21 +57,23 @@ export function OutboxPanel({
 
   return (
     <section
-      className="flex flex-col min-h-0 p-4"
+      className="flex-1 flex flex-col min-h-0 min-w-0 p-5"
       style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       aria-label="Outbox and transfer queue"
     >
-      <div className="flex items-center mb-3">
-        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Outbox</h2>
-        <span className="font-mono text-caption tabular-nums ml-2" style={{ color: totalQueued > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-          {totalQueued} queued
-        </span>
+      <div className="flex items-start gap-x-4 gap-y-3 flex-wrap mb-4">
+        <div className="min-w-0">
+          <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Outbox</h2>
+          <p className="text-body-sm mt-0.5" style={{ color: totalQueued > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+            <span className="font-mono tabular-nums">{totalQueued}</span> record{totalQueued === 1 ? '' : 's'} waiting to send
+          </p>
+        </div>
         <AsyncButton
           onClick={onDrain}
-          pendingLabel="Draining…"
-          doneLabel="Drained"
+          pendingLabel="Sending…"
+          doneLabel="Sent"
           disabled={!canDrain || drain.running || totalQueued === 0}
-          className="ml-auto px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[36px]"
+          className="ml-auto px-5 rounded-full text-body-sm font-semibold min-h-10"
           style={{
             border: '1px solid var(--ok)',
             color: 'var(--ok-soft)',
@@ -72,28 +82,33 @@ export function OutboxPanel({
           }}
           title={linkDown ? 'The link is down — nothing can transfer' : 'Drain the queue in strict tier order'}
         >
-          {drain.running ? 'Draining…' : 'Drain now'}
+          {drain.running ? 'Sending…' : 'Send now'}
         </AsyncButton>
       </div>
 
       {/* ---- Tier rows (FR-2.1) ---- */}
-      <div className="space-y-2 mb-4">
+      <div className="flex flex-col gap-3.5 mb-5">
         {tiers.map((t) => (
-          <div key={t.tier} className="flex items-center gap-2.5">
-            <TierChip tier={t.tier} />
-            <div className="flex-1">
-              <ProgressBar
-                value={t.sent}
-                max={maxQueued}
-                tone={tone(t.tier, t.queued)}
-                height={6}
-                label={`${t.tier}: ${t.queued} queued, ${t.sent} sent`}
-              />
+          <div key={t.tier}>
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mb-1.5">
+              <TierChip tier={t.tier} />
+              <span className="text-body-sm font-medium" style={{ color: 'var(--text-2)' }}>{TIER_NAME[t.tier]}</span>
+              <span className="flex items-baseline gap-x-3 ml-auto text-body-sm" style={{ color: 'var(--text-3)' }}>
+                <span>
+                  <span className="font-mono tabular-nums" style={{ color: t.queued > 0 ? 'var(--text)' : 'var(--text-3)' }}>{t.queued}</span> waiting
+                </span>
+                <span>
+                  <span className="font-mono tabular-nums">{t.sent}</span> sent
+                </span>
+              </span>
             </div>
-            <span className="font-mono text-caption tabular-nums w-28 text-right" style={{ color: 'var(--text-3)' }}>
-              <span style={{ color: t.queued > 0 ? 'var(--text-2)' : 'var(--text-4)' }}>{t.queued}</span> queued ·{' '}
-              {t.sent} sent
-            </span>
+            <ProgressBar
+              value={t.sent}
+              max={maxQueued}
+              tone={tone(t.tier, t.queued)}
+              height={6}
+              label={`${t.tier}: ${t.queued} queued, ${t.sent} sent`}
+            />
           </div>
         ))}
       </div>
@@ -101,62 +116,68 @@ export function OutboxPanel({
       {/* ---- Currently transferring (FR-2.4) ---- */}
       {drain.running && (
         <div
-          className="flex items-center gap-2.5 px-3 py-2 mb-3"
+          className="flex items-center gap-4 px-4 py-3 mb-4"
           style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--ok)', borderRadius: 'var(--r-inner)' }}
         >
-          <span className="font-mono text-micro tracking-label" style={{ color: 'var(--ok-soft)' }}>
+          <span className="text-body-sm font-medium" style={{ color: 'var(--ok-soft)' }}>
             {drain.status}
           </span>
           <span className="flex-1">
-            <ProgressBar value={drain.sentThisRun} max={Math.max(1, drain.sentThisRun + order.length)} tone="ok" height={4} />
+            <ProgressBar value={drain.sentThisRun} max={Math.max(1, drain.sentThisRun + order.length)} tone="ok" height={6} />
           </span>
-          <span className="font-mono text-caption tabular-nums" style={{ color: 'var(--text-3)' }}>
+          <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
             {formatBytes(drain.transferredBytes)}
           </span>
         </div>
       )}
 
       {/* ---- Drain order (FR-2.3) ---- */}
-      <p className="font-mono text-micro uppercase tracking-label mb-2" style={{ color: 'var(--text-4)' }}>
-        Next in transfer order
+      <h3 className="text-body font-semibold mb-0.5" style={{ color: 'var(--text)' }}>
+        Sending order
+      </h3>
+      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
+        Most urgent first. Nothing lower sends while a higher tier is still waiting.
       </p>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {order.length === 0 ? (
           <EmptyState reason="Nothing queued. Records written at the station appear here until the link carries them." />
         ) : (
-          <ol className="space-y-1">
+          <ol className="flex flex-col gap-2">
             {order.slice(0, 12).map((record, i) => (
               <li
                 key={record.id}
-                className="flex items-center gap-2 px-2 py-1.5"
+                className="flex items-start gap-3 px-4 py-3"
                 style={{
-                  backgroundColor: drain.transferringId === record.id ? 'var(--panel-raised)' : 'transparent',
+                  backgroundColor: drain.transferringId === record.id ? 'var(--panel-alt)' : 'var(--panel-raised)',
+                  border: `1px solid ${drain.transferringId === record.id ? 'var(--ok)' : 'transparent'}`,
                   borderRadius: 'var(--r-inner)',
                 }}
               >
-                <span className="font-mono text-micro w-5 shrink-0" style={{ color: 'var(--text-4)' }}>
+                <span
+                  className="w-7 h-7 shrink-0 grid place-items-center rounded-full font-mono text-caption tabular-nums"
+                  style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', color: 'var(--text-3)' }}
+                  aria-label={`Position ${i + 1}`}
+                >
                   {i + 1}
                 </span>
-                <TierChip tier={record.tier} />
-                <span className="font-mono text-micro w-16 shrink-0" style={{ color: 'var(--text-4)' }}>
-                  {record.type.toUpperCase()}
-                </span>
-                <span className="text-body-sm flex-1 truncate" style={{ color: 'var(--text-2)' }}>
-                  {record.payloadRef}
-                </span>
-                {record.promotedFrom && (
-                  <span className="font-mono text-micro px-1 py-0.5 rounded shrink-0"
-                    style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
-                    title={record.promotionReason}>
-                    ↑ {record.promotedFrom}
-                  </span>
-                )}
-                <span className="font-mono text-micro tabular-nums shrink-0" style={{ color: 'var(--text-4)' }}>
-                  {formatBytes(record.sizeBytes)}
-                </span>
-                <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>
-                  {STATION_CODE[record.stationId]}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-body-sm break-all" style={{ color: 'var(--text)' }} title="Record reference">
+                    {record.payloadRef}
+                  </p>
+                  <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
+                    <TierChip tier={record.tier} />
+                    <span className="capitalize">{record.type}</span>
+                    <span className="font-mono tabular-nums">{formatBytes(record.sizeBytes)}</span>
+                    <span title={STATION_CODE[record.stationId]}>{STATION_LABEL[record.stationId]}</span>
+                    {record.promotedFrom && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
+                        style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
+                        title={record.promotionReason}>
+                        Moved up from <span className="font-mono ml-1">{record.promotedFrom}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
               </li>
             ))}
           </ol>
@@ -165,34 +186,37 @@ export function OutboxPanel({
 
       {/* ---- Throughput (FR-2.5) — SYNTH and labelled ---- */}
       <div
-        className="flex items-center gap-2 mt-3 pt-2.5 flex-wrap"
+        className="grid grid-cols-2 gap-x-6 gap-y-3 mt-4 pt-4"
         style={{ borderTop: '1px solid var(--line)' }}
       >
-        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
-          Throughput
-        </span>
-        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
-          {throughputKbps} kbps
-        </span>
-        <ProvenanceBadge
-          measurement={synth(throughputKbps, 'kbps', 'confirmed NCPOR link budget')}
-          label="Assumed link throughput"
-        />
-        <span className="font-mono text-micro uppercase tracking-label ml-3" style={{ color: 'var(--text-4)' }}>
-          To clear
-        </span>
-        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
-          {totalQueued === 0 ? '—' : formatDuration(secondsToClear)}
-        </span>
-        <ProvenanceBadge
-          measurement={synth(secondsToClear, 's', 'confirmed NCPOR link budget')}
-          label="Estimated time to clear"
-        />
+        <div>
+          <p className="text-body-sm mb-1" style={{ color: 'var(--text-3)' }} title="Assumed link throughput">Link speed</p>
+          <p className="flex items-center gap-2.5">
+            <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text-2)' }}>
+              {throughputKbps} kbps
+            </span>
+            <ProvenanceBadge
+              measurement={synth(throughputKbps, 'kbps', 'confirmed NCPOR link budget')}
+              label="Assumed link throughput"
+            />
+          </p>
+        </div>
+        <div>
+          <p className="text-body-sm mb-1" style={{ color: 'var(--text-3)' }}>Time to clear</p>
+          <p className="flex items-center gap-2.5">
+            <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text-2)' }}>
+              {totalQueued === 0 ? '—' : formatDuration(secondsToClear)}
+            </span>
+            <ProvenanceBadge
+              measurement={synth(secondsToClear, 's', 'confirmed NCPOR link budget')}
+              label="Estimated time to clear"
+            />
+          </p>
+        </div>
       </div>
 
-      <p className="font-mono text-micro mt-2" style={{ color: 'var(--text-4)' }}>
-        Strict tier order: no T2 transfers while any T1 remains. A late higher-tier record
-        pre-empts at the next batch boundary and the list visibly reorders.
+      <p className="text-body-sm mt-3 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+        A late, more urgent record jumps ahead at the next batch and the list reorders to show it.
       </p>
     </section>
   );

@@ -28,13 +28,13 @@ export function LinkTimeline({ segments, windowHours, now = Date.now() }: Props)
     <div>
       <div
         className="relative w-full overflow-hidden flex"
-        style={{ height: 22, backgroundColor: 'var(--track)', borderRadius: 'var(--r-pill)' }}
+        style={{ height: 26, backgroundColor: 'var(--track)', borderRadius: 'var(--r-pill)' }}
         role="img"
         aria-label={`Link state over the last ${windowHours} hours`}
       >
         {segments.length === 0 && (
-          <span className="m-auto font-mono text-micro" style={{ color: 'var(--text-4)' }}>
-            no link history in this window
+          <span className="m-auto text-body-sm" style={{ color: 'var(--text-3)' }}>
+            No link history in this window
           </span>
         )}
         {segments.map((segment, i) => {
@@ -60,11 +60,19 @@ export function LinkTimeline({ segments, windowHours, now = Date.now() }: Props)
         })}
       </div>
 
-      <div className="flex items-center gap-3 mt-1.5 font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-4)' }}>
-        <Legend color="var(--ok)" label="LIVE" />
-        <Legend color="var(--watch)" label="LAGGING" />
-        <Legend color="var(--unknown)" label="DARK (hatched)" hatched />
-        <span className="ml-auto">{windowHours >= 48 ? `${Math.round(windowHours / 24)} d window` : `${windowHours} h window`}</span>
+      <div className="flex items-center justify-between mt-2 text-caption" style={{ color: 'var(--text-3)' }} aria-hidden>
+        <span>
+          <span className="font-mono tabular-nums">{windowHours >= 48 ? Math.round(windowHours / 24) : windowHours}</span>
+          {windowHours >= 48 ? ' days ago' : ' hours ago'}
+        </span>
+        <span>Now</span>
+      </div>
+
+      <div className="flex items-center gap-x-6 gap-y-2 flex-wrap mt-2.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+        <Legend color="var(--ok)" label="Live" />
+        <Legend color="var(--watch)" label="Lagging" />
+        <Legend color="var(--unknown)" label="Dark (no link)" hatched />
+        <span className="ml-auto">Hover the bar for exact times</span>
       </div>
     </div>
   );
@@ -72,12 +80,13 @@ export function LinkTimeline({ segments, windowHours, now = Date.now() }: Props)
 
 function Legend({ color, label, hatched }: { color: string; label: string; hatched?: boolean }) {
   return (
-    <span className="flex items-center gap-1">
+    <span className="flex items-center gap-2">
       <span
+        aria-hidden
         style={{
-          width: 10, height: 8, borderRadius: 2,
+          width: 18, height: 12, borderRadius: 3,
           backgroundColor: hatched ? 'transparent' : color,
-          backgroundImage: hatched ? `repeating-linear-gradient(45deg, ${color} 0 2px, transparent 2px 4px)` : undefined,
+          backgroundImage: hatched ? `repeating-linear-gradient(45deg, ${color} 0 2px, transparent 2px 5px)` : undefined,
         }}
       />
       {label}

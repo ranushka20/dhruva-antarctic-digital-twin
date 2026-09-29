@@ -48,7 +48,7 @@ export default function LoginPage() {
       style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}
     >
       <main
-        className="w-full max-w-[400px] p-6"
+        className="w-full max-w-[28rem] p-7"
         style={{
           backgroundColor: 'var(--panel)',
           border: '1px solid var(--line)',
@@ -56,8 +56,8 @@ export default function LoginPage() {
           boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
         }}
       >
-        <div className="flex items-center gap-2 mb-1">
-          <Snowflake size={20} style={{ color: 'var(--ok)' }} aria-hidden />
+        <div className="flex items-center gap-2.5 mb-2">
+          <Snowflake size={22} style={{ color: 'var(--ok)' }} aria-hidden />
           <h1
             className="text-headline font-semibold tracking-[0.1em]"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -65,36 +65,38 @@ export default function LoginPage() {
             DHRUVA
           </h1>
         </div>
-        <p className="text-body-sm mb-5" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-6" style={{ color: 'var(--text-3)' }}>
           Digital platform for remote management of Indian Antarctic research stations
         </p>
 
         <form onSubmit={submit}>
-          <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
+          <label htmlFor="login-username" className="block text-body-sm font-medium mb-1.5" style={{ color: 'var(--text-2)' }}>
             Username
           </label>
           <input
+            id="login-username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
-            className="w-full px-3 mb-3 text-body outline-none"
+            className="w-full px-4 mb-4 text-body outline-none"
             style={{ ...field, minHeight: 44 }}
           />
 
-          <label className="block font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
+          <label htmlFor="login-password" className="block text-body-sm font-medium mb-1.5" style={{ color: 'var(--text-2)' }}>
             Password
           </label>
           <input
+            id="login-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            className="w-full px-3 mb-3 text-body outline-none"
+            className="w-full px-4 mb-5 text-body outline-none"
             style={{ ...field, minHeight: 44 }}
           />
 
           {error && (
-            <p className="text-body-sm mb-3" style={{ color: 'var(--act-soft)' }} role="alert">
+            <p className="text-body-sm mb-4" style={{ color: 'var(--act-soft)' }} role="alert">
               {error}
             </p>
           )}
@@ -104,49 +106,52 @@ export default function LoginPage() {
             disabled={busy || !username || !password}
             className="w-full flex items-center justify-center gap-2 rounded-full text-body font-medium"
             style={{
-              minHeight: 46,
+              minHeight: 48,
               backgroundColor: username && password ? 'var(--act)' : 'var(--panel-raised)',
               color: username && password ? 'var(--bg)' : 'var(--text-4)',
             }}
           >
-            Sign in <ArrowRight size={14} />
+            Sign in <ArrowRight size={16} />
           </button>
         </form>
 
         <button
           type="button"
           onClick={() => navigate('/station')}
-          className="w-full flex items-center justify-center gap-2 mt-2.5 rounded-full text-body"
+          className="w-full flex items-center justify-center gap-2 mt-3 rounded-full text-body"
           style={{ minHeight: 44, border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
         >
-          <Terminal size={13} /> Station console
+          <Terminal size={16} /> Station console
         </button>
 
         {/* Roles come from the account — never offered as a choice at sign-in */}
-        <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-          <p className="font-mono text-micro uppercase tracking-label mb-2" style={{ color: 'var(--text-4)' }}>
+        <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--line)' }}>
+          <p className="text-body-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>
             Provisioned accounts
           </p>
-          <ul className="space-y-1">
+          <p className="text-caption mb-3" style={{ color: 'var(--text-3)' }}>
+            Choose one to fill in its username and password.
+          </p>
+          <ul className="flex flex-col gap-2">
             {DEMO_ACCOUNTS.map((a) => (
               <li key={a.username}>
                 <button
                   type="button"
                   onClick={() => { setUsername(a.username); setPassword('antarasetu'); }}
-                  className="w-full flex items-center gap-2 px-2.5 py-2 text-left rounded"
-                  style={{ backgroundColor: 'var(--panel-raised)' }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 min-h-10 text-left rounded-lg flex-wrap hover:bg-[var(--panel-alt)]"
+                  style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
                 >
-                  <span className="font-mono text-caption flex-1" style={{ color: 'var(--text-2)' }}>
+                  <span className="font-mono text-body-sm flex-1 min-w-0" style={{ color: 'var(--text)' }}>
                     {a.username}
                   </span>
-                  <span className="font-mono text-micro" style={{ color: 'var(--text-4)' }}>
+                  <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
                     {ROLE_LABEL[a.role]}
                   </span>
                 </button>
               </li>
             ))}
           </ul>
-          <p className="text-caption mt-3" style={{ color: 'var(--text-4)' }}>
+          <p className="text-caption mt-4 leading-relaxed" style={{ color: 'var(--text-3)' }}>
             Accounts are provisioned — there is no registration, password reset or SSO in this
             build. This is a frontend-only prototype: the token is issued and checked in the
             browser and role claims gate the interface only, not data access.

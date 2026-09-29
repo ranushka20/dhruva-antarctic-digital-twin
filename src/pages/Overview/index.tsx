@@ -88,71 +88,91 @@ export default function OverviewPage() {
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row (FR-2) ---- */}
       <div
-        className="flex items-center gap-3 h-[52px] px-6 shrink-0"
+        className="flex items-center flex-wrap gap-x-4 gap-y-3 px-6 py-3.5 shrink-0"
         style={{ borderBottom: '1px solid var(--line)' }}
       >
         <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           HQ Overview
         </h1>
 
-        <label className="flex items-center gap-2 ml-4 px-3 py-1.5 rounded-full min-w-0 max-w-sm flex-1"
-          style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)' }}>
-          <Search size={13} style={{ color: 'var(--text-4)' }} aria-hidden />
+        <label
+          className="flex items-center gap-2.5 px-4 min-h-10 rounded-full min-w-[15rem] max-w-md flex-1"
+          style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)' }}
+          title="Search assets, actions and records (⌘ Space)"
+        >
+          <Search size={16} style={{ color: 'var(--text-3)' }} aria-hidden />
           <span className="sr-only">Search assets, actions, records</span>
           <input
             readOnly
             onFocus={(e) => { e.currentTarget.blur(); window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', ctrlKey: true })); }}
             placeholder="Search assets, actions, records"
-            className="flex-1 bg-transparent outline-none text-body min-w-0"
+            className="flex-1 bg-transparent outline-none text-body-sm min-w-0"
             style={{ color: 'var(--text-2)' }}
           />
-          <span className="font-mono text-micro px-1.5 py-0.5 rounded shrink-0"
-            style={{ border: '1px solid var(--line)', color: 'var(--text-4)' }}>
-            ⌘ SPACE
+          <span
+            className="hidden 2xl:inline font-mono text-micro px-2 py-0.5 rounded shrink-0"
+            style={{ border: '1px solid var(--line)', color: 'var(--text-3)' }}
+          >
+            ⌘ Space
           </span>
         </label>
 
-        <div className="flex-1" />
+        <div className="ml-auto flex items-center flex-wrap gap-x-3 gap-y-2">
+          <span
+            className="font-mono text-body-sm tabular-nums mr-1"
+            style={{ color: 'var(--text-2)' }}
+            title="Current time, India Standard Time"
+          >
+            {formatClockIST()}
+          </span>
 
-        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
-          {formatClockIST()}
-        </span>
+          <button
+            type="button"
+            onClick={() => navigate('/actions')}
+            className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+            title="Open the Action Centre to filter every action"
+          >
+            <Filter size={15} aria-hidden /> Filter
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/compliance')}
+            className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+            title="Compliance reports"
+          >
+            <FileText size={15} aria-hidden /> Reports
+          </button>
 
-        {/* Primary CTA — the product's headline feature belongs in the title
-            row, not buried at the bottom of the right rail. */}
-        <button
-          type="button"
-          onClick={() => openTwin()}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-body font-semibold shrink-0"
-          style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
-          title={`Open the ${primary.name} 3D digital twin`}
-        >
-          <Box size={13} /> Open 3D twin
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/actions')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
-          style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
-        >
-          <Filter size={12} /> Filter
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/compliance')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-sm"
-          style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
-        >
-          <FileText size={12} /> Reports
-        </button>
+          {/* Primary CTA — the product's headline feature belongs in the title
+              row, not buried at the bottom of the right rail. */}
+          <button
+            type="button"
+            onClick={() => openTwin()}
+            className="flex items-center gap-2 px-5 min-h-10 rounded-full text-body font-semibold shrink-0"
+            style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
+            title={`Open the ${primary.name} 3D digital twin`}
+          >
+            <Box size={16} aria-hidden /> Open 3D twin
+          </button>
+        </div>
       </div>
 
-      {/* ---- Three columns; right column drops below centre under 1280px ---- */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-5">
-        <div className="flex flex-col xl:flex-row gap-3.5 min-h-full">
+      {/* ---- Layout (container queries, so it also follows the text-size
+           setting): one column when narrow; two columns — rails stacked on
+           the left, map + resources on the right — from 56rem; three
+           columns only from 88rem, where the centre keeps real room. ---- */}
+      <div className="@container flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <div
+          className={[
+            'grid grid-cols-1 gap-5 min-h-full',
+            '@min-[56rem]:grid-cols-[minmax(19rem,22rem)_minmax(0,1fr)] @min-[56rem]:grid-rows-[auto_1fr]',
+            '@min-[88rem]:grid-cols-[21rem_minmax(0,1fr)_22rem] @min-[88rem]:grid-rows-[1fr]',
+          ].join(' ')}
+        >
           {/* LEFT — never hidden at any width */}
-          <div className="flex flex-col gap-3.5 w-full xl:w-[320px] xl:shrink-0 order-1">
+          <div className="flex flex-col gap-5 min-w-0 order-1 @min-[56rem]:[grid-area:1/1/2/2]">
             <StationComparator
               primary={primary}
               compare={compare}
@@ -168,10 +188,10 @@ export default function OverviewPage() {
           </div>
 
           {/* CENTRE */}
-          <div className="flex flex-col gap-3.5 flex-1 min-w-0 order-3 xl:order-2">
+          <div className="flex flex-col gap-5 min-w-0 order-3 @min-[56rem]:[grid-area:1/2/3/3] @min-[88rem]:[grid-area:1/2/2/3]">
             <section
-              className="glow-hero glow-map relative overflow-hidden shrink-0"
-              style={{ borderRadius: 'var(--r-card)', height: 314 }}
+              className="glow-hero glow-map relative overflow-hidden shrink-0 h-[20rem] 2xl:h-[22rem]"
+              style={{ borderRadius: 'var(--r-card)' }}
               aria-label="Antarctica map"
             >
               <AntarcticaMap
@@ -183,10 +203,11 @@ export default function OverviewPage() {
               {/* Says out loud what the double-click does — the gesture is
                   worthless if nobody knows it is there. */}
               <p
-                className="absolute left-4 bottom-3 font-mono text-micro uppercase tracking-label pointer-events-none"
-                style={{ color: 'var(--text-4)' }}
+                className="absolute left-4 bottom-4 flex flex-wrap gap-x-4 gap-y-1 px-3.5 py-1.5 rounded-full text-body-sm pointer-events-none"
+                style={{ color: 'var(--text-3)', backgroundColor: 'var(--panel-deep)', border: '1px solid var(--line)' }}
               >
-                Click a station to select · double-click to open its 3D twin
+                <span>Click a station to select it</span>
+                <span>Double-click to open its 3D twin</span>
               </p>
             </section>
 
@@ -199,7 +220,7 @@ export default function OverviewPage() {
           </div>
 
           {/* RIGHT */}
-          <div className="flex flex-col gap-3.5 w-full xl:w-[342px] xl:shrink-0 order-2 xl:order-3">
+          <div className="flex flex-col gap-5 min-w-0 order-2 @min-[56rem]:[grid-area:2/1/3/2] @min-[88rem]:[grid-area:1/3/2/4]">
             <DegradableSurface
               syncState={primary.sync.state}
               ageLabel={formatDuration(primary.sync.ageSeconds)}
@@ -213,16 +234,28 @@ export default function OverviewPage() {
               />
             </DegradableSurface>
 
-            {/* Environment stat trio (FR-8) */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <StatTile label="Ambient" value={env.ambientC.value} unit="°C" measurement={env.ambientC} />
-              <StatTile label="Wind" value={env.windKt.value} unit="kt" measurement={env.windKt} />
-              <StatTile label="Load" value={env.loadKw.value} unit="kW" measurement={env.loadKw} />
-            </div>
+            {/* Environment stat trio (FR-8). Two-up plus one full-width tile in
+                a rail; three-across only when there is room for the labels. */}
+            <section aria-label={`Conditions at ${primary.name}`} className="@container">
+              <h2 className="text-body-sm font-medium mb-2.5 px-1" style={{ color: 'var(--text-3)' }}>
+                Right now at {primary.name}
+              </h2>
+              <div className="grid grid-cols-1 gap-3 @min-[18rem]:grid-cols-2 @min-[30rem]:grid-cols-3">
+                <StatTile label="Ambient" value={env.ambientC.value} unit="°C" measurement={env.ambientC} />
+                <StatTile label="Wind" value={env.windKt.value} unit="kt" measurement={env.windKt} />
+                <StatTile
+                  label="Load"
+                  value={env.loadKw.value}
+                  unit="kW"
+                  measurement={env.loadKw}
+                  className="@min-[18rem]:col-span-2 @min-[30rem]:col-span-1"
+                />
+              </div>
+            </section>
 
             {/* Selection summary + CTA (FR-9) */}
             <section
-              className="p-4"
+              className="p-5"
               style={{
                 backgroundColor: 'var(--panel)',
                 border: '1px solid var(--line)',
@@ -230,31 +263,41 @@ export default function OverviewPage() {
               }}
               aria-label="Selection summary"
             >
-              <p className="font-mono text-micro uppercase tracking-label mb-2" style={{ color: 'var(--text-4)' }}>
-                Selection
-              </p>
+              <h2 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>
+                Selected zone
+              </h2>
 
               {selectedZoneData && zoneImpact ? (
                 <>
-                  <p className="text-title font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
-                    {selectedZoneData.code} {selectedZoneData.name}
+                  <p className="text-body font-medium mb-1.5" style={{ color: 'var(--text)' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-2)' }}>{selectedZoneData.code}</span>{' '}
+                    {selectedZoneData.name}
                   </p>
-                  <p className="text-body-sm mb-2" style={{ color: 'var(--text-3)' }}>
-                    {zoneImpact.lossPct > 0
-                      ? `Holding this zone in ${selectedZoneData.status} adds ${zoneImpact.lossPct.toFixed(0)}% envelope loss.`
-                      : 'Zone nominal — no modelled autonomy cost.'}
+                  <p className="text-body-sm mb-3 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+                    {zoneImpact.lossPct > 0 ? (
+                      <>
+                        Holding this zone in {selectedZoneData.status} adds{' '}
+                        <span className="font-mono tabular-nums">{zoneImpact.lossPct.toFixed(0)}%</span> envelope loss.
+                      </>
+                    ) : (
+                      'Zone nominal — no modelled autonomy cost.'
+                    )}
+                  </p>
+                  <p className="text-body-sm mb-1" style={{ color: 'var(--text-3)' }} title="Days of autonomy: now → if the zone stays in this state">
+                    Days of autonomy
                   </p>
                   <p className="font-mono text-title tabular-nums">
                     <span style={{ color: 'var(--text-2)' }}>{Math.round(zoneImpact.beforeDays)}</span>
-                    <span style={{ color: 'var(--text-4)' }}> → </span>
+                    <span style={{ color: 'var(--text-3)' }} aria-label="becomes"> → </span>
                     <span style={{ color: zoneImpact.deltaDays < 0 ? 'var(--act-soft)' : 'var(--text)' }}>
-                      {Math.round(zoneImpact.afterDays)} d
+                      {Math.round(zoneImpact.afterDays)}
                     </span>
+                    <span className="text-body-sm" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}> days</span>
                   </p>
                 </>
               ) : (
-                <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
-                  Select a zone to see what leaving it in its current state costs in days of autonomy.
+                <p className="text-body-sm max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+                  Select a zone above to see what leaving it in its current state costs in days of autonomy.
                 </p>
               )}
 
@@ -264,12 +307,16 @@ export default function OverviewPage() {
               <button
                 type="button"
                 onClick={() => openTwin(primary.id)}
-                className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-full text-body font-semibold"
+                className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1 w-full mt-4 px-4 py-2 min-h-10 rounded-full text-body font-semibold"
                 style={{ backgroundColor: 'var(--text)', color: 'var(--bg)' }}
               >
-                <Box size={14} />
+                <Box size={16} aria-hidden />
                 Open {primary.name} 3D twin
-                {selectedZoneData ? ` · ${selectedZoneData.code}` : ''}
+                {selectedZoneData && (
+                  <span className="font-mono text-body-sm px-2 rounded-full" style={{ border: '1px solid currentColor' }}>
+                    {selectedZoneData.code}
+                  </span>
+                )}
               </button>
             </section>
           </div>
@@ -295,35 +342,47 @@ function OutboxStrip({
       : 'neutral';
 
   return (
-    <div
-      className="flex items-center gap-4 px-4 py-2.5 shrink-0"
-      style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
+    <section
+      className="px-5 py-4 shrink-0"
+      style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
+      aria-label="Records waiting to sync"
     >
-      <span className="font-mono text-micro uppercase tracking-label shrink-0" style={{ color: 'var(--text-4)' }}>
-        Records pending
-      </span>
-      <span className="font-mono text-body-sm tabular-nums shrink-0" style={{ color: total > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>
-        {total} queued
-      </span>
+      <div className="flex items-baseline flex-wrap gap-x-4 gap-y-1 mb-3">
+        <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
+          Records waiting to sync
+        </h2>
+        <span className="text-body-sm" style={{ color: total > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
+          <span className="font-mono tabular-nums">{total}</span> queued
+        </span>
+        <span
+          className="ml-auto text-body-sm px-3 py-0.5 rounded-full"
+          style={{ color: 'var(--text-2)', backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
+          title="Current state of the outbox transfer"
+        >
+          {status}
+        </span>
+      </div>
 
-      <div className="flex-1 flex items-center gap-1.5 min-w-[120px]">
+      <div className="flex items-center gap-4 min-w-0">
         {outbox.map((t) => (
-          <div key={t.tier} className="flex-1 flex items-center gap-1.5" style={{ flexGrow: Math.max(1, t.queued) }}>
-            <span className="font-mono text-micro shrink-0" style={{ color: 'var(--text-4)' }}>{t.tier}</span>
+          <div
+            key={t.tier}
+            className="flex-1 flex items-center gap-2 min-w-0"
+            style={{ flexGrow: Math.max(1, t.queued) }}
+            title={`Priority tier ${t.tier} (T0 most urgent): ${t.queued} queued`}
+          >
+            <span className="font-mono text-body-sm shrink-0" style={{ color: 'var(--text-3)' }}>{t.tier}</span>
+            <span className="font-mono text-body-sm tabular-nums shrink-0" style={{ color: 'var(--text-2)' }}>{t.queued}</span>
             <ProgressBar
               value={t.queued}
               max={Math.max(1, ...outbox.map((o) => o.queued))}
               tone={tone(t.tier, t.queued)}
-              height={4}
+              height={6}
               label={`${t.tier}: ${t.queued} queued`}
             />
           </div>
         ))}
       </div>
-
-      <span className="font-mono text-micro tracking-[0.06em] shrink-0" style={{ color: 'var(--text-3)' }}>
-        {status}
-      </span>
-    </div>
+    </section>
   );
 }

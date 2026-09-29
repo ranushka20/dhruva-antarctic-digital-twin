@@ -10,11 +10,24 @@ import { StatusDot } from '@/components/shared/StatusDot';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE } from '@/state/stationScope';
+import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { SYNC_OPACITY } from '@/lib/freshness';
 import { lsodColor } from '@/lib/risk';
 
 const RISK_DOT = { ok: 'ok', watch: 'watch', warning: 'warning', critical: 'critical' } as const;
+
+// One grid template for the header and every row, applied only once the card
+// itself is wide enough (container query, so it also tracks the text-size
+// setting). Below that each row stacks: name first, then labelled figures.
+// The old separate Station column is folded into the name cell as a chip.
+const ROW_GRID =
+  '@min-[40rem]:grid @min-[40rem]:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(6.5rem,auto)] @min-[40rem]:items-center @min-[40rem]:gap-x-6';
+
+const COLUMN_HINT = {
+  autonomy: 'Autonomy — days of supply left at the current rate of use, with its uncertainty band',
+  margin: 'Margin to ship — days of stock still left when the next ship arrives. Negative means it runs out before the ship.',
+  lsod: 'Last Safe Order Date (LSOD) — days left to place an order that still arrives in time',
+};
 
 export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
   const navigate = useNavigate();
@@ -22,9 +35,9 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
   return (
     <section
       // w-full + min-w-0: as a flex child this section would otherwise size to
-      // the table's max-content width and leave dead space to the right of the
-      // card, so it would not line up with the map above it.
-      className="flex flex-col min-h-0 w-full min-w-0 p-4"
+      // its content's max width and leave dead space to the right of the card,
+      // so it would not line up with the map above it.
+      className="@container flex flex-col min-h-0 w-full min-w-0 p-5"
       style={{
         backgroundColor: 'var(--panel)',
         border: '1px solid var(--line)',
@@ -32,91 +45,118 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
       }}
       aria-label="Resource watch"
     >
-      <div className="flex items-baseline gap-2.5 mb-3">
+      <div className="mb-4">
         <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
           Resource watch
         </h2>
-        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
-          Unresolvable deadlines first, then LSOD
-        </span>
+        <p
+          className="text-body-sm mt-1 max-w-[70ch]"
+          style={{ color: 'var(--text-3)' }}
+          title="Sort order: unresolvable deadlines first, then by Last Safe Order Date (LSOD)"
+        >
+          Both stations, most urgent first. Items whose order deadline can’t be worked out yet are
+          listed at the top. Select a row to open it in Logistics.
+        </p>
       </div>
 
       {resources.length === 0 ? (
         <EmptyState reason="No resources reported by either station yet." />
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
-          <table className="w-full min-w-[620px] border-collapse">
-            <thead>
-              <tr>
-                {['Resource', 'Station', 'Autonomy', 'Margin to ship', 'LSOD'].map((h, i) => (
-                  <th
-                    key={h}
-                    className="font-mono text-micro uppercase tracking-label font-normal pb-2 px-1"
-                    style={{
-                      color: 'var(--text-4)',
-                      textAlign: i >= 2 ? (i === 4 ? 'right' : 'left') : 'left',
-                      borderBottom: '1px solid var(--line)',
-                    }}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div
+            className={`hidden ${ROW_GRID} px-4 pb-2.5 mb-2 text-body-sm`}
+            style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line)' }}
+            aria-hidden
+          >
+            <span>Resource</span>
+            <span title={COLUMN_HINT.autonomy}>Lasts about</span>
+            <span title={COLUMN_HINT.margin}>Margin to next ship</span>
+            <span className="text-right" title={COLUMN_HINT.lsod}>Order within</span>
+          </div>
+
+          <ul className="flex flex-col gap-2" aria-label="Resources by urgency">
+            {resources.map((r) => (
+              <li
+                key={r.id}
+                onClick={() => navigate('/logistics?resource=' + r.id)}
+                className={`flex flex-col gap-3 ${ROW_GRID} px-4 py-3 cursor-pointer transition-colors hover:bg-[var(--panel-raised)]`}
+                style={{
+                  opacity: SYNC_OPACITY[r.syncState],
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--r-inner)',
+                }}
+                title={`Open ${r.name} (${STATION_LABEL[r.stationId]}) in Logistics`}
+              >
+                {/* Resource name + station + reorder flag */}
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5 min-w-0">
+                  <StatusDot status={RISK_DOT[r.risk]} size={10} />
+                  <span className="text-body font-medium break-words min-w-0" style={{ color: 'var(--text)' }}>
+                    {r.name}
+                  </span>
+                  <span
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption shrink-0"
+                    style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', color: 'var(--text-2)' }}
+                    title={STATION_CODE[r.stationId]}
                   >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {resources.map((r) => (
-                <tr
-                  key={r.id}
-                  onClick={() => navigate('/logistics?resource=' + r.id)}
-                  className="cursor-pointer hover:bg-[var(--panel-raised)]"
-                  style={{ opacity: SYNC_OPACITY[r.syncState] }}
-                >
-                  <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="flex items-center gap-2">
-                      <StatusDot status={RISK_DOT[r.risk]} size={6} />
-                      <span className="text-body" style={{ color: 'var(--text)' }}>{r.name}</span>
-                      {r.belowReorder && (
-                        <span
-                          className="font-mono text-micro uppercase tracking-[0.06em] px-1 py-0.5 rounded"
-                          style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.4)' }}
-                        >
-                          Reorder
-                        </span>
-                      )}
+                    {STATION_LABEL[r.stationId]}
+                  </span>
+                  {r.belowReorder && (
+                    <span
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium shrink-0"
+                      style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.4)' }}
+                      title="Stock is below the reorder level"
+                    >
+                      Reorder
                     </span>
-                  </td>
+                  )}
+                </div>
 
-                  <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="font-mono text-body-sm" style={{ color: 'var(--text-3)' }}>
-                      {STATION_CODE[r.stationId]}
-                    </span>
-                  </td>
-
-                  <td className="py-2 px-1" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="flex items-center gap-1.5">
-                      <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text-2)' }}>
-                        {Math.round(r.autonomyDays)} ±{Math.round(r.autonomyBandDays)} d
+                {/* Figures — a labelled wrap row when narrow, grid cells when wide */}
+                <div className="flex flex-wrap items-start gap-x-8 gap-y-3 @min-[40rem]:contents">
+                  <div className="min-w-0">
+                    <p className="text-caption mb-1 @min-[40rem]:hidden" style={{ color: 'var(--text-3)' }} title={COLUMN_HINT.autonomy}>
+                      Lasts about
+                    </p>
+                    <span className="flex items-center flex-wrap gap-x-2 gap-y-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
+                      <span>
+                        <span className="font-mono text-body tabular-nums" style={{ color: 'var(--text)' }}>
+                          {Math.round(r.autonomyDays)}
+                        </span>{' '}
+                        <span className="font-mono tabular-nums">±{Math.round(r.autonomyBandDays)}</span> days
                       </span>
                       <ProvenanceBadge measurement={r.stock} label={r.name + ' stock'} />
                     </span>
-                  </td>
+                  </div>
 
-                  <td className="py-2 px-1 w-32" style={{ borderBottom: '1px solid var(--line)' }}>
+                  <div className="min-w-[11rem] flex-1 @min-[40rem]:min-w-0">
+                    <p className="text-caption mb-1 @min-[40rem]:hidden" style={{ color: 'var(--text-3)' }} title={COLUMN_HINT.margin}>
+                      Margin to next ship
+                    </p>
                     <MarginBar resource={r} />
-                  </td>
+                  </div>
 
-                  <td
-                    className="py-2 px-1 text-right font-mono text-body-sm tabular-nums"
-                    style={{ borderBottom: '1px solid var(--line)', color: lsodColor(r.lsodDays) }}
-                  >
-                    {r.lsodDays === null
-                      ? r.lsodUnavailableReason === 'no-voyage' ? 'no voyage' : 'stale'
-                      : `${Math.round(r.lsodDays)} d`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <div className="min-w-0 @min-[40rem]:text-right">
+                    <p className="text-caption mb-1 @min-[40rem]:hidden" style={{ color: 'var(--text-3)' }} title={COLUMN_HINT.lsod}>
+                      Order within
+                    </p>
+                    <span className="text-body-sm" style={{ color: lsodColor(r.lsodDays) }}>
+                      {r.lsodDays === null ? (
+                        r.lsodUnavailableReason === 'no-voyage' ? (
+                          <span title="No voyage is scheduled, so there is no order deadline to compute">No ship scheduled</span>
+                        ) : (
+                          <span title="The station’s data is too old to compute a safe order date">Data too old</span>
+                        )
+                      ) : (
+                        <>
+                          <span className="font-mono text-body tabular-nums">{Math.round(r.lsodDays)}</span> days
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>
@@ -125,22 +165,30 @@ export function ResourceWatch({ resources }: { resources: DerivedResource[] }) {
 
 function MarginBar({ resource }: { resource: DerivedResource }) {
   if (!resource.marginDays) {
-    return <span className="font-mono text-caption" style={{ color: 'var(--text-4)' }}>—</span>;
+    return (
+      <span className="font-mono text-body-sm" style={{ color: 'var(--text-3)' }} title="No margin can be computed for this resource">
+        —
+      </span>
+    );
   }
   const { min } = resource.marginDays;
   const tone = min < 0 ? 'act' : min <= 21 ? 'watch' : 'ok';
   const scale = 120; // days; beyond this the bar is simply full
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex items-center gap-3">
       <ProgressBar
         value={Math.min(Math.abs(min), scale)}
         max={scale}
         tone={tone}
+        height={8}
         hatched={resource.syncState !== 'LIVE'}
         label={`Margin to ship for ${resource.name}`}
       />
-      <span className="font-mono text-caption tabular-nums shrink-0" style={{ color: 'var(--text-3)' }}>
-        {min < 0 ? '−' : '+'}{Math.abs(Math.round(min))}d
+      <span className="text-body-sm shrink-0 whitespace-nowrap" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>
+          {min < 0 ? '−' : '+'}{Math.abs(Math.round(min))}
+        </span>{' '}
+        days
       </span>
     </span>
   );

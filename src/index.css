@@ -4,6 +4,7 @@
 @import "shadcn/tailwind.css";
 @import "./styles/tokens.css";
 @import "./styles/motion.css";
+@import "./styles/chart.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -93,43 +94,54 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Type scale — the ONLY font sizes a component may use. Nothing below
-     11px. Pick by role, never by pixel: an ad-hoc `text-[9px]` is how the
-     app ended up with 26 sizes and unreadable 8px labels.
-       micro     11  uppercase mono micro-labels, chips, badges, axis ticks
-       caption   12  meta lines, timestamps, secondary mono values
-       body-sm   13  dense rows, table cells, pills
-       body      14  default body, inputs, button labels
-       title     16  card headings
-       headline  20  section / panel titles
-       display   28  page title (h1)
-       hero      32  single hero figure */
-  --text-micro: 0.6875rem;
-  --text-micro--line-height: 0.875rem;
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1rem;
-  --text-body-sm: 0.8125rem;
-  --text-body-sm--line-height: 1.125rem;
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.25rem;
-  --text-title: 1rem;
-  --text-title--line-height: 1.375rem;
+  /* Type scale — the ONLY font sizes a component may use. Pick by role,
+     never by pixel: an ad-hoc `text-[9px]` is how the app once ended up with
+     26 sizes and unreadable 8px labels.
+     Sized for the people who actually run this: operators and scientists
+     who are often past 40. Body copy is 15px, nothing is below 11.5px, and
+     line-heights are generous — but it stays a working dashboard, not a
+     poster: anyone who wants more uses the Text size control (NavBar "Aa"),
+     which scales this whole rem-based scale and all rem spacing in one go.
+       micro     11.5  uppercase mono micro-labels, chips, badges, axis ticks
+       caption   12.5  meta lines, timestamps, secondary mono values
+       body-sm   13.5  dense rows, table cells, pills, secondary buttons
+       body      15    default body, inputs, button labels, row titles
+       title     17    card headings
+       headline  20    section / panel titles
+       display   26    page title (h1)
+       hero      32    single hero figure */
+  --text-micro: 0.71875rem;
+  --text-micro--line-height: 1rem;
+  --text-caption: 0.78125rem;
+  --text-caption--line-height: 1.125rem;
+  --text-body-sm: 0.84375rem;
+  --text-body-sm--line-height: 1.25rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-title: 1.0625rem;
+  --text-title--line-height: 1.5rem;
   --text-headline: 1.25rem;
-  --text-headline--line-height: 1.625rem;
-  --text-display: 1.75rem;
-  --text-display--line-height: 2.125rem;
+  --text-headline--line-height: 1.75rem;
+  --text-display: 1.625rem;
+  --text-display--line-height: 2rem;
   --text-hero: 2rem;
   --text-hero--line-height: 2.375rem;
+
+  /* Base spacing unit behind every p-*, m-*, gap-*, w-*, h-* utility.
+     Tailwind's default is 0.25rem; 0.26rem adds a little air everywhere
+     without touching a single call site. The real decluttering lives in the
+     page layouts (fewer things per row, grouped sections), not in this. */
+  --spacing: 0.26rem;
 
   /* Uppercase mono labels: mono is already wide, so keep tracking light. */
   --tracking-label: 0.06em;
 
   /* Legacy aliases used by the 3D twin components. */
-  --text-label: 0.6875rem;
-  --text-label--line-height: 0.875rem;
+  --text-label: 0.71875rem;
+  --text-label--line-height: 1rem;
   --text-label--letter-spacing: 0.04em;
-  --text-readout: 0.8125rem;
-  --text-readout--line-height: 1.125rem;
+  --text-readout: 0.84375rem;
+  --text-readout--line-height: 1.25rem;
 
   --font-mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
 

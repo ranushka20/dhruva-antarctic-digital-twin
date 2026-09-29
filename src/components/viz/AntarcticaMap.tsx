@@ -11,14 +11,19 @@ import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'reac
 import type { SyncState } from '@/shared/contracts';
 import type { StationId } from '@/state/connectivity';
 import { formatDuration } from '@/lib/time';
+import { useTextSize, TEXT_SIZES } from '@/state/textSize';
 
 const VIEW_W = 1000;
 const VIEW_H = 620;
 const CX = 500;
 
 /** Station chip size in CSS px — it is counter-scaled, so this is what the reader sees. */
-const CHIP_W_PX = 240;
-const CHIP_H_PX = 54;
+// Chip box at the Standard text size. Scaled by the root font size below, so
+// the rem-sized text inside never outgrows its foreignObject at Large/Larger.
+const CHIP_W_PX = 250;
+const CHIP_H_PX = 62;
+
+const LINK_WORD: Record<string, string> = { LIVE: 'Live', LAGGING: 'Delayed', DARK: 'Offline' };
 
 /**
  * viewBox units per CSS pixel. The map is drawn at 1000 units but usually
@@ -117,6 +122,9 @@ export function AntarcticaMap({
   const hq = { x: 892, y: 84 };
   const svgRef = useRef<SVGSVGElement>(null);
   const u = useViewBoxUnit(svgRef);
+  // Root font scale from the Text size setting (1, 1.125, 1.25).
+  const textSize = useTextSize();
+  const textScale = parseFloat(TEXT_SIZES.find((t) => t.id === textSize)?.scale ?? '100') / 100;
 
   return (
     <svg
@@ -197,8 +205,8 @@ export function AntarcticaMap({
         const isPrimary = s.id === primaryId;
 
         // Chip placement: keep both chips inside the frame at any width.
-        const chipW = CHIP_W_PX * u;
-        const chipH = CHIP_H_PX * u;
+        const chipW = CHIP_W_PX * textScale * u;
+        const chipH = CHIP_H_PX * textScale * u;
         const chipLeft = Math.max(4, sx + 26 + chipW > VIEW_W ? sx - 26 - chipW : sx + 26);
         const chipTop = Math.min(VIEW_H - chipH - 4, Math.max(4, sy - chipH / 2));
 
@@ -228,11 +236,11 @@ export function AntarcticaMap({
             {/* Floating chip (FR-5.5) — dashed border when LAGGING or DARK */}
             <foreignObject x={chipLeft} y={chipTop} width={chipW} height={chipH}>
               <div
-                style={{ width: CHIP_W_PX, transform: `scale(${u})`, transformOrigin: '0 0' }}
+                style={{ width: CHIP_W_PX * textScale, transform: `scale(${u})`, transformOrigin: '0 0' }}
               >
               <div
                 onDoubleClick={() => onOpenTwin?.(s.id)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5"
+                className="flex items-center gap-2 px-3 py-2"
                 style={{
                   backgroundColor: 'var(--panel-alt)',
                   border: `1px ${s.syncState === 'LIVE' ? 'solid' : 'dashed'} var(--line-strong)`,
@@ -257,10 +265,11 @@ export function AntarcticaMap({
                       {s.code}
                     </span>
                   </span>
-                  <span className="block font-mono text-micro mt-0.5" style={{ color: 'var(--text-3)' }}>
-                    {s.syncState} · {formatDuration(s.ageSeconds)} ·{' '}
+                  <span className="flex items-center gap-2.5 mt-1 text-caption whitespace-nowrap" style={{ color: 'var(--text-3)' }}>
+                    <span title={`Link state: ${s.syncState}`}>{LINK_WORD[s.syncState] ?? s.syncState}</span>
+                    <span><span className="font-mono">{formatDuration(s.ageSeconds)}</span> ago</span>
                     <span style={{ color: s.warnings > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-                      {s.warnings} warning{s.warnings === 1 ? '' : 's'}
+                      <span className="font-mono">{s.warnings}</span> warning{s.warnings === 1 ? '' : 's'}
                     </span>
                   </span>
                 </button>

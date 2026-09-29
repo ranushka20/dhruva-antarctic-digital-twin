@@ -15,14 +15,14 @@
   --track:         #1C2422;   /* progress-bar trough */
 
   /* ---- hairlines ---- */
-  --line:          rgba(255,255,255,0.07);
-  --line-strong:   rgba(255,255,255,0.12);
+  --line:          rgba(255,255,255,0.085);
+  --line-strong:   rgba(255,255,255,0.15);
 
   /* ---- text ---- */
   --text:          #EEF2F0;   /* primary */
-  --text-2:        #B4C1BC;   /* secondary */
-  --text-3:        #8B9A94;   /* muted labels — minimum permitted, passes 4.5:1 */
-  --text-4:        #6E7C77;   /* axis ticks only */
+  --text-2:        #C3CFCA;   /* secondary */
+  --text-3:        #A3B1AB;   /* muted labels — ~7.5:1 on --panel */
+  --text-4:        #8D9B95;   /* faintest text — still passes 4.5:1 on --panel-raised; was #6E7C77 (4.1:1, failed) */
 
   /* ---- semantic status ---- */
   --act:           #F26B21;   /* ORANGE — action required */
@@ -34,6 +34,15 @@
   --unknown:       #8B9A94;   /* GREY — no data / not ours */
   --sim:           #9B84C4;   /* VIOLET — sandbox simulation only */
   --sim-soft:      #B79BE0;
+
+  /* ---- chart series : DATA ONLY ----
+     A measured quantity over time is not a status, so it must not borrow a
+     status colour (mint = healthy, orange = act). Series use these calm,
+     status-free hues; thresholds and ship windows keep their semantic ones. */
+  --chart-1:       #7FB0D6;   /* primary series — cool blue */
+  --chart-2:       #B39DDB;   /* comparison series — soft lilac (never used next to --sim) */
+  --chart-3:       #8FA7A0;   /* context / baseline series — grey-green */
+  --brand:         var(--chart-1);   /* legacy alias used by Environment/Assets */
 
   /* ---- ambient glow : DECORATION ONLY ---- */
   --glow:          #4FD1A5;

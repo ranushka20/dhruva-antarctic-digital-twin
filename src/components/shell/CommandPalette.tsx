@@ -139,7 +139,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       <div className="fixed inset-0 z-[60]" style={{ backgroundColor: 'rgba(10,13,12,0.68)' }} onClick={onClose} />
       <div className="fixed inset-0 z-[61] flex items-start justify-center pt-[12vh] px-4 pointer-events-none">
         <div
-          className="w-full max-w-xl pointer-events-auto overflow-hidden"
+          className="w-full max-w-2xl pointer-events-auto overflow-hidden"
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',
@@ -149,7 +149,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           role="dialog"
           aria-label="Search assets, actions, records"
         >
-          <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--line)' }}>
+          <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--line)' }}>
             <Search size={15} style={{ color: 'var(--text-3)' }} />
             <input
               ref={inputRef}
@@ -162,7 +162,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 if (e.key === 'Enter' && results[cursor]) { e.preventDefault(); go(results[cursor]); }
               }}
               placeholder="Search assets, actions, records"
-              className="flex-1 bg-transparent outline-none text-body"
+              className="flex-1 bg-transparent outline-none text-title"
               style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}
               aria-label="Search assets, actions, records"
             />
@@ -183,11 +183,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   type="button"
                   onMouseEnter={() => setCursor(i)}
                   onClick={() => go(hit)}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-left"
+                  className="w-full flex items-center gap-3 px-5 py-3 text-left"
                   style={{ backgroundColor: i === cursor ? 'var(--panel-raised)' : 'transparent' }}
                 >
                   <span
-                    className="font-mono text-micro tracking-label w-16 shrink-0"
+                    className="font-mono text-caption tracking-label w-24 shrink-0"
                     style={{ color: KIND_COLOR[hit.kind] }}
                   >
                     {hit.kind.toUpperCase()}
@@ -197,7 +197,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <span className="block text-body truncate" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
                       {hit.title}
                     </span>
-                    <span className="block font-mono text-micro truncate" style={{ color: 'var(--text-3)' }}>
+                    <span className="block font-mono text-caption truncate" style={{ color: 'var(--text-3)' }}>
                       {hit.sub}
                     </span>
                   </span>

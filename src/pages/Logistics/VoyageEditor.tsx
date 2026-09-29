@@ -32,7 +32,7 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
 
   const field = {
     backgroundColor: 'var(--panel-raised)',
-    border: '1px solid var(--line)',
+    border: '1px solid var(--line-strong)',
     borderRadius: 'var(--r-inner)',
     color: 'var(--text)',
   } as const;
@@ -52,15 +52,21 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={'Arrival windows — ' + voyage.name}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="font-mono text-micro tracking-[0.06em] px-1.5 py-0.5 rounded"
-          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-3)' }}>
-          {voyage.status.toUpperCase()}
+    <Modal open={open} onClose={onClose} title={'Arrival dates — ' + voyage.name}>
+      <div className="flex items-center gap-x-4 gap-y-2 flex-wrap mb-3.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+        <span
+          className="inline-flex items-center px-3 py-1 rounded-full text-body-sm font-medium capitalize"
+          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+        >
+          {voyage.status}
         </span>
-        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>
-          season {voyage.season} · {voyage.capacityKg.min.toLocaleString()}–
-          {voyage.capacityKg.max.toLocaleString()} kg
+        <span>
+          Season <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{voyage.season}</span>
+        </span>
+        <span>
+          Cargo <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>
+            {voyage.capacityKg.min.toLocaleString()}–{voyage.capacityKg.max.toLocaleString()}
+          </span> kg
         </span>
         <ProvenanceBadge
           measurement={synth(voyage.name, '', 'confirmed NCPOR voyage schedule')}
@@ -68,44 +74,50 @@ export function VoyageEditor({ open, voyage, onClose, onSaved }: Props) {
         />
       </div>
 
-      <p className="text-body-sm mb-3" style={{ color: 'var(--text-3)' }}>
-        Moving a window recomputes every Last Safe Order Date on the page immediately. That is not
-        a preview — the bars and ticks move with the save.
+      <p className="text-body-sm mb-4 max-w-[60ch]" style={{ color: 'var(--text-2)' }}>
+        Changing these dates immediately recalculates every order deadline on the page. This is not
+        a preview — the bars and deadlines update as soon as you apply.
       </p>
 
       {(['bharati', 'maitri'] as const).map((id) => (
-        <div key={id} className="mb-3">
-          <p className="font-mono text-micro uppercase tracking-label mb-1" style={{ color: 'var(--text-4)' }}>
-            {STATION_LABEL[id]} arrival
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={id === 'bharati' ? bhrFrom : mtrFrom}
-              onChange={(e) => (id === 'bharati' ? setBhrFrom : setMtrFrom)(e.target.value)}
-              className="flex-1 px-3 py-2 font-mono text-body outline-none"
-              style={field}
-              aria-label={STATION_LABEL[id] + ' earliest arrival'}
-            />
-            <input
-              type="date"
-              value={id === 'bharati' ? bhrTo : mtrTo}
-              onChange={(e) => (id === 'bharati' ? setBhrTo : setMtrTo)(e.target.value)}
-              className="flex-1 px-3 py-2 font-mono text-body outline-none"
-              style={field}
-              aria-label={STATION_LABEL[id] + ' latest arrival'}
-            />
+        <fieldset key={id} className="mb-4">
+          <legend className="text-body font-medium mb-2" style={{ color: 'var(--text)' }}>
+            {STATION_LABEL[id]} — ship arrival window
+          </legend>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Earliest</span>
+              <input
+                type="date"
+                value={id === 'bharati' ? bhrFrom : mtrFrom}
+                onChange={(e) => (id === 'bharati' ? setBhrFrom : setMtrFrom)(e.target.value)}
+                className="w-full px-3.5 min-h-10 font-mono text-body-sm outline-none"
+                style={field}
+                aria-label={STATION_LABEL[id] + ' earliest arrival'}
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Latest</span>
+              <input
+                type="date"
+                value={id === 'bharati' ? bhrTo : mtrTo}
+                onChange={(e) => (id === 'bharati' ? setBhrTo : setMtrTo)(e.target.value)}
+                className="w-full px-3.5 min-h-10 font-mono text-body-sm outline-none"
+                style={field}
+                aria-label={STATION_LABEL[id] + ' latest arrival'}
+              />
+            </label>
           </div>
-        </div>
+        </fieldset>
       ))}
 
       <button
         type="button"
         onClick={save}
-        className="w-full py-2.5 rounded-full text-body font-medium min-h-[44px]"
+        className="w-full mt-1 px-5 rounded-full text-body-sm font-semibold min-h-10"
         style={{ backgroundColor: 'var(--act)', color: 'var(--bg)' }}
       >
-        Apply and recompute
+        Apply and recalculate
       </button>
     </Modal>
   );

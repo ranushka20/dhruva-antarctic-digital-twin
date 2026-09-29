@@ -14,7 +14,7 @@ interface EmptyStateProps {
 export function EmptyState({ reason, icon, action, className = '' }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center py-8 px-4 rounded-xl ${className}`}
+      className={`flex flex-col items-center justify-center py-10 px-6 rounded-xl ${className}`}
       style={{
         backgroundColor: 'var(--panel-raised)',
         border: '1px dashed var(--line-strong)',
@@ -26,7 +26,7 @@ export function EmptyState({ reason, icon, action, className = '' }: EmptyStateP
         </div>
       )}
       <p
-        className="text-center text-body max-w-xs"
+        className="text-center text-body max-w-md"
         style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
       >
         {reason}

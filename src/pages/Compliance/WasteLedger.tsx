@@ -23,7 +23,7 @@ import type { WasteEvent } from '@/shared/contracts';
 import type { WasteBalanceRow } from '@/state/data';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE } from '@/state/stationScope';
+import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDateIST } from '@/lib/time';
 import { synth } from '@/lib/provenance';
 import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
@@ -72,37 +72,48 @@ export function WasteLedger({
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const failing = balance.filter((r) => !r.withinTolerance);
 
+  const th = 'pb-3 px-3 text-left text-body-sm font-medium whitespace-nowrap';
+  const thStyle = { color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' } as const;
+  const cell = { borderBottom: '1px solid var(--line)' } as const;
+
   return (
-    <div className="space-y-3.5">
+    <div className="flex flex-col gap-5">
       {/* ---- Balance check (FR-3.4) ---- */}
       {failing.length > 0 && (
         <div
-          className="flex items-start gap-2.5 px-4 py-3"
+          className="flex items-start gap-3 px-5 py-4"
           role="alert"
           style={{
             backgroundColor: 'rgba(242,107,33,0.10)',
             border: '1px solid var(--act)',
-            borderRadius: 'var(--r-inner)',
+            borderRadius: 'var(--r-card)',
           }}
         >
-          <AlertTriangle size={15} style={{ color: 'var(--act)' }} className="mt-0.5 shrink-0" aria-hidden />
-          <div className="flex-1">
-            <p className="text-body mb-1" style={{ color: 'var(--act-soft)' }}>
-              Mass balance fails on {failing.length} stream{failing.length === 1 ? '' : 's'}:{' '}
-              generated − shipped ≠ stored beyond the {toleranceKg} kg tolerance.
+          <AlertTriangle size={20} style={{ color: 'var(--act)' }} className="mt-0.5 shrink-0" aria-hidden />
+          <div className="flex-1 min-w-0">
+            <p className="text-body font-medium" style={{ color: 'var(--act-soft)' }}>
+              The waste books do not balance for{' '}
+              <span className="font-mono tabular-nums">{failing.length}</span> stream{failing.length === 1 ? '' : 's'}.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-body-sm mt-1 mb-3 max-w-[70ch]" style={{ color: 'var(--text-2)' }}>
+              Generated minus shipped out should equal what is stored, within{' '}
+              <span className="font-mono tabular-nums">{toleranceKg}</span> kg. Raise an action for each gap.
+            </p>
+            <div className="flex flex-wrap gap-2.5">
               {failing.map((row) => (
                 <button
                   key={row.stationId + row.stream}
                   type="button"
                   disabled={!canRaise}
                   onClick={() => onRaiseBalanceAction(row)}
-                  className="text-body-sm font-medium px-2.5 py-1.5 rounded min-h-[32px]"
+                  className="inline-flex items-center gap-2 text-body-sm font-medium px-4 min-h-9 rounded-full"
                   style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canRaise ? 1 : 0.4 }}
+                  title={`Raise a Tier 2 (T2) action · ${STATION_CODE[row.stationId]}`}
                 >
-                  Raise T2 · {STATION_CODE[row.stationId]} {STREAM_LABEL[row.stream]} ·{' '}
-                  {row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg
+                  Raise action — {STATION_LABEL[row.stationId]} {STREAM_LABEL[row.stream]}
+                  <span className="font-mono tabular-nums">
+                    {row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg
+                  </span>
                 </button>
               ))}
             </div>
@@ -112,35 +123,41 @@ export function WasteLedger({
 
       {/* ---- Chart / table ---- */}
       <section
-        className="p-4"
+        className="p-5"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-3 mb-5 flex-wrap">
           <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
-            Monthly generation by stream
+            Waste produced each month
           </h3>
           <ProvenanceBadge
             measurement={synth(0, 'kg', 'station waste record feed')}
             label="All waste masses"
           />
-          <div data-segmented className="relative isolate flex items-center gap-0.5 p-0.5 rounded-full ml-auto" style={{ border: '1px solid var(--line)' }}>
+          <div
+            data-segmented
+            role="group"
+            aria-label="Chart or table view"
+            className="relative isolate flex items-center gap-1 p-1 rounded-full ml-auto"
+            style={{ border: '1px solid var(--line-strong)' }}
+          >
             <button
               type="button"
               onClick={() => setView('chart')}
               aria-pressed={view === 'chart'}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-body-sm"
+              className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
               style={{ color: view === 'chart' ? 'var(--text)' : 'var(--text-3)' }}
             >
-              <BarChart3 size={11} /> Chart
+              <BarChart3 size={16} aria-hidden /> Chart
             </button>
             <button
               type="button"
               onClick={() => setView('table')}
               aria-pressed={view === 'table'}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-body-sm"
+              className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
               style={{ color: view === 'table' ? 'var(--text)' : 'var(--text-3)' }}
             >
-              <Table2 size={11} /> Table
+              <Table2 size={16} aria-hidden /> Table
             </button>
             <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--panel-raised)' }} />
           </div>
@@ -155,19 +172,19 @@ export function WasteLedger({
         )}
 
         {/* Legend — always present for >= 2 series */}
-        <ul className="flex flex-wrap gap-x-3.5 gap-y-1.5 mt-3">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2.5 mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
           {STREAM_ORDER.map((stream) => (
-            <li key={stream} className="flex items-center gap-1.5">
-              <span style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: STREAM_RAMP[stream] }} aria-hidden />
-              <span className="font-mono text-micro tracking-[0.04em]" style={{ color: 'var(--text-3)' }}>
+            <li key={stream} className="flex items-center gap-2">
+              <span className="shrink-0" style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: STREAM_RAMP[stream] }} aria-hidden />
+              <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>
                 {STREAM_LABEL[stream]}
               </span>
             </li>
           ))}
-          <li className="flex items-center gap-1.5">
-            <span style={{ width: 12, height: 2, backgroundColor: 'var(--text-2)' }} aria-hidden />
-            <span className="font-mono text-micro tracking-[0.04em]" style={{ color: 'var(--text-3)' }}>
-              Cumulative stored
+          <li className="flex items-center gap-2">
+            <span className="shrink-0" style={{ width: 16, height: 2, backgroundColor: 'var(--text-2)' }} aria-hidden />
+            <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>
+              Total stored at station
             </span>
           </li>
         </ul>
@@ -175,17 +192,21 @@ export function WasteLedger({
 
       {/* ---- Mass balance table (FR-3.1) ---- */}
       <section
-        className="p-4"
+        className="p-5"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <h3 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Mass balance</h3>
+        <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
+          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Mass balance</h3>
+          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+            Generated − shipped out should equal stored.
+          </p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] border-collapse">
+          <table className="w-full min-w-[44rem] border-collapse">
             <thead>
               <tr>
-                {['Stream', 'Stn', 'Generated', 'Shipped out', 'Stored', 'Check'].map((h) => (
-                  <th key={h} className="pb-2 px-1.5 text-left font-mono text-micro uppercase tracking-label font-normal"
-                    style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>
+                {['Waste stream', 'Station', 'Generated', 'Shipped out', 'Stored', 'Balance check'].map((h) => (
+                  <th key={h} className={th} style={thStyle}>
                     {h}
                   </th>
                 ))}
@@ -194,28 +215,41 @@ export function WasteLedger({
             <tbody>
               {balance.map((row) => (
                 <tr key={row.stationId + row.stream}>
-                  <td className="py-2 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="flex items-center gap-2">
-                      <span style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: STREAM_RAMP[row.stream] }} aria-hidden />
-                      <span className="text-body" style={{ color: 'var(--text)' }}>{STREAM_LABEL[row.stream]}</span>
+                  <td className="py-3 px-3" style={cell}>
+                    <span className="flex items-center gap-2.5">
+                      <span className="shrink-0" style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: STREAM_RAMP[row.stream] }} aria-hidden />
+                      <span className="text-body font-medium" style={{ color: 'var(--text)' }}>{STREAM_LABEL[row.stream]}</span>
                     </span>
                   </td>
-                  <td className="py-2 px-1.5 font-mono text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
-                    {STATION_CODE[row.stationId]}
+                  <td className="py-3 px-3 text-body" style={{ ...cell, color: 'var(--text-2)' }} title={STATION_CODE[row.stationId]}>
+                    {STATION_LABEL[row.stationId]}
                   </td>
-                  <td className="py-2 px-1.5 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
+                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
                     {row.generatedKg.toLocaleString()} kg
                   </td>
-                  <td className="py-2 px-1.5 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
+                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
                     {row.shippedKg.toLocaleString()} kg
                   </td>
-                  <td className="py-2 px-1.5 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
+                  <td className="py-3 px-3 font-mono text-body tabular-nums whitespace-nowrap" style={{ ...cell, color: 'var(--text-2)' }}>
                     {row.storedKg.toLocaleString()} kg
                   </td>
-                  <td className="py-2 px-1.5 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span style={{ color: row.withinTolerance ? 'var(--ok-soft)' : 'var(--act-soft)' }}>
-                      {row.withinTolerance ? 'balanced' : `${row.discrepancyKg > 0 ? '+' : ''}${row.discrepancyKg} kg`}
-                    </span>
+                  <td className="py-3 px-3" style={cell}>
+                    {row.withinTolerance ? (
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-body-sm font-medium"
+                        style={{ border: '1px solid var(--ok)', color: 'var(--ok-soft)' }}
+                      >
+                        Balanced
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-body-sm font-medium whitespace-nowrap"
+                        style={{ border: '1px solid var(--act)', color: 'var(--act-soft)' }}
+                      >
+                        Off by
+                        <span className="font-mono tabular-nums">{row.discrepancyKg > 0 ? '+' : ''}{row.discrepancyKg} kg</span>
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -226,17 +260,21 @@ export function WasteLedger({
 
       {/* ---- Event rows (FR-3.5, FR-3.6) ---- */}
       <section
-        className="p-4"
+        className="p-5"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <h3 className="text-title font-semibold mb-3" style={{ color: 'var(--text)' }}>Waste events</h3>
-        <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
-          <table className="w-full min-w-[760px] border-collapse">
-            <thead className="sticky top-0" style={{ backgroundColor: 'var(--panel)' }}>
+        <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap mb-4">
+          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Waste events</h3>
+          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+            Most recent first. Shipments link to their voyage manifest.
+          </p>
+        </div>
+        <div className="overflow-x-auto max-h-[32rem] overflow-y-auto">
+          <table className="w-full min-w-[54rem] border-collapse">
+            <thead className="sticky top-0 z-[1]" style={{ backgroundColor: 'var(--panel)' }}>
               <tr>
-                {['Date', 'Stream', 'Dir', 'Mass', 'Container', 'Handler', 'Destination', 'Class'].map((h) => (
-                  <th key={h} className="pb-2 px-1.5 text-left font-mono text-micro uppercase tracking-label font-normal"
-                    style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>
+                {['Date', 'Waste stream', 'Movement', 'Mass', 'Handled by', 'Destination', 'Sync'].map((h) => (
+                  <th key={h} className={th} style={thStyle}>
                     {h}
                   </th>
                 ))}
@@ -245,38 +283,39 @@ export function WasteLedger({
             <tbody>
               {events.slice(0, 60).map((e) => (
                 <tr key={e.id}>
-                  <td className="py-1.5 px-1.5 font-mono text-caption" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                  <td className="py-3 px-3 font-mono text-body-sm tabular-nums whitespace-nowrap align-top" style={{ ...cell, color: 'var(--text-2)' }}>
                     {formatDateIST(e.at)}
                   </td>
-                  <td className="py-1.5 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="flex items-center gap-1.5">
-                      <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: STREAM_RAMP[e.stream] }} aria-hidden />
-                      <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>{STREAM_LABEL[e.stream]}</span>
+                  <td className="py-3 px-3 align-top" style={cell}>
+                    <span className="flex items-center gap-2">
+                      <span className="shrink-0" style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: STREAM_RAMP[e.stream] }} aria-hidden />
+                      <span className="text-body" style={{ color: 'var(--text)' }}>{STREAM_LABEL[e.stream]}</span>
                     </span>
                   </td>
-                  <td className="py-1.5 px-1.5 font-mono text-caption" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-4)' }}>
-                    {e.direction === 'generated' ? 'GEN' : 'SHIP'}
+                  <td className="py-3 px-3 text-body-sm align-top whitespace-nowrap" style={{ ...cell, color: 'var(--text-3)' }}
+                    title={e.direction === 'generated' ? 'GEN' : 'SHIP'}>
+                    {e.direction === 'generated' ? 'Generated' : 'Shipped out'}
                   </td>
-                  <td className="py-1.5 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
-                    <span className="flex items-center gap-1.5">
-                      <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
+                  <td className="py-3 px-3 align-top" style={cell}>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-body tabular-nums whitespace-nowrap" style={{ color: 'var(--text)' }}>
                         {typeof e.massKg.value === 'number' ? e.massKg.value.toLocaleString() : '—'} kg
                       </span>
                       <ProvenanceBadge measurement={e.massKg} label={STREAM_LABEL[e.stream] + ' mass'} />
                     </span>
                   </td>
-                  <td className="py-1.5 px-1.5 font-mono text-caption" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-4)' }}>
-                    {e.containerId ?? '—'}
+                  <td className="py-3 px-3 align-top" style={cell}>
+                    <span className="block text-body-sm" style={{ color: 'var(--text-2)' }}>{e.handler}</span>
+                    <span className="block text-caption mt-0.5" style={{ color: 'var(--text-3)' }}>
+                      Container <span className="font-mono">{e.containerId ?? '—'}</span>
+                    </span>
                   </td>
-                  <td className="py-1.5 px-1.5 text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
-                    {e.handler}
-                  </td>
-                  <td className="py-1.5 px-1.5 text-body-sm" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+                  <td className="py-3 px-3 text-body-sm align-top" style={{ ...cell, color: 'var(--text-3)' }}>
                     {e.voyageId ? (
                       <button
                         type="button"
                         onClick={() => onOpenVoyage(e.voyageId!)}
-                        className="underline underline-offset-2"
+                        className="inline-flex items-center text-left underline underline-offset-4 min-h-9"
                         style={{ color: 'var(--text-2)' }}
                       >
                         {e.destination ?? e.voyageId}
@@ -285,11 +324,12 @@ export function WasteLedger({
                       e.destination ?? '—'
                     )}
                   </td>
-                  <td className="py-1.5 px-1.5" style={{ borderBottom: '1px solid var(--line)' }}>
+                  <td className="py-3 px-3 align-top" style={cell}>
                     {e.pendingSync && (
-                      <span className="font-mono text-micro uppercase px-1.5 py-0.5 rounded"
-                        style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        Pending sync
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-body-sm whitespace-nowrap"
+                        style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}
+                        title="Recorded at the station; waiting on the link to reach HQ">
+                        Waiting to sync
                       </span>
                     )}
                   </td>
@@ -308,12 +348,12 @@ export function WasteLedger({
 // ---------------------------------------------------------------------------
 
 const W = 760;
-const BAR_H = 180;
-const LINE_H = 84;
-const GAP = 26;
-const PAD_L = 52;
+const BAR_H = 200;
+const LINE_H = 92;
+const GAP = 30;
+const PAD_L = 64;
 const PAD_R = 14;
-const AXIS_H = 20;
+const AXIS_H = 24;
 
 function WasteChart({ series }: { series: Props['series'] }) {
   const [hover, setHover] = useState<number | null>(null);
@@ -340,7 +380,7 @@ function WasteChart({ series }: { series: Props['series'] }) {
 
   return (
     <div className="relative overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${totalH}`} className="w-full min-w-[560px]" style={{ height: totalH }}
+      <svg viewBox={`0 0 ${W} ${totalH}`} className="w-full min-w-[40rem]" style={{ height: totalH }}
         role="img" aria-label="Monthly waste generation by stream, with cumulative stored mass below">
 
         {/* y grid — generation panel */}
@@ -349,12 +389,12 @@ function WasteChart({ series }: { series: Props['series'] }) {
             <line x1={PAD_L} y1={BAR_H - f * (BAR_H - 10)} x2={W - PAD_R} y2={BAR_H - f * (BAR_H - 10)}
               stroke="var(--line)" strokeWidth={1} />
             <text x={PAD_L - 6} y={BAR_H - f * (BAR_H - 10) + 3}
-              textAnchor="end" fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">
+              textAnchor="end" fontFamily="var(--font-mono)" fontSize={13} fill="var(--text-4)">
               {Math.round((maxMonth * f) / 100) * 100}
             </text>
           </g>
         ))}
-        <text x={4} y={12} fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">kg / month</text>
+        <text x={4} y={13} fontFamily="var(--font-body)" fontSize={13} fill="var(--text-3)">kg per month</text>
 
         {/* Stacked bars — 2px surface gap between segments */}
         {series.map((m, i) => {
@@ -393,7 +433,7 @@ function WasteChart({ series }: { series: Props['series'] }) {
         })}
 
         {/* Cumulative stored mass — its OWN panel, its own scale, same x axis */}
-        <text x={4} y={BAR_H + GAP + 10} fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-4)">
+        <text x={4} y={BAR_H + GAP + 11} fontFamily="var(--font-body)" fontSize={13} fill="var(--text-3)">
           kg stored
         </text>
         <line x1={PAD_L} y1={BAR_H + GAP + LINE_H} x2={W - PAD_R} y2={BAR_H + GAP + LINE_H}
@@ -413,7 +453,7 @@ function WasteChart({ series }: { series: Props['series'] }) {
             x={linePoints[linePoints.length - 1][0] - 4}
             y={linePoints[linePoints.length - 1][1] - 8}
             textAnchor="end"
-            fontFamily="var(--font-mono)" fontSize={11} fill="var(--text-2)"
+            fontFamily="var(--font-mono)" fontSize={13} fill="var(--text-2)"
           >
             {series[series.length - 1].cumulativeStoredKg.toLocaleString()} kg
           </text>
@@ -424,9 +464,9 @@ function WasteChart({ series }: { series: Props['series'] }) {
           <text
             key={m.month}
             x={PAD_L + slot * i + slot / 2}
-            y={totalH - 5}
+            y={totalH - 6}
             textAnchor="middle"
-            fontFamily="var(--font-mono)" fontSize={11}
+            fontFamily="var(--font-mono)" fontSize={13}
             fill={hover === i ? 'var(--text-2)' : 'var(--text-4)'}
           >
             {labelFor(m.month)}
@@ -436,7 +476,7 @@ function WasteChart({ series }: { series: Props['series'] }) {
 
       {hover !== null && series[hover] && (
         <div
-          className="absolute top-2 right-2 p-2.5 pointer-events-none w-52"
+          className="absolute top-2 right-2 p-4 pointer-events-none w-64"
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',
@@ -444,27 +484,27 @@ function WasteChart({ series }: { series: Props['series'] }) {
             boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
           }}
         >
-          <p className="font-mono text-caption mb-1.5" style={{ color: 'var(--text-2)' }}>
+          <p className="font-mono text-body-sm font-medium mb-2" style={{ color: 'var(--text)' }}>
             {series[hover].month}
           </p>
           {STREAM_ORDER.map((stream) => {
             const v = series[hover].byStream[stream] ?? 0;
             if (v <= 0) return null;
             return (
-              <div key={stream} className="flex items-center gap-1.5 py-0.5">
-                <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: STREAM_RAMP[stream] }} />
-                <span className="font-mono text-micro flex-1" style={{ color: 'var(--text-3)' }}>
+              <div key={stream} className="flex items-center gap-2 py-1">
+                <span className="shrink-0" style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: STREAM_RAMP[stream] }} />
+                <span className="text-body-sm flex-1" style={{ color: 'var(--text-2)' }}>
                   {STREAM_LABEL[stream]}
                 </span>
-                <span className="font-mono text-micro tabular-nums" style={{ color: 'var(--text-2)' }}>
+                <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text)' }}>
                   {v.toLocaleString()}
                 </span>
               </div>
             );
           })}
-          <div className="flex items-center gap-1.5 pt-1.5 mt-1" style={{ borderTop: '1px solid var(--line)' }}>
-            <span className="font-mono text-micro flex-1" style={{ color: 'var(--text-3)' }}>Stored</span>
-            <span className="font-mono text-micro tabular-nums" style={{ color: 'var(--text-2)' }}>
+          <div className="flex items-center gap-2 pt-2 mt-1.5" style={{ borderTop: '1px solid var(--line)' }}>
+            <span className="text-body-sm flex-1" style={{ color: 'var(--text-2)' }}>Total stored (kg)</span>
+            <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text)' }}>
               {series[hover].cumulativeStoredKg.toLocaleString()}
             </span>
           </div>
@@ -478,35 +518,35 @@ function WasteChart({ series }: { series: Props['series'] }) {
 function WasteTable({ series }: { series: Props['series'] }) {
   const rows = useMemo(() => series.slice().reverse(), [series]);
   return (
-    <div className="overflow-x-auto max-h-[280px] overflow-y-auto">
-      <table className="w-full min-w-[640px] border-collapse">
-        <thead className="sticky top-0" style={{ backgroundColor: 'var(--panel)' }}>
+    <div className="overflow-x-auto max-h-[24rem] overflow-y-auto">
+      <table className="w-full min-w-[48rem] border-collapse">
+        <thead className="sticky top-0 z-[1]" style={{ backgroundColor: 'var(--panel)' }}>
           <tr>
-            <th className="pb-2 px-1.5 text-left font-mono text-micro uppercase tracking-label font-normal"
-              style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>Month</th>
+            <th className="pb-3 px-3 text-left text-body-sm font-medium"
+              style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>Month</th>
             {STREAM_ORDER.map((s) => (
-              <th key={s} className="pb-2 px-1.5 text-right font-mono text-micro uppercase tracking-label font-normal"
-                style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>
+              <th key={s} className="pb-3 px-3 text-right text-body-sm font-medium whitespace-nowrap"
+                style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>
                 {STREAM_LABEL[s]}
               </th>
             ))}
-            <th className="pb-2 px-1.5 text-right font-mono text-micro uppercase tracking-label font-normal"
-              style={{ color: 'var(--text-4)', borderBottom: '1px solid var(--line-strong)' }}>Stored</th>
+            <th className="pb-3 px-3 text-right text-body-sm font-medium whitespace-nowrap"
+              style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--line-strong)' }}>Stored (kg)</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((m) => (
             <tr key={m.month}>
-              <td className="py-1.5 px-1.5 font-mono text-caption" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-3)' }}>
+              <td className="py-3 px-3 font-mono text-body-sm tabular-nums" style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
                 {m.month}
               </td>
               {STREAM_ORDER.map((s) => (
-                <td key={s} className="py-1.5 px-1.5 text-right font-mono text-caption tabular-nums"
+                <td key={s} className="py-3 px-3 text-right font-mono text-body-sm tabular-nums"
                   style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-2)' }}>
                   {(m.byStream[s] ?? 0).toLocaleString()}
                 </td>
               ))}
-              <td className="py-1.5 px-1.5 text-right font-mono text-caption tabular-nums"
+              <td className="py-3 px-3 text-right font-mono text-body-sm tabular-nums"
                 style={{ borderBottom: '1px solid var(--line)', color: 'var(--text)' }}>
                 {m.cumulativeStoredKg.toLocaleString()}
               </td>

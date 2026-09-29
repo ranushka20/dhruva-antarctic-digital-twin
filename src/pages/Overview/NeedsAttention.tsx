@@ -8,7 +8,7 @@ import type { DerivedAction } from '@/state/data';
 import { TierChip } from '@/components/shared/TierChip';
 import { StatusDot } from '@/components/shared/StatusDot';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { STATION_CODE } from '@/state/stationScope';
+import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDuration } from '@/lib/time';
 import { useActionTransitions } from '@/shared/contracts';
 import { currentActor } from '@/state/auth';
@@ -28,6 +28,16 @@ const STATE_DOT: Record<string, 'ok' | 'watch' | 'warning' | 'unknown'> = {
   DEFERRED: 'unknown',
 };
 
+/** Plain words for the lifecycle state; the raw state stays in the tooltip. */
+const STATE_WORD: Record<string, string> = {
+  RAISED: 'New',
+  ACKNOWLEDGED: 'Acknowledged',
+  ASSIGNED: 'Assigned',
+  IN_PROGRESS: 'In progress',
+  RESOLVED: 'Resolved',
+  DEFERRED: 'Deferred',
+};
+
 export function NeedsAttention({ actions, deferred, resolved }: Props) {
   const top = actions.slice(0, 3);
 
@@ -35,7 +45,7 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
     <section
       // w-full + min-w-0 so the card fills its flex track rather than shrinking
       // to the width of its widest row.
-      className="flex flex-col min-h-0 w-full min-w-0 p-4"
+      className="flex flex-col min-h-0 w-full min-w-0 p-5"
       style={{
         backgroundColor: 'var(--panel)',
         border: '1px solid var(--line)',
@@ -43,20 +53,20 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
       }}
       aria-label="Needs attention"
     >
-      <div className="flex items-center mb-3">
+      <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
         <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
           Needs attention
         </h2>
         <Link
           to="/actions"
-          className="ml-auto text-body-sm font-medium"
-          style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
+          className="ml-auto inline-flex items-center min-h-9 px-4 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+          style={{ color: 'var(--text-2)', border: '1px solid var(--line-strong)', fontFamily: 'var(--font-body)' }}
         >
           View all →
         </Link>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
         {top.length === 0 ? (
           <EmptyState reason="No open actions on either station. Anything raised by the rule engine or the station console appears here first." />
         ) : (
@@ -65,15 +75,19 @@ export function NeedsAttention({ actions, deferred, resolved }: Props) {
       </div>
 
       <div
-        className="flex items-center gap-4 mt-3 pt-2.5"
+        className="flex items-center flex-wrap gap-x-5 gap-y-2 mt-4 pt-3.5 text-body-sm"
         style={{ borderTop: '1px solid var(--line)', color: 'var(--text-3)' }}
       >
-        <span className="font-mono text-micro uppercase tracking-[0.06em]">{deferred} deferred</span>
-        <span className="font-mono text-micro uppercase tracking-[0.06em]">{resolved} resolved</span>
+        <span>
+          <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{deferred}</span> deferred
+        </span>
+        <span>
+          <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{resolved}</span> resolved
+        </span>
         <Link
           to="/compliance?tab=audit"
-          className="ml-auto text-body-sm font-medium"
-          style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}
+          className="ml-auto inline-flex items-center min-h-9 px-2 font-medium hover:underline"
+          style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
         >
           Full log →
         </Link>
@@ -105,39 +119,47 @@ function AttentionCard({ action }: { action: DerivedAction }) {
 
   return (
     <article
-      className="p-3"
+      className="p-4"
       style={{
         backgroundColor: 'var(--panel-raised)',
         borderRadius: 'var(--r-inner)',
         border: `1px solid ${urgentUnacked ? 'rgba(242,107,33,0.30)' : 'var(--line)'}`,
       }}
     >
-      <div className="flex items-center gap-2 mb-1.5">
-        <TierChip tier={action.tier} />
-        <span className="font-mono text-micro tracking-[0.06em]" style={{ color: 'var(--text-3)' }}>
-          {STATION_CODE[action.stationId]} · {formatDuration(action.ageSeconds)}
+      <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-2.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+        <span title="Priority tier — T0 is the most urgent, T3 the least">
+          <TierChip tier={action.tier} />
         </span>
-        <span className="ml-auto flex items-center gap-1.5">
-          <StatusDot status={STATE_DOT[action.state] ?? 'unknown'} size={6} />
-          <span className="font-mono text-micro" style={{ color: 'var(--text-3)' }}>
-            {action.state}
-          </span>
+        <span title={STATION_CODE[action.stationId]}>{STATION_LABEL[action.stationId]}</span>
+        <span>
+          <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>
+            {formatDuration(action.ageSeconds)}
+          </span>{' '}
+          ago
+        </span>
+        <span className="ml-auto flex items-center gap-2" title={`State: ${action.state}`}>
+          <StatusDot status={STATE_DOT[action.state] ?? 'unknown'} size={9} />
+          <span style={{ color: 'var(--text-2)' }}>{STATE_WORD[action.state] ?? action.state}</span>
         </span>
       </div>
 
-      <Link to={'/actions/' + action.id} className="block">
-        <p className="text-body font-medium mb-1" style={{ color: 'var(--text)' }}>
+      <Link to={'/actions/' + action.id} className="block hover:underline underline-offset-4">
+        <p className="text-body font-medium leading-snug mb-1" style={{ color: 'var(--text)' }}>
           {action.title}
         </p>
       </Link>
 
-      <p className="text-body-sm mb-2" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
         {action.consequenceLabel ?? action.reason}
-        {action.assignee ? ' · ' + action.assignee.name : ''}
       </p>
+      {action.assignee && (
+        <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
+          Assigned to <span style={{ color: 'var(--text-2)' }}>{action.assignee.name}</span>
+        </p>
+      )}
 
       {error && (
-        <p className="font-mono text-micro mb-1.5" style={{ color: 'var(--act-soft)' }}>{error}</p>
+        <p className="text-body-sm mt-2" role="alert" style={{ color: 'var(--act-soft)' }}>{error}</p>
       )}
 
       <button
@@ -145,7 +167,7 @@ function AttentionCard({ action }: { action: DerivedAction }) {
         onClick={onAck}
         disabled={acked || busy}
         title={acked ? 'Already acknowledged — the timeline records who and when' : 'Acknowledge this action'}
-        className="px-3 py-1.5 rounded-full text-body-sm font-medium min-h-[32px]"
+        className="mt-3.5 px-4 rounded-full text-body-sm font-semibold min-h-9"
         style={{
           backgroundColor: acked ? 'transparent' : 'var(--act)',
           color: acked ? 'var(--text-3)' : 'var(--bg)',

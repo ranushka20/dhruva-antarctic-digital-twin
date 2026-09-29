@@ -35,7 +35,7 @@ export function Popover({ trigger, children, className = '' }: PopoverProps) {
       {mounted && (
         <div
           data-state={state}
-          className="m-pop absolute z-50 mt-1 rounded-lg p-3 min-w-48 shadow-lg"
+          className="m-pop absolute z-50 mt-1.5 rounded-xl p-4 min-w-64 shadow-lg"
           style={{
             backgroundColor: 'var(--panel-alt)',
             border: '1px solid var(--line-strong)',

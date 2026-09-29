@@ -124,19 +124,25 @@ export default function LogisticsPage() {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Header: title, scope, season. Nothing else. ---- */}
-      <div className="flex items-center gap-3 flex-wrap px-6 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
+      <div className="flex items-center gap-x-5 gap-y-3 flex-wrap px-6 py-4 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
         <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Logistics &amp; Resupply
         </h1>
 
-        <div data-segmented className="relative isolate flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div
+          data-segmented
+          role="group"
+          aria-label="Which station to show"
+          className="relative isolate flex items-center gap-1 p-1 rounded-full"
+          style={{ border: '1px solid var(--line-strong)' }}
+        >
           {SCOPES.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => setScope(s.id)}
               aria-pressed={scope === s.id}
-              className="px-3 py-1.5 rounded-full text-body-sm"
+              className="px-4 min-h-9 rounded-full text-body-sm font-medium"
               style={{
                 color: scope === s.id ? 'var(--bg)' : 'var(--text-3)',
               }}
@@ -147,17 +153,17 @@ export default function LogisticsPage() {
           <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
-        <label className="flex items-center gap-2 ml-auto">
-          <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
+        <label className="flex items-center gap-3 ml-auto">
+          <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
             Season
           </span>
           <select
             value={activeSeason ?? ''}
             onChange={(e) => setSeason(e.target.value)}
-            className="px-2.5 py-1.5 font-mono text-body-sm outline-none"
+            className="px-4 min-h-9 font-mono text-body-sm outline-none"
             style={{
-              backgroundColor: 'var(--panel)', border: '1px solid var(--line)',
-              borderRadius: 'var(--r-pill)', color: 'var(--text-2)',
+              backgroundColor: 'var(--panel)', border: '1px solid var(--line-strong)',
+              borderRadius: 'var(--r-pill)', color: 'var(--text)',
             }}
           >
             {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -165,63 +171,58 @@ export default function LogisticsPage() {
         </label>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-5">
-        <div className="flex flex-col gap-3.5 max-w-[1280px] mx-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <div className="flex flex-col gap-5 max-w-[100rem] mx-auto">
 
-          {/* ---- The answer, in three tiles ---- */}
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* ---- The answer, in three cards ---- */}
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             <Tile
-              label="At risk"
+              label="Resources at risk"
               value={String(atRisk)}
               unit={`of ${resources.length} tracked`}
               tone={atRisk > 0 ? 'act' : 'ok'}
               note={
                 atRisk > 0
-                  ? 'Worst-case cover falls short of the ship, or the order-by date is close.'
-                  : 'Every resource outlasts the next resupply, band included.'
+                  ? 'Even in the worst case, these will not last until the ship arrives — or they must be ordered soon.'
+                  : 'Every resource lasts beyond the next resupply, even in the worst case.'
               }
-              footer={
-                [
-                  orderSoon > 0 ? `${orderSoon} within ${warningDays} days of its order-by date` : null,
-                  unreachable > 0 ? `${unreachable} cannot be dated — station link stale` : null,
-                ].filter(Boolean).join(' · ') || undefined
-              }
+              footer={[
+                orderSoon > 0 ? `${orderSoon} must be ordered within ${warningDays} days` : null,
+                unreachable > 0 ? `${unreachable} cannot be dated — the station has not reported recently` : null,
+              ].filter((f): f is string => Boolean(f))}
             />
 
             <Tile
-              label="Next resupply"
+              label="Next resupply ship"
               value={voyage ? String(departsInDays) : '—'}
-              unit={voyage ? 'days to departure' : 'no voyage'}
+              unit={voyage ? 'days until departure' : 'no voyage planned'}
               tone="default"
-              icon={<Ship size={13} />}
-              note={
-                voyage
-                  ? `${voyage.name} · departs ${formatDateIST(voyage.departureWindow.from)}`
-                  : 'Autonomy still computes; there is no date to be late for.'
-              }
+              icon={<Ship size={16} />}
+              note={voyage ? voyage.name : 'Days of supply still compute; there is just no ship date to measure against.'}
+              meta={voyage ? `Departs ${formatDateIST(voyage.departureWindow.from)}` : undefined}
               action={
                 voyage && canEditVoyage
-                  ? { label: 'Edit windows', icon: <Pencil size={10} />, onClick: () => setEditingVoyage(true) }
+                  ? { label: 'Edit arrival dates', icon: <Pencil size={14} />, onClick: () => setEditingVoyage(true) }
                   : undefined
               }
             />
 
             <Tile
-              label="Manifest"
+              label="Cargo manifest"
               value={totals.totalMassKg.toLocaleString()}
-              unit={`of ${capacityKg.toLocaleString()} kg`}
+              unit={`kg of ${capacityKg.toLocaleString()} kg`}
               tone={totals.deferredAtRisk > 0 ? 'act' : 'ok'}
-              note={`${totals.carried.length} items carried, ${totals.deferred.length} deferred.`}
+              note={`${totals.carried.length} items loaded, ${totals.deferred.length} held for a later ship.`}
               footer={
                 totals.deferredAtRisk > 0
-                  ? `${totals.deferredAtRisk} deferred item${totals.deferredAtRisk === 1 ? '' : 's'} run out before the following voyage.`
+                  ? [`${totals.deferredAtRisk} held item${totals.deferredAtRisk === 1 ? '' : 's'} will run out before the following ship.`]
                   : undefined
               }
               action={
                 voyage
                   ? {
-                      label: 'Open builder',
-                      icon: <ArrowRight size={10} />,
+                      label: 'Open manifest builder',
+                      icon: <ArrowRight size={14} />,
                       onClick: () => navigate('/logistics/manifest/' + voyage.id),
                     }
                   : undefined
@@ -257,14 +258,15 @@ export default function LogisticsPage() {
 interface TileAction { label: string; icon: React.ReactNode; onClick: () => void }
 
 function Tile({
-  label, value, unit, tone, note, footer, icon, action,
+  label, value, unit, tone, note, meta, footer, icon, action,
 }: {
   label: string;
   value: string;
   unit: string;
   tone: 'default' | 'ok' | 'act';
   note: string;
-  footer?: string;
+  meta?: string;
+  footer?: string[];
   icon?: React.ReactNode;
   action?: TileAction;
 }) {
@@ -272,41 +274,51 @@ function Tile({
 
   return (
     <section
-      className="flex flex-col p-4"
+      className="flex flex-col p-5"
       style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
     >
-      <div className="flex items-center gap-1.5 mb-2">
-        {icon && <span style={{ color: 'var(--text-4)' }} aria-hidden>{icon}</span>}
-        <span className="font-mono text-micro uppercase tracking-label" style={{ color: 'var(--text-4)' }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        {icon && <span style={{ color: 'var(--text-3)' }} aria-hidden>{icon}</span>}
+        <h2 className="text-title font-medium" style={{ color: 'var(--text)' }}>
           {label}
-        </span>
+        </h2>
       </div>
 
-      <div className="flex items-baseline gap-1.5 mb-1.5">
+      <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap mb-3">
         <span
-          className="text-display font-semibold leading-none tabular-nums"
-          style={{ fontFamily: 'var(--font-display)', color: valueColor }}
+          className="font-mono text-display font-semibold leading-none tabular-nums"
+          style={{ color: valueColor }}
         >
           {value}
         </span>
-        <span className="font-mono text-caption" style={{ color: 'var(--text-3)' }}>{unit}</span>
+        <span className="text-body" style={{ color: 'var(--text-3)' }}>{unit}</span>
       </div>
 
-      <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>{note}</p>
+      <p className="text-body-sm max-w-[60ch]" style={{ color: 'var(--text-2)' }}>{note}</p>
 
-      {footer && (
-        <p className="text-body-sm mt-1" style={{ color: 'var(--act-soft)' }}>{footer}</p>
+      {meta && (
+        <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>{meta}</p>
+      )}
+
+      {footer && footer.length > 0 && (
+        <ul className="flex flex-col gap-1 mt-2.5">
+          {footer.map((f) => (
+            <li key={f} className="text-body-sm" style={{ color: 'var(--act-soft)' }}>{f}</li>
+          ))}
+        </ul>
       )}
 
       {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          className="flex items-center justify-center gap-1.5 mt-3 py-2 rounded-full text-body-sm font-medium min-h-[36px]"
-          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
-        >
-          {action.label} {action.icon}
-        </button>
+        <div className="mt-auto pt-4">
+          <button
+            type="button"
+            onClick={action.onClick}
+            className="w-full flex items-center justify-center gap-2 px-5 rounded-full text-body-sm font-medium min-h-10 hover:bg-[var(--panel-alt)]"
+            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
+          >
+            {action.label} {action.icon}
+          </button>
+        </div>
       )}
     </section>
   );

@@ -14,6 +14,16 @@ Traced from `main @ a35f823` on 2026-09-30: router, the shared contract, `state/
 
 ---
 
+## Platform overview
+
+![Antarasetu platform overview](overview.png)
+
+*Vector version: [overview.svg](overview.svg)*
+
+The platform sits at the centre; the eight capabilities around it are the product's core modules, each backed by real code in `src/`.
+
+---
+
 ## 1. Technical diagram (as built)
 
 ![Technical architecture diagram](technical.png)

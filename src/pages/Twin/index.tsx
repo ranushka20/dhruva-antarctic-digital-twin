@@ -23,8 +23,9 @@ import { useCan } from '@/state/auth';
 import { useSyncInfo } from '@/state/connectivity';
 import { formatAge } from '@/lib/time';
 import { FLOORS, floorsForZone, getRoom, roomsForZone, twinZoneStatus, zoneForRoom } from '@/twin/zoneRooms';
-import { roomTraceProfile, zoneTraceProfile } from '@/twin/roomProfiles';
-import { runZoneTrace, type ZoneTraceProfile } from '@/engine/zoneTrace';
+import { roomTraceProfile } from '@/twin/roomProfiles';
+import { zoneSubject } from '@/twin/zoneSubject';
+import { runZoneTrace } from '@/engine/zoneTrace';
 
 // Lazy load the existing 3D model
 const Bharati3D = lazy(() => import('@/twin/Bharati3D'));
@@ -168,10 +169,9 @@ export default function TwinPage() {
   const activeZone = zones.find((z) => z.code === selectedZone) ?? null;
   const clickedRoom = selectedRoomId ? getRoom(selectedRoomId) : undefined;
 
-  // Bharati's zones are the sum of their rooms; Maitri has no room model, so
-  // its zones carry their own profile in mock/maitri.json.
-  const zoneProfile = (zone: ZoneModel) =>
-    has3D ? zoneTraceProfile(zone.code) : (zone as ZoneModel & { trace?: ZoneTraceProfile }).trace;
+  // Same rule as the Action Centre drawer (touchpoint #10): one helper decides
+  // which story a zone tells, so the two pages can't drift apart.
+  const zoneProfile = (zone: ZoneModel) => zoneSubject(stationId, zone.code)?.trace;
 
   const highlightRoom = useMemo(() => {
     const room = selectedRoomId ? getRoom(selectedRoomId) : undefined;

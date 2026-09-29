@@ -70,6 +70,8 @@ export function TierFilter({ counts, tiers, onToggleTier }: Props) {
             style={{
               backgroundColor: active ? 'var(--panel-raised)' : 'transparent',
               border: `1px solid ${active ? meta.color : 'var(--line)'}`,
+              // An empty tier stays clickable but recedes, so the eye goes to tiers with work.
+              opacity: counts.byTier[tier] === 0 && !active ? 0.5 : 1,
             }}
           >
             <span

@@ -13,11 +13,12 @@ import { TierFilter } from './TierRail';
 import { ActionTable } from './ActionTable';
 import { ActionBoard } from './ActionBoard';
 import { ActionDrawer } from './ActionDrawer';
+import { RaiseActionDialog } from './RaiseActionDialog';
 import { StepDialog, STEP_FOR_STATE, type StepRequest } from '@/components/shared/StepDialog';
 import { useChainBroken } from '@/components/shared/ChainBanner';
 import { getActions, getActionCounts, OPEN_STATES, type ActionCounts } from '@/state/data';
 import { useStoreValue, useTick } from '@/state/useStore';
-import { STATION_LABEL, type StationFilter } from '@/state/stationScope';
+import { type StationFilter } from '@/state/stationScope';
 import { useCan } from '@/state/auth';
 import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 import { usePresence, useLastWhileOpen } from '@/hooks/usePresence';
@@ -81,6 +82,7 @@ export default function ActionsPage() {
   const [cursorId, setCursorId] = useState<string | null>(null);
   // Every state change goes through StepDialog, which asks for the note the log needs.
   const [step, setStep] = useState<StepRequest | null>(null);
+  const [raiseFor, setRaiseFor] = useState<'bharati' | 'maitri' | null>(null);
 
   useTick(60_000);
 
@@ -174,6 +176,42 @@ export default function ActionsPage() {
   };
   const activeView = STEP_VIEWS.find((v) => v.id === stepView)!;
 
+  // Tier, overdue and (on the ack tab) bulk acknowledge — one row, shared by
+  // the list (next to its sort control) and the board.
+  const filters = (
+    <>
+      <TierFilter counts={counts} tiers={tiers} onToggleTier={(t) => setTiers((s) => toggle(s, t))} />
+      <button
+        type="button"
+        onClick={() => setBreachOnly((v) => !v)}
+        aria-pressed={breachOnly}
+        title="Only show actions past their response-time target (SLA breach)"
+        className="inline-flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium"
+        style={{
+          backgroundColor: breachOnly ? 'rgba(242,107,33,0.12)' : 'transparent',
+          border: `1px solid ${breachOnly ? 'var(--act)' : 'var(--line)'}`,
+          color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-2)',
+        }}
+      >
+        Overdue only
+        <span className="font-mono tabular-nums">{counts.breaching}</span>
+      </button>
+      {view === 'table' && stepView === 'ack' && filtered.length > 1 && (
+        <button
+          type="button"
+          disabled={!canBulk || chainBroken}
+          onClick={bulkAck}
+          className="inline-flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
+          style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
+          title={chainBroken ? 'Bulk operations are off while the audit chain is broken' : 'Resolving stays one at a time — each needs its own evidence'}
+        >
+          Acknowledge all <span className="font-mono tabular-nums">{filtered.length}</span>
+        </button>
+      )}
+    
+    </>
+  );
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
@@ -183,7 +221,8 @@ export default function ActionsPage() {
             Action Centre
           </h1>
           <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
-            Every action moves through three steps: acknowledge, assign, resolve. Open one for the full picture.
+            Every problem at either station that needs a person to act, raised automatically or by staff.
+            Each one moves through three steps: acknowledge, assign, resolve.
           </p>
         </div>
 
@@ -299,45 +338,16 @@ export default function ActionsPage() {
           className="flex-1 min-w-0 min-h-0 p-4 flex flex-col"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
         >
-          {/* ---- Filters: tier + overdue, and bulk acknowledge on the ack tab ---- */}
-          <div className="flex items-center gap-x-4 gap-y-2.5 flex-wrap px-2 pb-3 shrink-0">
-            <TierFilter counts={counts} tiers={tiers} onToggleTier={(t) => setTiers((s) => toggle(s, t))} />
-            <button
-              type="button"
-              onClick={() => setBreachOnly((v) => !v)}
-              aria-pressed={breachOnly}
-              title="Only show actions past their response-time target (SLA breach)"
-              className="inline-flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium"
-              style={{
-                backgroundColor: breachOnly ? 'rgba(242,107,33,0.12)' : 'transparent',
-                border: `1px solid ${breachOnly ? 'var(--act)' : 'var(--line)'}`,
-                color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-2)',
-              }}
-            >
-              Overdue only
-              <span className="font-mono tabular-nums">{counts.breaching}</span>
-            </button>
-            {view === 'table' && stepView === 'ack' && filtered.length > 1 && (
-              <button
-                type="button"
-                disabled={!canBulk || chainBroken}
-                onClick={bulkAck}
-                className="ml-auto inline-flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
-                style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
-                title={chainBroken ? 'Bulk operations are off while the audit chain is broken' : 'Resolving stays one at a time — each needs its own evidence'}
-              >
-                Acknowledge all <span className="font-mono tabular-nums">{filtered.length}</span>
-              </button>
-            )}
-          </div>
-
           <div key={view} className="m-panel flex-1 min-h-0">
           {view === 'table' ? (
             <ActionTable
               actions={filtered}
               cursorId={cursorId}
               canWrite={canWrite}
-              emptyReason={stepView === 'open' ? 'No open actions match these filters.' : 'Nothing is waiting at this step.'}
+              emptyReason={stepView === 'open' ? 'Nothing open here that matches these filters.' : 'Nothing waiting at this step.'}
+              toolbar={filters}
+              stations={scope === 'all' ? ['bharati', 'maitri'] : [scope]}
+              onRaise={(id) => setRaiseFor(id)}
               onOpen={(id) => navigate('/actions/' + id)}
               onAck={(id) => setStep({ kind: 'ack', actionIds: [id] })}
               onAssign={(id) => setStep({ kind: 'assign', actionIds: [id] })}
@@ -345,6 +355,8 @@ export default function ActionsPage() {
               onResolve={(id) => setStep({ kind: 'resolve', actionIds: [id] })}
             />
           ) : (
+            <>
+            <div className="flex items-center gap-x-4 gap-y-2.5 flex-wrap px-2 pb-3">{filters}</div>
             <ActionBoard
               actions={filtered}
               canWrite={canWrite}
@@ -354,6 +366,7 @@ export default function ActionsPage() {
                 if (kind) setStep({ kind, actionIds: [id] });
               }}
             />
+            </>
           )}
           </div>
         </section>
@@ -364,6 +377,11 @@ export default function ActionsPage() {
       )}
 
       <StepDialog request={step} actions={allActions} onClose={() => setStep(null)} />
+      <RaiseActionDialog
+        stationId={raiseFor}
+        onClose={() => setRaiseFor(null)}
+        onRaised={(id) => { setRaiseFor(null); navigate('/actions/' + id); }}
+      />
     </div>
   );
 }

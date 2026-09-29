@@ -3,18 +3,19 @@
 // separates this from a ticket list. It carries the operational cost of
 // inaction, straight from the coupling engine.
 //
-// Readability layout: each row is the title, one meta line (station, age,
-// where it stands) and the cost of inaction. Only the NEXT step is an inline
+// The list is split by station — a Bharati section and a Maitri section, each
+// with its own heading, count, contact state and "Raise action" — because
+// every action belongs to one station's crew. Inside a section each row is the
+// title, one meta line (age, where it stands) and the cost of inaction. Only the NEXT step is an inline
 // button, from the shared ActionSteps; the other legal moves sit behind the
 // "…" menu and in the drawer (row click). Zone, asset and trigger detail live
 // in the drawer, not here.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal, Plus } from 'lucide-react';
 import { canTransition } from '@/shared/contracts';
 import type { DerivedAction } from '@/state/data';
 import { TierChip } from '@/components/shared/TierChip';
-import { EmptyState } from '@/components/shared/EmptyState';
 import { STEPS, StepBars, consequenceText, describeStanding, nextStep } from '@/components/shared/ActionSteps';
 import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDuration } from '@/lib/time';
@@ -22,13 +23,14 @@ import { SYNC_OPACITY } from '@/lib/freshness';
 import { usePresence } from '@/hooks/usePresence';
 import { STATE_HINT, TIER_META } from './TierRail';
 
-export type SortKey = 'priority' | 'tier' | 'title' | 'station' | 'state' | 'age' | 'owner' | 'consequence';
+export type SortKey = 'priority' | 'tier' | 'title' | 'state' | 'age' | 'owner' | 'consequence';
+
+type StationId = DerivedAction['stationId'];
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'priority', label: 'Priority (recommended)' },
   { key: 'tier', label: 'Tier' },
   { key: 'title', label: 'Action title' },
-  { key: 'station', label: 'Station' },
   { key: 'state', label: 'Status' },
   { key: 'age', label: 'How long open' },
   { key: 'owner', label: 'Owner' },
@@ -39,8 +41,14 @@ interface Props {
   actions: DerivedAction[];
   cursorId: string | null;
   canWrite: boolean;
-  /** Shown when the current tab and filters leave nothing to list. */
+  /** Shown in a station's section when the tab and filters leave it empty. */
   emptyReason: string;
+  /** Sections to show, in order — both stations for "All", or just the one in scope. */
+  stations: StationId[];
+  /** Opens the raise form for one station; omitted when the viewer cannot raise. */
+  onRaise?: (stationId: StationId) => void;
+  /** The page's filters, placed on the same row as the sort control. */
+  toolbar?: ReactNode;
   onOpen: (id: string) => void;
   onAck: (id: string) => void;
   onAssign: (id: string) => void;
@@ -53,7 +61,7 @@ const WINDOW_THRESHOLD = 200;
 const WINDOW_SIZE = 120;
 
 export function ActionTable({
-  actions, cursorId, canWrite, emptyReason, onOpen, onAck, onAssign, onDefer, onResolve,
+  actions, cursorId, canWrite, emptyReason, stations, onRaise, toolbar, onOpen, onAck, onAssign, onDefer, onResolve,
 }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'priority', dir: 1 });
   const [windowEnd, setWindowEnd] = useState(WINDOW_SIZE);
@@ -64,7 +72,6 @@ export function ActionTable({
       switch (sort.key) {
         case 'tier': return a.tier;
         case 'title': return a.title.toLowerCase();
-        case 'station': return a.stationId;
         case 'state': return a.state;
         case 'age': return a.ageSeconds;
         case 'owner': return a.assignee?.name.toLowerCase() ?? '￿';
@@ -81,15 +88,12 @@ export function ActionTable({
 
   const windowed = sorted.length > WINDOW_THRESHOLD ? sorted.slice(0, windowEnd) : sorted;
 
-  if (actions.length === 0) {
-    return <EmptyState reason={`${emptyReason} Clear a filter or widen the station scope to All.`} />;
-  }
-
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* ---- Sort toolbar ---- */}
-      <div className="flex items-center justify-end gap-x-3 gap-y-2 flex-wrap px-2 pb-3 shrink-0">
-        <label className="flex items-center gap-2">
+      {/* ---- One toolbar row: the page's filters, then sort on the right ---- */}
+      <div className="flex items-center gap-x-4 gap-y-2.5 flex-wrap px-2 pb-4 shrink-0">
+        {toolbar}
+        <label className="flex items-center gap-2 ml-auto">
           <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Sort by</span>
           <span className="relative">
             <select
@@ -123,84 +127,66 @@ export function ActionTable({
       </div>
 
       <div className="flex-1 min-h-0 overflow-auto">
-        <ul className="flex flex-col" aria-label="Actions">
-          {windowed.map((a) => {
-            const standing = describeStanding(a);
-            const consequence = consequenceText(a);
-            const overdueBy = a.sla.elapsedSeconds - a.sla.targetSeconds;
+        <div className="flex flex-col gap-6">
+          {stations.map((stationId) => {
+            const rows = windowed.filter((a) => a.stationId === stationId);
+            // Every row of a station shares its contact state, so it is said once, here.
+            const sync = actions.find((a) => a.stationId === stationId)?.syncState;
             return (
-              <li
-                key={a.id}
-                onClick={() => onOpen(a.id)}
-                className="flex items-start gap-4 px-3 py-3.5 cursor-pointer rounded-lg hover:bg-[var(--panel-raised)]"
-                style={{
-                  borderBottom: '1px solid var(--line)',
-                  opacity: SYNC_OPACITY[a.syncState],
-                  backgroundColor: a.id === cursorId ? 'var(--panel-raised)' : undefined,
-                  outline: a.id === cursorId ? '1px solid var(--ok-soft)' : undefined,
-                }}
-              >
-                <span className="shrink-0 mt-0.5" title={`${a.tier} — ${TIER_META[a.tier].label}`}>
-                  <TierChip tier={a.tier} />
-                </span>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-body font-medium line-clamp-2 max-w-[70ch]" style={{ color: 'var(--text)' }} title={a.title}>
-                    {a.title}
-                  </p>
-
-                  <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
-                    <span title={STATION_CODE[a.stationId]}>{STATION_LABEL[a.stationId]}</span>
-                    <span aria-hidden>·</span>
-                    <span>
-                      open{' '}
-                      <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{formatDuration(a.ageSeconds)}</span>
-                      {a.syncState !== 'LIVE' && <span> as of last sync</span>}
+              <section key={stationId} aria-label={`${STATION_LABEL[stationId]} actions`}>
+                <div
+                  className="flex items-center gap-x-4 gap-y-2 flex-wrap px-3 pb-2.5"
+                  style={{ borderBottom: '1px solid var(--line-strong)' }}
+                >
+                  <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }} title={STATION_CODE[stationId]}>
+                    {STATION_LABEL[stationId]}
+                  </h3>
+                  <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+                    <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{rows.length}</span>{' '}
+                    {rows.length === 1 ? 'action' : 'actions'}
+                  </span>
+                  {sync && sync !== 'LIVE' && (
+                    <span className="text-body-sm" style={{ color: 'var(--watch-soft)' }}>
+                      Out of contact — times shown are as of the last sync
                     </span>
-                    <span aria-hidden>·</span>
-                    <span className="inline-flex items-center gap-2" title={`${STATE_HINT[a.state]} (${a.state})`}>
-                      <StepBars action={a} />
-                      <span style={{ color: a.state === 'RAISED' ? 'var(--act-soft)' : 'var(--text-2)' }}>{standing.now}</span>
-                    </span>
-                    {a.sla.breached && (
-                      <span
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
-                        style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
-                        title={`Response target ${formatDuration(a.sla.targetSeconds)} (SLA)`}
-                      >
-                        Overdue by&nbsp;<span className="font-mono tabular-nums">{formatDuration(overdueBy)}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {consequence && (
-                    <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
-                      If nobody acts:{' '}
-                      <span
-                        className="font-mono"
-                        style={{ color: a.consequence?.kind === 'safety' ? 'var(--act-soft)' : 'var(--watch-soft)' }}
-                      >
-                        {consequence}
-                      </span>
-                    </p>
+                  )}
+                  {onRaise && (
+                    <button
+                      type="button"
+                      onClick={() => onRaise(stationId)}
+                      disabled={!canWrite}
+                      title={canWrite ? `Log a problem at ${STATION_LABEL[stationId]} that no rule has raised` : 'Your role cannot raise actions'}
+                      className="ml-auto inline-flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
+                      style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
+                    >
+                      <Plus size={16} aria-hidden /> Raise action
+                    </button>
                   )}
                 </div>
 
-                <div className="shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                  <RowActions
-                    action={a}
-                    canWrite={canWrite}
-                    onOpen={onOpen}
-                    onAck={onAck}
-                    onAssign={onAssign}
-                    onDefer={onDefer}
-                    onResolve={onResolve}
-                  />
-                </div>
-              </li>
+                {rows.length === 0 ? (
+                  <p className="px-3 py-4 text-body-sm" style={{ color: 'var(--text-3)' }}>{emptyReason}</p>
+                ) : (
+                  <ul className="flex flex-col">
+                    {rows.map((a) => (
+                      <ActionRow
+                        key={a.id}
+                        action={a}
+                        cursor={a.id === cursorId}
+                        canWrite={canWrite}
+                        onOpen={onOpen}
+                        onAck={onAck}
+                        onAssign={onAssign}
+                        onDefer={onDefer}
+                        onResolve={onResolve}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </section>
             );
           })}
-        </ul>
+        </div>
 
         {sorted.length > windowed.length && (
           <div className="py-4 text-center">
@@ -218,6 +204,86 @@ export function ActionTable({
         )}
       </div>
     </div>
+  );
+}
+
+function ActionRow({
+  action: a, cursor, canWrite, onOpen, onAck, onAssign, onDefer, onResolve,
+}: {
+  action: DerivedAction; cursor: boolean; canWrite: boolean;
+  onOpen: (id: string) => void;
+  onAck: (id: string) => void; onAssign: (id: string) => void;
+  onDefer: (id: string) => void; onResolve: (id: string) => void;
+}) {
+  const standing = describeStanding(a);
+  const consequence = consequenceText(a);
+  const overdueBy = a.sla.elapsedSeconds - a.sla.targetSeconds;
+  return (
+    <li
+      onClick={() => onOpen(a.id)}
+      className="flex items-start gap-4 px-3 py-3.5 cursor-pointer rounded-lg hover:bg-[var(--panel-raised)]"
+      style={{
+        borderBottom: '1px solid var(--line)',
+        opacity: SYNC_OPACITY[a.syncState],
+        backgroundColor: cursor ? 'var(--panel-raised)' : undefined,
+        outline: cursor ? '1px solid var(--ok-soft)' : undefined,
+      }}
+    >
+      <span className="shrink-0 mt-0.5" title={`${a.tier} — ${TIER_META[a.tier].label}`}>
+        <TierChip tier={a.tier} />
+      </span>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-body font-medium line-clamp-2 max-w-[70ch]" style={{ color: 'var(--text)' }} title={a.title}>
+          {a.title}
+        </p>
+
+        <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
+          <span>
+            open{' '}
+            <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{formatDuration(a.ageSeconds)}</span>
+          </span>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-2" title={`${STATE_HINT[a.state]} (${a.state})`}>
+            <StepBars action={a} />
+            <span style={{ color: a.state === 'RAISED' ? 'var(--act-soft)' : 'var(--text-2)' }}>{standing.now}</span>
+          </span>
+          {a.sla.breached && (
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
+              style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
+              title={`Response target ${formatDuration(a.sla.targetSeconds)} (SLA)`}
+            >
+              Overdue by&nbsp;<span className="font-mono tabular-nums">{formatDuration(overdueBy)}</span>
+            </span>
+          )}
+        </div>
+
+        {consequence && (
+          <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
+            If nobody acts:{' '}
+            <span
+              className="font-mono"
+              style={{ color: a.consequence?.kind === 'safety' ? 'var(--act-soft)' : 'var(--watch-soft)' }}
+            >
+              {consequence}
+            </span>
+          </p>
+        )}
+      </div>
+
+      <div className="shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <RowActions
+          action={a}
+          canWrite={canWrite}
+          onOpen={onOpen}
+          onAck={onAck}
+          onAssign={onAssign}
+          onDefer={onDefer}
+          onResolve={onResolve}
+        />
+      </div>
+    </li>
   );
 }
 

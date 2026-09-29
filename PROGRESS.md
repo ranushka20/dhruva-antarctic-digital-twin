@@ -278,6 +278,35 @@
 - Touchpoint completed? #10: the drawer and the Twin now share one input and one zone model. The Twin could use `zoneSubject()` instead of its inline copy of the same rule (`Twin/index.tsx`, `zoneProfile`); suggested to the Twin session.
 - Notes for the other developer: none beyond the above.
 
+### [2026-09-30 00:05] Dev B (at the user's request; one edit in Dev A's Twin page) — Every action step asks for a note; no silent transitions
+- Status: done. `tsc` clean apart from the 2 known IsoStationModel/Assets errors. Checked in Chrome: Acknowledge (preset phrase) → Assign (owner + note) → Resolve on a T0 blocks without evidence. The chain re-verified at 42 entries, and the note shows in the drawer history and in the audit-chain payload.
+- Files changed: `src/components/shared/StepDialog.tsx` (new), `src/shared/contracts.ts`, `src/pages/Actions/{index,ActionDrawer,ActionBoard}.tsx`, `src/pages/Twin/index.tsx` (the zone inspector's Acknowledge only), `src/pages/StationConsole/index.tsx` (one `assign` call), `src/components/shared/ActionSteps.tsx` (step explainer text).
+- Summary: The user asked why Acknowledge worked in one click with no reason given, and wanted every step logged. One rule now holds everywhere: **no step changes an action without a note**. Who and when are filled in automatically; the person writes one line.
+  - **One dialog:** `StepDialog` handles Acknowledge, Assign, Start, Defer and Resolve. Every entry point uses it: drawer footer, table row buttons, "Acknowledge all n", the `a` key, Board drops and the Twin zone inspector.
+  - **Fast input:** Acknowledge and Assign offer preset phrases, one tap each, so acknowledging is still two clicks. The dialog says exactly what gets written: name, time, note, history and audit log.
+  - **Enforced in the contract**, not just the UI. `apply()` rejects an empty note, so no call site can write a silent transition.
+  - **Notes are tamper-evident:** each note sits inside the hashed payload. Before, the ACK/assign text lived only in the unhashed `payloadSummary`.
+  - **Bug fixed:** Board drag called `transitionTo`, which skipped every required field. It could RESOLVE a T0 with no note or evidence, DEFER with no reason or review date, and ASSIGN with no owner. Dropping a card now opens the matching dialog, and `transitionTo` refuses ASSIGNED/DEFERRED/RESOLVED.
+  - **Bulk acknowledge:** one note covers the batch, but each action still gets its own chain entry, written in sequence.
+  - The duplicate Assign/Defer/Resolve dialogs in `ActionDrawer` and `Actions/index` (`QuickDialog`) are gone; both now use `StepDialog`.
+- **Spec deviation (user-directed):** FR-6.2 / FR-4.5 / NFR-3.6 describe Acknowledge as recording actor + timestamp only, in one action. It now also needs a note. The `a` key opens the dialog instead of acknowledging directly.
+- Touches shared contract? **yes** — see Contract changes (2026-09-30 rows).
+- Touchpoint completed? #1 still 🟢. The Twin's Acknowledge now goes through `StepDialog`, so both sides call the same component.
+- Notes for the other developer: in `Twin/index.tsx` I replaced the direct `transitions.acknowledge(id, actor.name)` with `<StepDialog>`. Only the `acknowledge` handler, one `useState`, the imports and the dialog element below the ack error changed. If a Twin or Asset surface needs to change an action's state, open `StepDialog` rather than calling `useActionTransitions` directly.
+
+### [2026-09-30 01:30] Dev B (at the user's request) — Action Centre split by station; HQ can raise an action; one toolbar row
+- Status: done. `tsc` is clean for every Actions file (the 2 known IsoStationModel/Assets errors remain). The user is checking visuals.
+- Files changed: `src/pages/Actions/{index,ActionTable,TierRail}.tsx`, `src/pages/Actions/RaiseActionDialog.tsx` (new).
+- Summary:
+  - **Split by station:** with "All stations", the list is now a Bharati section and a Maitri section. Each has a heading with its count and a single "Out of contact" note, which replaces the per-row "as of last sync". Rows no longer repeat the station name, and the "Station" sort option is gone.
+  - **Raise action:** each station heading has a "Raise action" button, the HQ path for a problem reported by phone, radio or email. The form asks what's wrong, optional details, tier, an optional zone and an optional owner; the owner is recorded as a normal assign step with a note. The trigger reads "Reported by HQ staff", mirroring the Station Console's operator entry.
+  - **One toolbar row:** the tier filter, "Overdue only", bulk acknowledge and "Sort by" now share one row; before, "Sort by" sat alone on a second row. Tier chips with a zero count are dimmed.
+  - **Subtitle** now says what the page is for.
+- **Spec deviation (user-directed):** FR-1.2 / §3.6 "a Maitri T1 outranks a Bharati T2" still holds *within* the priority order, but the two stations are no longer interleaved in one list.
+- Touches shared contract? no. `raise` and `assign` are used as they are.
+- Touchpoint completed? none. #7 (`?station=` / `?tier=` / `?state=`) still pre-fills.
+- Notes for the other developer: if the Twin needs a "Raise action" entry point, reuse `RaiseActionDialog` (props: `stationId`, `onClose`, `onRaised`).
+
 ---
 
 ## Integration & Review
@@ -292,7 +321,7 @@ checklist at the bottom) before either side merges to `main`.
 
 | # | Touchpoint | Dev A side | Dev B side | Status |
 |---|---|---|---|---|
-| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟢 both sides done, needs review — Dev A calls it from the zone inspector; Dev B's implementation validates transitions and writes the chain |
+| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟢 both sides done, needs review — the zone inspector's Acknowledge now opens the shared `StepDialog` (note required, 2026-09-30); Dev B's implementation validates transitions and writes the chain |
 | 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | 🟢 both sides done, needs review — drawer consumes it via `causalTraceInput()`, no local maths. **See #10: the numbers have not been compared across the two pages yet.** |
 | 3 | Twin / Environment → "Open in Sandbox" | Owns both ends (pre-load payload) | n/a | 🟢 both sides done, needs review (Dev A owns both ends) |
 | 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | 🟢 both sides done, needs review — `decrementResource()` is the single stock write path; Dev A's maintenance log and the station console Inventory change both use it |
@@ -337,6 +366,9 @@ Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides d
 | 2026-09-20 | Dev B | New parameters: `energy.fuelEnergyKwhPerL`, `thermal.zoneWarningLossPct`, `thermal.zoneWatchLossPct`, `logistics.targetCoverDays` | NFR-B1: every constant the engine consumes must be editable on `/settings`. The first converts the engine's kW-equivalent burn into the litres the fuel ledger uses. |
 | 2026-09-20 | Dev B | Added `tsconfig.json` and `typescript` as a dev dependency (`bun add -d typescript`) | The `@/*` alias existed only in `vite.config.js`, so the IDE and any type-check could not resolve it. `.js`/`.jsx` are included but unchecked, so the 3D twin is unaffected. |
 | 2026-09-29 | Dev A | New module `src/engine/zoneTrace.ts`: `runZoneTrace(input, profile)`, `ZoneTraceProfile`, `ZoneCondition`, `ZoneTraceResult`. Additive optional `trace` field per zone in `mock/maitri.json` (not yet on the `ZoneModel` type). Bharati's comes from its rooms in `src/twin/roomProfiles.js` | Per-zone "Why this matters" on the Twin. Built on `runCausalTrace` + `compute*`, with no existing signature changed. `result.station` is exactly `runCausalTrace(input)`. |
+| 2026-09-30 | Dev B | **Breaking:** `acknowledge(actionId, note)` (the 2nd arg was `actorName`, now the note; the actor comes from the hook). `assign(actionId, assignee, note)` gains a required `note`. `start(actionId, note)` and `transitionTo(actionId, to, note)` now require the note | Every step must carry a person's note for the log. All call sites updated (Actions, drawer, Twin, StationConsole). A leftover `acknowledge(id, actor.name)` would type-check but log the name as the note, so search for that call. |
+| 2026-09-30 | Dev B | Every transition rejects an empty note. The note is stored inside the hashed `payload` (`{ from, to, note, … }`), and `payloadSummary` is the note | Makes the note tamper-evident. Entries written earlier still verify, because their stored payloads are unchanged. |
+| 2026-09-30 | Dev B | `transitionTo` refuses ASSIGNED / DEFERRED / RESOLVED | Those states carry required fields; the generic mover had let the Board skip them. Use `assign` / `defer` / `resolve`. |
 
 #### ⚠ Open question for Dev A — suspected sign bug in `computeMarginDays`
 

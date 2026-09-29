@@ -1,0 +1,190 @@
+<svg width="1400" height="880" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 880" role="img" aria-label="Conceptual model: infrastructure, energy, logistics and environment facts from the station feed one station state model. Inside it, a causal chain runs from ambient temperature to heating degree-days, heat loss, energy demand, fuel burn, autonomy, margin and last safe order date. The model feeds the twin view, Action Centre, autonomy and logistics, and records. Below, the observe-understand-decide-act-record loop and the offline sync path from station edge to HQ.">
+  <style>svg{
+  --bg: #040a14;
+  --panel: #07122a;
+  --card: #0a1a31;
+  --edge: #1d4c77;
+  --glow: #38c6ff;
+  --fg: #dcecff;
+  --muted: #88a4c3;
+  --faint: #52708f;
+  --warn: #ffb14a;
+  --ok: #43e0a4;
+  --sim: #b793ff;
+  --f-display: "Chakra Petch", "Bahnschrift", "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  
+}/* SVG classes (styled from the page, no <style> inside the SVGs) */
+.fr-outer { fill: none; stroke: var(--glow); stroke-width: 1.4; stroke-opacity: .55; }
+.fr { fill: rgba(8, 22, 46, .55); stroke: var(--glow); stroke-width: 1.6; }
+.pan { fill: var(--panel); stroke: var(--edge); stroke-width: 1.2; }
+.cd { fill: var(--card); stroke: var(--edge); stroke-width: 1.2; }
+.cd-hot { fill: var(--card); stroke: var(--glow); stroke-width: 1.4; }
+.cd-warn { fill: rgba(255, 177, 74, .06); stroke: var(--warn); stroke-width: 1.3; stroke-dasharray: 6 5; }
+.ln { fill: none; stroke: var(--glow); stroke-width: 1.5; }
+.ln-w { fill: none; stroke: var(--warn); stroke-width: 1.6; }
+.ln-f { fill: none; stroke: var(--faint); stroke-width: 1.3; stroke-dasharray: 5 5; }
+.t-h { font: 600 20px var(--f-display); fill: var(--fg); letter-spacing: .03em; }
+.t-t { font: 600 13.5px var(--f-body); fill: var(--fg); }
+.t-b { font: 400 12px var(--f-body); fill: var(--muted); }
+.t-m { font: 400 10.5px var(--f-mono); fill: var(--muted); }
+.t-mg { font: 500 10.5px var(--f-mono); fill: var(--glow); }
+.t-l { font: 500 10px var(--f-mono); fill: var(--faint); letter-spacing: .12em; }
+.t-a { font: 400 9.5px var(--f-mono); fill: var(--glow); }
+.t-aw { font: 500 10px var(--f-mono); fill: var(--warn); }
+.t-w { font: 500 10.5px var(--f-mono); fill: var(--warn); }
+.t-ok { font: 500 10px var(--f-mono); fill: var(--ok); }
+.t-sim { font: 500 10px var(--f-mono); fill: var(--sim); }
+.t-f { font: 500 10px var(--f-mono); fill: var(--faint); }
+.chip { fill: #0b2140; stroke: var(--edge); }
+.dot-ok { fill: var(--ok); } .dot-g { fill: var(--glow); } .dot-f { fill: var(--faint); } .dot-s { fill: var(--sim); } .dot-w { fill: var(--warn); }
+
+</style>
+  <defs>
+    <filter id="g2" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#38c6ff"/></marker>
+    <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b793ff"/></marker>
+  </defs>
+  <rect width="1400" height="880" fill="#040a14"/>
+
+  <rect x="12" y="12" width="1376" height="856" rx="26" class="fr-outer" filter="url(#g2)"/>
+  <text x="40" y="39" class="t-l">TRUST · EVERY NUMBER SAYS WHERE IT CAME FROM</text>
+  <rect x="440" y="24" width="96" height="22" rx="11" class="chip"/><circle cx="455" cy="35" r="3.5" class="dot-ok"/><text x="465" y="39" class="t-ok">LIVE</text>
+  <rect x="546" y="24" width="112" height="22" rx="11" class="chip"/><circle cx="561" cy="35" r="3.5" class="dot-g"/><text x="571" y="39" class="t-mg">MODELED</text>
+  <rect x="668" y="24" width="96" height="22" rx="11" class="chip"/><circle cx="683" cy="35" r="3.5" class="dot-f"/><text x="693" y="39" class="t-f">SYNTH</text>
+  <rect x="774" y="24" width="90" height="22" rx="11" class="chip"/><circle cx="789" cy="35" r="3.5" class="dot-s"/><text x="799" y="39" class="t-sim">SIM</text>
+  <text x="880" y="39" class="t-m">real feed · derived · placeholder · what-if</text>
+
+  <!-- Station & domains -->
+  <rect x="40" y="70" width="230" height="480" rx="18" class="fr" filter="url(#g2)"/>
+  <text x="155" y="100" text-anchor="middle" class="t-h">Antarctic station</text>
+  <text x="155" y="120" text-anchor="middle" class="t-m">Bharati · Maitri, as equals</text>
+  <rect x="58" y="140" width="194" height="80" rx="10" class="cd"/>
+  <text x="74" y="168" class="t-t">Infrastructure</text><text x="74" y="190" class="t-m">zones · assets · maintenance</text>
+  <rect x="58" y="240" width="194" height="80" rx="10" class="cd"/>
+  <text x="74" y="268" class="t-t">Energy</text><text x="74" y="290" class="t-m">generators · load · fuel</text>
+  <rect x="58" y="340" width="194" height="80" rx="10" class="cd"/>
+  <text x="74" y="368" class="t-t">Logistics</text><text x="74" y="390" class="t-m">stock · voyages · manifests</text>
+  <rect x="58" y="440" width="194" height="80" rx="10" class="cd"/>
+  <text x="74" y="468" class="t-t">Environment</text><text x="74" y="490" class="t-m">temp · wind · pressure · RH</text>
+
+  <path d="M252 180 H318" class="ln" marker-end="url(#a2)"/>
+  <path d="M252 280 H318" class="ln" marker-end="url(#a2)"/>
+  <path d="M252 380 H318" class="ln" marker-end="url(#a2)"/>
+  <path d="M252 480 H318" class="ln" marker-end="url(#a2)"/>
+  <text x="285" y="172" text-anchor="middle" class="t-a">facts</text>
+
+  <!-- State model -->
+  <rect x="320" y="70" width="700" height="480" rx="18" class="fr" filter="url(#g2)"/>
+  <text x="670" y="100" text-anchor="middle" class="t-h">Station state model</text>
+  <text x="670" y="120" text-anchor="middle" class="t-m">stores hold raw facts · everything derived is recomputed on read</text>
+
+  <rect x="348" y="150" width="146" height="64" rx="10" class="cd"/>
+  <text x="362" y="176" class="t-t">Ambient temp ↓</text><text x="362" y="198" class="t-m">wind ↑ → chill</text>
+  <rect x="516" y="150" width="146" height="64" rx="10" class="cd"/>
+  <text x="530" y="176" class="t-t">Degree-days ↑</text><text x="530" y="198" class="t-mg">max(0, Tb − T)</text>
+  <rect x="684" y="150" width="146" height="64" rx="10" class="cd"/>
+  <text x="698" y="176" class="t-t">Heat loss ↑</text><text x="698" y="198" class="t-mg">Q = U · A · ΔT</text>
+  <rect x="852" y="150" width="146" height="64" rx="10" class="cd"/>
+  <text x="866" y="176" class="t-t">Energy demand ↑</text><text x="866" y="198" class="t-m">base + heating kW</text>
+
+  <rect x="852" y="250" width="146" height="64" rx="10" class="cd"/>
+  <text x="866" y="276" class="t-t">Fuel burn ↑</text><text x="866" y="298" class="t-mg">demand ÷ η</text>
+  <rect x="684" y="250" width="146" height="64" rx="10" class="cd"/>
+  <text x="698" y="276" class="t-t">Autonomy ↓</text><text x="698" y="298" class="t-m">stock ÷ burn, ± band</text>
+  <rect x="516" y="250" width="146" height="64" rx="10" class="cd"/>
+  <text x="530" y="276" class="t-t">Margin</text><text x="530" y="298" class="t-m">vs voyage window</text>
+  <rect x="348" y="250" width="146" height="64" rx="10" class="cd-hot"/>
+  <text x="362" y="276" class="t-t">LSOD · risk</text><text x="362" y="298" class="t-m">last safe order date</text>
+
+  <path d="M494 182 H514" class="ln" marker-end="url(#a2)"/>
+  <path d="M662 182 H682" class="ln" marker-end="url(#a2)"/>
+  <path d="M830 182 H850" class="ln" marker-end="url(#a2)"/>
+  <path d="M925 214 V248" class="ln" marker-end="url(#a2)"/>
+  <path d="M852 282 H832" class="ln" marker-end="url(#a2)"/>
+  <path d="M684 282 H664" class="ln" marker-end="url(#a2)"/>
+  <path d="M516 282 H496" class="ln" marker-end="url(#a2)"/>
+
+  <rect x="348" y="400" width="200" height="110" rx="10" class="pan"/>
+  <text x="364" y="426" class="t-t">Parameter registry</text>
+  <text x="364" y="448" class="t-mg">/settings · every constant</text>
+  <text x="364" y="468" class="t-m">each one an assumption</text>
+  <text x="364" y="484" class="t-m">until NCPOR confirms it</text>
+  <rect x="572" y="400" width="200" height="110" rx="10" class="cd-hot" filter="url(#g2)"/>
+  <text x="588" y="426" class="t-t">One engine call</text>
+  <text x="588" y="448" class="t-mg">runCausalTrace()</text>
+  <text x="588" y="468" class="t-m">same numbers on Twin,</text>
+  <text x="588" y="484" class="t-m">Env, Sandbox, drawer</text>
+  <rect x="796" y="400" width="202" height="110" rx="10" class="pan"/>
+  <text x="812" y="426" class="t-t">Research sandbox</text>
+  <text x="812" y="448" class="t-sim">forked copy · tagged SIM</text>
+  <text x="812" y="468" class="t-m">overrides inputs,</text>
+  <text x="812" y="484" class="t-m">writes nothing back</text>
+
+  <path d="M448 398 V316" class="ln" marker-end="url(#a2)"/><text x="456" y="362" class="t-a">tunes</text>
+  <path d="M740 398 V316" class="ln" marker-end="url(#a2)"/><text x="748" y="362" class="t-a">computes</text>
+  <path d="M897 398 V316" class="ln" stroke-dasharray="5 4" marker-end="url(#s2)"/><text x="905" y="362" class="t-sim">what-if</text>
+
+  <!-- Outputs -->
+  <rect x="1070" y="70" width="290" height="100" rx="12" class="cd"/>
+  <text x="1088" y="98" class="t-t">Digital twin view</text>
+  <text x="1088" y="120" class="t-m">3D Bharati · iso SVG Maitri</text>
+  <text x="1088" y="140" class="t-m">zones tinted by status</text>
+  <rect x="1070" y="190" width="290" height="100" rx="12" class="cd-hot"/>
+  <text x="1088" y="218" class="t-t">Action Centre</text>
+  <text x="1088" y="240" class="t-m">ACK · assign · defer · escalate</text>
+  <text x="1088" y="260" class="t-m">tiers T0–T3 with SLA clocks</text>
+  <rect x="1070" y="310" width="290" height="100" rx="12" class="cd"/>
+  <text x="1088" y="338" class="t-t">Autonomy &amp; logistics</text>
+  <text x="1088" y="360" class="t-m">LSOD markers · cargo manifest</text>
+  <text x="1088" y="380" class="t-m">ranked by urgency × criticality</text>
+  <rect x="1070" y="430" width="290" height="100" rx="12" class="cd"/>
+  <text x="1088" y="458" class="t-t">Records &amp; handover</text>
+  <text x="1088" y="480" class="t-m">hash-chained audit log</text>
+  <text x="1088" y="500" class="t-m">crew capsule at rotation</text>
+
+  <path d="M1020 120 H1068" class="ln" marker-end="url(#a2)"/><text x="1044" y="113" text-anchor="middle" class="t-a">status</text>
+  <path d="M1020 240 H1068" class="ln" marker-end="url(#a2)"/><text x="1044" y="233" text-anchor="middle" class="t-a">risk</text>
+  <path d="M1020 360 H1068" class="ln" marker-end="url(#a2)"/><text x="1044" y="353" text-anchor="middle" class="t-a">days</text>
+  <path d="M1020 480 H1068" class="ln" marker-end="url(#a2)"/><text x="1044" y="473" text-anchor="middle" class="t-a">events</text>
+
+  <!-- Management loop -->
+  <text x="40" y="592" class="t-l">MANAGEMENT LOOP</text>
+  <rect x="60" y="606" width="220" height="56" rx="28" class="cd"/>
+  <text x="170" y="630" text-anchor="middle" class="t-t">Observe</text><text x="170" y="648" text-anchor="middle" class="t-m">twin · environment</text>
+  <rect x="330" y="606" width="220" height="56" rx="28" class="cd"/>
+  <text x="440" y="630" text-anchor="middle" class="t-t">Understand</text><text x="440" y="648" text-anchor="middle" class="t-m">causal trace</text>
+  <rect x="600" y="606" width="220" height="56" rx="28" class="cd"/>
+  <text x="710" y="630" text-anchor="middle" class="t-t">Decide</text><text x="710" y="648" text-anchor="middle" class="t-m">LSOD · sandbox · manifest</text>
+  <rect x="870" y="606" width="220" height="56" rx="28" class="cd-hot"/>
+  <text x="980" y="630" text-anchor="middle" class="t-t">Act</text><text x="980" y="648" text-anchor="middle" class="t-m">Action Centre</text>
+  <rect x="1140" y="606" width="220" height="56" rx="28" class="cd"/>
+  <text x="1250" y="630" text-anchor="middle" class="t-t">Record</text><text x="1250" y="648" text-anchor="middle" class="t-m">audit chain · handover</text>
+  <path d="M280 634 H328" class="ln" marker-end="url(#a2)"/>
+  <path d="M550 634 H598" class="ln" marker-end="url(#a2)"/>
+  <path d="M820 634 H868" class="ln" marker-end="url(#a2)"/>
+  <path d="M1090 634 H1138" class="ln" marker-end="url(#a2)"/>
+  <path d="M1250 662 V684 H170 V664" class="ln" stroke-opacity=".6" marker-end="url(#a2)"/>
+  <text x="710" y="700" text-anchor="middle" class="t-a">records become the history the next observation is read against</text>
+
+  <!-- Offline band -->
+  <text x="40" y="738" class="t-l">OFFLINE-FIRST · THE STATION KEEPS WORKING WHEN THE LINK DROPS</text>
+  <rect x="60" y="752" width="300" height="84" rx="12" class="cd-hot"/>
+  <text x="80" y="782" class="t-t">Station edge</text>
+  <text x="80" y="804" class="t-m">operates and records locally</text>
+  <text x="80" y="820" class="t-m">no spinner waits on a server</text>
+  <rect x="420" y="752" width="240" height="84" rx="12" class="cd"/>
+  <text x="440" y="782" class="t-t">Priority outbox</text>
+  <text x="440" y="806" class="t-mg">T0 → T1 → T2 → T3</text>
+  <rect x="720" y="752" width="240" height="84" rx="42" class="cd-hot" filter="url(#g2)"/>
+  <text x="840" y="784" text-anchor="middle" class="t-t">Satellite link</text>
+  <text x="840" y="806" text-anchor="middle" class="t-ok">LIVE · LAGGING · DARK</text>
+  <rect x="1020" y="752" width="340" height="84" rx="12" class="cd"/>
+  <text x="1040" y="782" class="t-t">HQ / NCPOR</text>
+  <text x="1040" y="804" class="t-m">sees last-known state, visibly aged</text>
+  <text x="1040" y="820" class="t-m">"last sync 4h 12m ago"</text>
+  <path d="M360 794 H418" class="ln" marker-end="url(#a2)"/><text x="389" y="786" text-anchor="middle" class="t-a">queue</text>
+  <path d="M660 794 H718" class="ln" marker-end="url(#a2)"/><text x="689" y="786" text-anchor="middle" class="t-a">drain</text>
+  <path d="M960 794 H1018" class="ln" marker-start="url(#a2)" marker-end="url(#a2)"/><text x="989" y="786" text-anchor="middle" class="t-a">sync</text>
+</svg>

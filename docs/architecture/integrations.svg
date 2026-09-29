@@ -1,103 +1,95 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" role="img" aria-label="Integration map: the Antarasetu HQ web app in the centre connects to browser storage (read/write), the NCPOR Bharati AWS feed (HTTP via a Vite proxy), climate snapshots (JSON import), the station console (outbox sync T0 to T3), file exports (CSV, Markdown, JSON), and future telemetry adapters that are still stubs.">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-label="Antarasetu connects to six things: Saved Data (save and load), NCPOR Weather (live data), Climate Records (loads), the Station (sync), Reports (download), and Future Sensors (planned).">
   <style><![CDATA[
-    .nm { font: 700 18px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1b2430; }
-    .sb { font: 500 12.5px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #5d6b7a; }
-    .lb { font: 700 13px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #1b2430; }
-    .lbg { font: 700 13px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #8a96a3; }
-    .ct { font: 700 22px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1b2430; }
-    .cs { font: 500 12.5px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #5d6b7a; }
+    .nm { font: 700 18px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1f2328; }
+    .nm-g { font: 700 18px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #8c959f; }
+    .lb { font: 600 15px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1f2328; }
+    .lb-g { font: 600 15px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #8c959f; }
+    .ct { font: 700 20px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1f2328; }
   ]]></style>
-  <rect width="1100" height="700" fill="#ffffff"/>
+  <rect width="1000" height="620" fill="#ffffff"/>
 
-  <!-- Connection lines -->
-  <g fill="none" stroke="#1b2430" stroke-width="2.2" stroke-dasharray="9 7">
-    <path d="M550 154 V258"/>
-    <path d="M550 462 V560"/>
-    <path d="M438 312 H150 V240"/>
-    <path d="M438 408 H150 V480"/>
-    <path d="M662 312 H950 V240"/>
+  <!-- Lines -->
+  <g fill="none" stroke="#1f2328" stroke-width="2" stroke-dasharray="8 6">
+    <path d="M500 132 V228"/>
+    <path d="M500 412 V488"/>
+    <path d="M398 270 H110 V196"/>
+    <path d="M398 370 H110 V444"/>
+    <path d="M602 270 H890 V196"/>
   </g>
-  <path d="M662 408 H950 V480" fill="none" stroke="#a9b3bd" stroke-width="2.2" stroke-dasharray="4 7"/>
+  <path d="M602 370 H890 V444" fill="none" stroke="#b6bec7" stroke-width="2" stroke-dasharray="8 6"/>
 
-  <!-- Line labels -->
+  <!-- Line labels (white gap on the line) -->
   <g fill="#ffffff">
-    <rect x="496" y="192" width="108" height="26" rx="6"/>
-    <rect x="496" y="498" width="108" height="26" rx="6"/>
-    <rect x="212" y="299" width="176" height="26" rx="6"/>
-    <rect x="236" y="395" width="128" height="26" rx="6"/>
-    <rect x="720" y="299" width="164" height="26" rx="6"/>
-    <rect x="736" y="395" width="132" height="26" rx="6"/>
+    <rect x="452" y="166" width="96" height="28"/>
+    <rect x="456" y="436" width="88" height="28"/>
+    <rect x="212" y="256" width="86" height="28"/>
+    <rect x="222" y="356" width="66" height="28"/>
+    <rect x="712" y="256" width="66" height="28"/>
+    <rect x="705" y="356" width="80" height="28"/>
   </g>
-  <text x="550" y="210" text-anchor="middle" class="lb">read / write</text>
-  <text x="550" y="516" text-anchor="middle" class="lb">CSV · MD · JSON</text>
-  <text x="300" y="317" text-anchor="middle" class="lb">HTTP · Vite proxy</text>
-  <text x="300" y="413" text-anchor="middle" class="lb">JSON import</text>
-  <text x="802" y="317" text-anchor="middle" class="lb">outbox T0 → T3</text>
-  <text x="802" y="413" text-anchor="middle" class="lbg">adapter stub</text>
+  <text x="500" y="186" text-anchor="middle" class="lb">save / load</text>
+  <text x="500" y="456" text-anchor="middle" class="lb">download</text>
+  <text x="255" y="276" text-anchor="middle" class="lb">live data</text>
+  <text x="255" y="376" text-anchor="middle" class="lb">loads</text>
+  <text x="745" y="276" text-anchor="middle" class="lb">sync</text>
+  <text x="745" y="376" text-anchor="middle" class="lb-g">planned</text>
 
-  <!-- Centre: the app -->
-  <rect x="440" y="260" width="220" height="200" rx="18" fill="#eef3fb" stroke="#1b2430" stroke-width="2.5"/>
-  <rect x="498" y="280" width="104" height="70" rx="7" fill="#ffffff" stroke="#1b2430" stroke-width="2.5"/>
-  <rect x="528" y="296" width="44" height="36" rx="5" fill="#fde9e7" stroke="#d2453a" stroke-width="2.2"/>
-  <text x="550" y="320" text-anchor="middle" style="font: 700 17px 'Segoe UI', Arial, sans-serif; fill: #d2453a;">HQ</text>
-  <path d="M540 350 L534 364 H566 L560 350" fill="#ffffff" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round"/>
-  <text x="550" y="398" text-anchor="middle" class="ct">Antarasetu</text>
-  <text x="550" y="420" text-anchor="middle" class="cs">HQ web app · React SPA</text>
-  <text x="550" y="440" text-anchor="middle" class="cs">all state in the browser</text>
+  <!-- Centre -->
+  <rect x="400" y="230" width="200" height="180" rx="16" fill="#eef2f7" stroke="#1f2328" stroke-width="2.5"/>
+  <rect x="455" y="252" width="90" height="62" rx="6" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+  <rect x="480" y="265" width="40" height="34" rx="5" fill="#fdecea" stroke="#d1453b" stroke-width="2"/>
+  <text x="500" y="288" text-anchor="middle" style="font: 700 15px 'Segoe UI', Arial, sans-serif; fill: #d1453b;">HQ</text>
+  <path d="M492 314 L487 328 H513 L508 314" fill="#ffffff" stroke="#1f2328" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="500" y="366" text-anchor="middle" class="ct">Antarasetu</text>
+  <text x="500" y="390" text-anchor="middle" class="lb" style="fill:#57606a">HQ Dashboard</text>
 
-  <!-- Top: browser storage -->
-  <text x="550" y="42" text-anchor="middle" class="nm">Browser storage</text>
-  <text x="550" y="62" text-anchor="middle" class="sb">localStorage · 2 namespaces</text>
-  <g stroke="#1b2430" stroke-width="2.5" fill="#ffffff">
-    <path d="M518 90 V142 A32 10 0 0 0 582 142 V90"/>
-    <ellipse cx="550" cy="90" rx="32" ry="10"/>
-    <path d="M518 108 A32 10 0 0 0 582 108 M518 125 A32 10 0 0 0 582 125" fill="none"/>
+  <!-- Top: Saved Data -->
+  <text x="500" y="38" text-anchor="middle" class="nm">Saved Data</text>
+  <g stroke="#1f2328" stroke-width="2.5" fill="#ffffff">
+    <path d="M472 64 V118 A28 9 0 0 0 528 118 V64"/>
+    <ellipse cx="500" cy="64" rx="28" ry="9"/>
+    <path d="M472 82 A28 9 0 0 0 528 82 M472 100 A28 9 0 0 0 528 100" fill="none"/>
   </g>
 
-  <!-- Bottom: exports -->
-  <g stroke="#b8860b" stroke-width="2.5" stroke-linejoin="round">
-    <path d="M518 572 H538 L544 580 H582 V618 H518 Z" fill="#fbe3a0"/>
-    <path d="M550 586 V608 M541 600 L550 609 L559 600" fill="none" stroke-linecap="round"/>
+  <!-- Bottom: Reports -->
+  <g stroke="#b7860b" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M472 494 H490 L496 502 H528 V540 H472 Z" fill="#fbe3a0"/>
+    <path d="M500 508 V530 M492 522 L500 530 L508 522" fill="none" stroke-linecap="round"/>
   </g>
-  <text x="550" y="648" text-anchor="middle" class="nm">Exports</text>
-  <text x="550" y="668" text-anchor="middle" class="sb">manifest CSV · handover capsule</text>
+  <text x="500" y="572" text-anchor="middle" class="nm">Reports</text>
 
-  <!-- Top-left: NCPOR AWS -->
-  <text x="150" y="120" text-anchor="middle" class="nm">NCPOR Bharati AWS</text>
-  <text x="150" y="140" text-anchor="middle" class="sb">data.ncpor.res.in · XLSX</text>
-  <g stroke="#1f5fa8" stroke-width="2.5" fill="none">
-    <circle cx="145" cy="200" r="30" fill="#3b82d6"/>
-    <ellipse cx="145" cy="200" rx="13" ry="30" stroke="#ffffff"/>
-    <path d="M115 200 H175 M120 185 H170 M120 215 H170" stroke="#ffffff"/>
-    <circle cx="145" cy="200" r="30"/>
+  <!-- Top-left: NCPOR Weather -->
+  <text x="110" y="100" text-anchor="middle" class="nm">NCPOR Weather</text>
+  <g stroke="#ffffff" stroke-width="2.2" fill="none">
+    <circle cx="106" cy="158" r="28" fill="#3b82d6" stroke="#1f5fa8" stroke-width="2.5"/>
+    <ellipse cx="106" cy="158" rx="12" ry="28"/>
+    <path d="M78 158 H134 M82 144 H130 M82 172 H130"/>
+    <circle cx="106" cy="158" r="28" stroke="#1f5fa8" stroke-width="2.5"/>
   </g>
-  <path d="M166 192 H182 V184 L198 200 L182 216 V208 H166 Z" fill="#f59e2a" stroke="#c77712" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M126 151 H140 V143 L155 158 L140 173 V165 H126 Z" fill="#f59e2a" stroke="#c77712" stroke-width="1.5" stroke-linejoin="round"/>
 
-  <!-- Bottom-left: climate snapshots -->
+  <!-- Bottom-left: Climate Records -->
   <g stroke="#2e8b57" stroke-width="2.5" stroke-linejoin="round">
-    <path d="M122 482 H164 L178 496 V548 H122 Z" fill="#e3f4ea"/>
-    <path d="M164 482 V496 H178" fill="none"/>
-    <path d="M131 536 L143 520 L153 528 L168 506" fill="none" stroke-linecap="round"/>
+    <path d="M84 446 H124 L136 458 V504 H84 Z" fill="#e3f4ea"/>
+    <path d="M124 446 V458 H136" fill="none"/>
+    <path d="M93 494 L104 480 L113 487 L127 467" fill="none" stroke-linecap="round"/>
   </g>
-  <text x="150" y="585" text-anchor="middle" class="nm">Climate snapshots</text>
-  <text x="150" y="605" text-anchor="middle" class="sb">SCAR · AMRC · ERA5</text>
+  <text x="110" y="538" text-anchor="middle" class="nm">Climate Records</text>
 
-  <!-- Top-right: station console -->
-  <text x="950" y="120" text-anchor="middle" class="nm">Station console</text>
-  <text x="950" y="140" text-anchor="middle" class="sb">/station · edge, offline-first</text>
+  <!-- Top-right: Station -->
+  <text x="890" y="100" text-anchor="middle" class="nm">Station</text>
   <g stroke="#6a4fb6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M950 186 L932 236 M950 186 L968 236 M938 220 H962 M942 206 H958"/>
-    <circle cx="950" cy="182" r="5" fill="#6a4fb6"/>
-    <path d="M934 170 A22 22 0 0 1 966 170 M925 161 A34 34 0 0 1 975 161"/>
+    <path d="M890 146 L873 190 M890 146 L907 190 M879 175 H901 M883 162 H897"/>
+    <circle cx="890" cy="142" r="5" fill="#6a4fb6"/>
+    <path d="M876 130 A20 20 0 0 1 904 130 M868 122 A31 31 0 0 1 912 122"/>
   </g>
 
-  <!-- Bottom-right: future telemetry -->
-  <g stroke="#8a96a3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-dasharray="5 4">
-    <rect x="928" y="496" width="44" height="34" rx="8" fill="#f3f5f7"/>
+  <!-- Bottom-right: Future Sensors -->
+  <g stroke="#8c959f" stroke-width="2.5" stroke-linecap="round" fill="none">
+    <circle cx="890" cy="478" r="28" fill="#f3f5f7" stroke-dasharray="6 5"/>
+    <path d="M870 486 A22 22 0 0 1 910 486"/>
+    <path d="M890 488 L902 468" stroke-width="3"/>
+    <circle cx="890" cy="488" r="4" fill="#8c959f" stroke="none"/>
   </g>
-  <g stroke="#8a96a3" stroke-width="3" stroke-linecap="round">
-    <path d="M940 484 V496 M960 484 V496 M950 530 V548"/>
-  </g>
-  <text x="950" y="585" text-anchor="middle" class="nm" style="fill:#5d6b7a">Future telemetry</text>
-  <text x="950" y="605" text-anchor="middle" class="sb">fuel · generator · maintenance</text>
+  <text x="890" y="538" text-anchor="middle" class="nm-g">Future Sensors</text>
 </svg>

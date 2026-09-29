@@ -30,7 +30,7 @@ The platform sits at the centre; the eight capabilities around it are the produc
 
 *Vector version: [integrations.svg](integrations.svg)*
 
-Every system the app touches, with how it connects. The only live external feed is NCPOR, reached through a dev-only Vite proxy because the endpoint sends no CORS header. The fuel, generator and maintenance adapters exist but return `null`.
+Everything the HQ dashboard connects to. **Saved Data** is the browser's own storage. **NCPOR Weather** is the one live outside feed. **Climate Records** are saved weather files. **Station** is the station console, which syncs when the link is up. **Reports** are the files you can download. **Future Sensors** (fuel, generator, maintenance) are planned but not connected yet.
 
 ---
 

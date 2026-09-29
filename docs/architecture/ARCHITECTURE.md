@@ -24,6 +24,16 @@ The platform sits at the centre; the eight capabilities around it are the produc
 
 ---
 
+## Integration map
+
+![Antarasetu integration map](integrations.png)
+
+*Vector version: [integrations.svg](integrations.svg)*
+
+Every system the app touches, with how it connects. The only live external feed is NCPOR, reached through a dev-only Vite proxy because the endpoint sends no CORS header. The fuel, generator and maintenance adapters exist but return `null`.
+
+---
+
 ## 1. Technical diagram (as built)
 
 ![Technical architecture diagram](technical.png)

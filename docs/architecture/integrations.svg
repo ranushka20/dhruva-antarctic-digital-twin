@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" role="img" aria-label="Integration map: the Antarasetu HQ web app in the centre connects to browser storage (read/write), the NCPOR Bharati AWS feed (HTTP via a Vite proxy), climate snapshots (JSON import), the station console (outbox sync T0 to T3), file exports (CSV, Markdown, JSON), and future telemetry adapters that are still stubs.">
+  <style><![CDATA[
+    .nm { font: 700 18px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1b2430; }
+    .sb { font: 500 12.5px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #5d6b7a; }
+    .lb { font: 700 13px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #1b2430; }
+    .lbg { font: 700 13px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #8a96a3; }
+    .ct { font: 700 22px "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: #1b2430; }
+    .cs { font: 500 12.5px "Cascadia Mono", Consolas, "SF Mono", monospace; fill: #5d6b7a; }
+  ]]></style>
+  <rect width="1100" height="700" fill="#ffffff"/>
+
+  <!-- Connection lines -->
+  <g fill="none" stroke="#1b2430" stroke-width="2.2" stroke-dasharray="9 7">
+    <path d="M550 154 V258"/>
+    <path d="M550 462 V560"/>
+    <path d="M438 312 H150 V240"/>
+    <path d="M438 408 H150 V480"/>
+    <path d="M662 312 H950 V240"/>
+  </g>
+  <path d="M662 408 H950 V480" fill="none" stroke="#a9b3bd" stroke-width="2.2" stroke-dasharray="4 7"/>
+
+  <!-- Line labels -->
+  <g fill="#ffffff">
+    <rect x="496" y="192" width="108" height="26" rx="6"/>
+    <rect x="496" y="498" width="108" height="26" rx="6"/>
+    <rect x="212" y="299" width="176" height="26" rx="6"/>
+    <rect x="236" y="395" width="128" height="26" rx="6"/>
+    <rect x="720" y="299" width="164" height="26" rx="6"/>
+    <rect x="736" y="395" width="132" height="26" rx="6"/>
+  </g>
+  <text x="550" y="210" text-anchor="middle" class="lb">read / write</text>
+  <text x="550" y="516" text-anchor="middle" class="lb">CSV · MD · JSON</text>
+  <text x="300" y="317" text-anchor="middle" class="lb">HTTP · Vite proxy</text>
+  <text x="300" y="413" text-anchor="middle" class="lb">JSON import</text>
+  <text x="802" y="317" text-anchor="middle" class="lb">outbox T0 → T3</text>
+  <text x="802" y="413" text-anchor="middle" class="lbg">adapter stub</text>
+
+  <!-- Centre: the app -->
+  <rect x="440" y="260" width="220" height="200" rx="18" fill="#eef3fb" stroke="#1b2430" stroke-width="2.5"/>
+  <rect x="498" y="280" width="104" height="70" rx="7" fill="#ffffff" stroke="#1b2430" stroke-width="2.5"/>
+  <rect x="528" y="296" width="44" height="36" rx="5" fill="#fde9e7" stroke="#d2453a" stroke-width="2.2"/>
+  <text x="550" y="320" text-anchor="middle" style="font: 700 17px 'Segoe UI', Arial, sans-serif; fill: #d2453a;">HQ</text>
+  <path d="M540 350 L534 364 H566 L560 350" fill="#ffffff" stroke="#1b2430" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="550" y="398" text-anchor="middle" class="ct">Antarasetu</text>
+  <text x="550" y="420" text-anchor="middle" class="cs">HQ web app · React SPA</text>
+  <text x="550" y="440" text-anchor="middle" class="cs">all state in the browser</text>
+
+  <!-- Top: browser storage -->
+  <text x="550" y="42" text-anchor="middle" class="nm">Browser storage</text>
+  <text x="550" y="62" text-anchor="middle" class="sb">localStorage · 2 namespaces</text>
+  <g stroke="#1b2430" stroke-width="2.5" fill="#ffffff">
+    <path d="M518 90 V142 A32 10 0 0 0 582 142 V90"/>
+    <ellipse cx="550" cy="90" rx="32" ry="10"/>
+    <path d="M518 108 A32 10 0 0 0 582 108 M518 125 A32 10 0 0 0 582 125" fill="none"/>
+  </g>
+
+  <!-- Bottom: exports -->
+  <g stroke="#b8860b" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M518 572 H538 L544 580 H582 V618 H518 Z" fill="#fbe3a0"/>
+    <path d="M550 586 V608 M541 600 L550 609 L559 600" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="550" y="648" text-anchor="middle" class="nm">Exports</text>
+  <text x="550" y="668" text-anchor="middle" class="sb">manifest CSV · handover capsule</text>
+
+  <!-- Top-left: NCPOR AWS -->
+  <text x="150" y="120" text-anchor="middle" class="nm">NCPOR Bharati AWS</text>
+  <text x="150" y="140" text-anchor="middle" class="sb">data.ncpor.res.in · XLSX</text>
+  <g stroke="#1f5fa8" stroke-width="2.5" fill="none">
+    <circle cx="145" cy="200" r="30" fill="#3b82d6"/>
+    <ellipse cx="145" cy="200" rx="13" ry="30" stroke="#ffffff"/>
+    <path d="M115 200 H175 M120 185 H170 M120 215 H170" stroke="#ffffff"/>
+    <circle cx="145" cy="200" r="30"/>
+  </g>
+  <path d="M166 192 H182 V184 L198 200 L182 216 V208 H166 Z" fill="#f59e2a" stroke="#c77712" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Bottom-left: climate snapshots -->
+  <g stroke="#2e8b57" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M122 482 H164 L178 496 V548 H122 Z" fill="#e3f4ea"/>
+    <path d="M164 482 V496 H178" fill="none"/>
+    <path d="M131 536 L143 520 L153 528 L168 506" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="150" y="585" text-anchor="middle" class="nm">Climate snapshots</text>
+  <text x="150" y="605" text-anchor="middle" class="sb">SCAR · AMRC · ERA5</text>
+
+  <!-- Top-right: station console -->
+  <text x="950" y="120" text-anchor="middle" class="nm">Station console</text>
+  <text x="950" y="140" text-anchor="middle" class="sb">/station · edge, offline-first</text>
+  <g stroke="#6a4fb6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M950 186 L932 236 M950 186 L968 236 M938 220 H962 M942 206 H958"/>
+    <circle cx="950" cy="182" r="5" fill="#6a4fb6"/>
+    <path d="M934 170 A22 22 0 0 1 966 170 M925 161 A34 34 0 0 1 975 161"/>
+  </g>
+
+  <!-- Bottom-right: future telemetry -->
+  <g stroke="#8a96a3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-dasharray="5 4">
+    <rect x="928" y="496" width="44" height="34" rx="8" fill="#f3f5f7"/>
+  </g>
+  <g stroke="#8a96a3" stroke-width="3" stroke-linecap="round">
+    <path d="M940 484 V496 M960 484 V496 M950 530 V548"/>
+  </g>
+  <text x="950" y="585" text-anchor="middle" class="nm" style="fill:#5d6b7a">Future telemetry</text>
+  <text x="950" y="605" text-anchor="middle" class="sb">fuel · generator · maintenance</text>
+</svg>

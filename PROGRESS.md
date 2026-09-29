@@ -307,6 +307,14 @@
 - Touchpoint completed? none. #7 (`?station=` / `?tier=` / `?state=`) still pre-fills.
 - Notes for the other developer: if the Twin needs a "Raise action" entry point, reuse `RaiseActionDialog` (props: `stationId`, `onClose`, `onRaised`).
 
+### [2026-09-30 01:45] Dev A (at the user's request) — Full-screen view for the 3D twin
+- Status: done. The build passes and `tsc` shows nothing new. I tested it in headless Chrome: full screen opens, the floors switch, and exit restores the page.
+- Files changed: `src/hooks/useFullscreen.ts` (new), `src/twin/Bharati3D.jsx`, `src/pages/Twin/index.tsx`.
+- Summary: A full-screen button now sits next to the "Zone model" badge in the 3D view. It uses the browser Fullscreen API on the centre viewport, so the legend, caption and staleness banner come along. In full screen the button reads "Exit full screen" (Esc also works). A floor picker stacked top floor first replaces the hidden left panel and shows the same worst-status dot. Browsers without the Fullscreen API (iPhone Safari) don't show the button.
+- Touches shared contract? no. `Bharati3D` gained an optional `controls` prop, rendered beside the badge.
+- Touchpoint completed? none.
+- Notes for the other developer: none.
+
 ---
 
 ## Integration & Review

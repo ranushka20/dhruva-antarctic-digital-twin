@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy, type RefObject } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ChevronDown, GripVertical } from 'lucide-react';
+import { ChevronDown, GripVertical, Maximize2, Minimize2 } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { IsoStationModel } from '@/components/viz/IsoStationModel';
 import { ZoneTrace } from '@/components/shared/ZoneTrace';
@@ -22,6 +22,7 @@ import { useStoreValue } from '@/state/useStore';
 import { useCan } from '@/state/auth';
 import { useSyncInfo } from '@/state/connectivity';
 import { formatAge } from '@/lib/time';
+import { useFullscreen } from '@/hooks/useFullscreen';
 import { FLOORS, floorsForZone, getRoom, roomsForZone, twinZoneStatus, zoneForRoom } from '@/twin/zoneRooms';
 import { roomTraceProfile } from '@/twin/roomProfiles';
 import { zoneSubject } from '@/twin/zoneSubject';
@@ -156,6 +157,10 @@ export default function TwinPage() {
   const rightRef = useRef<HTMLDivElement>(null);
   const [leftWidth, setLeftWidth] = usePanelWidth(LEFT_PANEL);
   const [rightWidth, setRightWidth] = usePanelWidth(RIGHT_PANEL);
+
+  // --- Full screen: the whole centre viewport, so the legend comes along ---
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const fullscreen = useFullscreen(viewportRef);
 
   // --- Derived Data ---
   const zones: ZoneModel[] = useMemo(() => stationData?.zones ?? [], [stationData]);
@@ -451,10 +456,10 @@ export default function TwinPage() {
         </div>
 
         {/* Centre Column: Render Viewport */}
-        <div className="flex-1 min-w-[20rem] relative bg-[var(--bg)] overflow-hidden flex flex-col">
-          {/* Capped short of the 3D's top-right "Zone model" badge, so on a
-              narrow viewport the legend wraps instead of sliding under it. */}
-          <div className="absolute top-4 left-4 z-10 max-w-[calc(100%-18rem)] bg-[var(--panel)] border border-[var(--line)] rounded-xl px-4 py-2 text-body-sm text-[var(--text-2)] flex items-center gap-x-4 gap-y-1 flex-wrap">
+        <div ref={viewportRef} className="flex-1 min-w-[20rem] relative bg-[var(--bg)] overflow-hidden flex flex-col">
+          {/* Capped short of the 3D's top-right badge and full-screen button,
+              so on a narrow viewport the legend wraps instead of sliding under. */}
+          <div className="absolute top-4 left-4 z-10 max-w-[calc(100%-21rem)] bg-[var(--panel)] border border-[var(--line)] rounded-xl px-4 py-2 text-body-sm text-[var(--text-2)] flex items-center gap-x-4 gap-y-1 flex-wrap">
             {(['ok', 'watch', 'warning', 'unknown'] as const).map((s) => (
               <span key={s} className="flex items-center gap-2">
                 <StatusDot status={s} size={10} />
@@ -480,8 +485,58 @@ export default function TwinPage() {
                    selectedAsset={highlightRoom}
                    zoneStatus={twinStatus}
                    sync={twinSync}
+                   controls={
+                     fullscreen.supported && (
+                       <button
+                         type="button"
+                         onClick={fullscreen.toggle}
+                         aria-label={fullscreen.active ? 'Exit full screen' : 'Full screen'}
+                         title={fullscreen.active ? 'Exit full screen (Esc)' : 'Show the 3D model full screen'}
+                         className="min-h-10 min-w-10 px-2.5 flex items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] text-body-sm font-medium text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--panel-raised)]"
+                       >
+                         {fullscreen.active ? (
+                           <>
+                             <Minimize2 aria-hidden className="size-5" />
+                             Exit full screen
+                           </>
+                         ) : (
+                           <Maximize2 aria-hidden className="size-5" />
+                         )}
+                       </button>
+                     )
+                   }
                  />
                </Suspense>
+
+              {/* The floors list lives in the left panel, which full screen
+                  hides — so the floors come along, stacked top floor first. */}
+              {fullscreen.active && (
+                <div
+                  role="group"
+                  aria-label="Floor"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-1 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-1"
+                >
+                  {[...FLOORS].reverse().map((f) => {
+                    const worst = zonesOnFloor(f.id)[0]?.status;
+                    return (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => f.id !== floor && chooseFloor(f.id)}
+                        aria-pressed={floor === f.id}
+                        className={`${segBtn(floor === f.id)} flex items-center justify-between gap-3 text-left`}
+                      >
+                        {f.label}
+                        {worst && worst !== 'ok' && (
+                          <span title={`A zone on this floor: ${STATUS_WORD[worst]}`}>
+                            <StatusDot status={worst} size={9} />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

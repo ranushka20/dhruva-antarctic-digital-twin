@@ -119,6 +119,8 @@ export default function Bharati3D({
   selectedAsset,
   zoneStatus,
   sync = { state: "live", staleness: 0, label: "just now" },
+  // Page-owned buttons (e.g. full screen), set beside the model badge.
+  controls,
 }) {
   const caption = VIEW_CAPTIONS[floor];
 
@@ -187,10 +189,11 @@ export default function Bharati3D({
         </div>
       )}
 
-      <div className="pointer-events-none absolute top-4 right-4 z-10">
+      <div className="pointer-events-none absolute top-4 right-4 z-10 flex items-center gap-2">
         <Badge className="bg-popover/85 shadow-sm backdrop-blur-sm" variant="outline">
           Zone model · not an as-built survey
         </Badge>
+        {controls && <div className="pointer-events-auto">{controls}</div>}
       </div>
 
       <span className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-md border bg-popover/85 px-2.5 py-1.5 text-muted-foreground text-xs shadow-sm backdrop-blur-sm">

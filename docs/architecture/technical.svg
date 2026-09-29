@@ -1,5 +1,5 @@
 <svg width="1400" height="960" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 960" role="img" aria-label="Technical architecture: data sources feed an ingest layer and localStorage; the shared contract and the state read layer feed the pages; the station console, outbox, link simulator and drain form the offline sync path to HQ. Amber paths show where Dev A pages read mock JSON directly and where the only real NCPOR feed reaches an orphaned legacy file.">
-  <style>svg{
+  <style><![CDATA[svg{
   --bg: #040a14;
   --panel: #07122a;
   --card: #0a1a31;
@@ -15,7 +15,7 @@
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   
-}/* SVG classes (styled from the page, no <style> inside the SVGs) */
+}
 .fr-outer { fill: none; stroke: var(--glow); stroke-width: 1.4; stroke-opacity: .55; }
 .fr { fill: rgba(8, 22, 46, .55); stroke: var(--glow); stroke-width: 1.6; }
 .pan { fill: var(--panel); stroke: var(--edge); stroke-width: 1.2; }
@@ -40,7 +40,7 @@
 .chip { fill: #0b2140; stroke: var(--edge); }
 .dot-ok { fill: var(--ok); } .dot-g { fill: var(--glow); } .dot-f { fill: var(--faint); } .dot-s { fill: var(--sim); } .dot-w { fill: var(--warn); }
 
-</style>
+]]></style>
   <defs>
     <filter id="g1" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#38c6ff"/></marker>
@@ -127,7 +127,7 @@
 
   <rect x="505" y="280" width="390" height="72" rx="10" class="cd"/>
   <text x="523" y="308" class="t-t">Coupling engine · runCausalTrace()</text>
-  <text x="523" y="332" class="t-mg">HDD → heat loss → demand → fuel burn → autonomy → LSOD → risk</text>
+  <text x="523" y="332" class="t-mg">HDD → heat loss → demand → fuel → autonomy → LSOD → risk</text>
 
   <rect x="505" y="364" width="390" height="72" rx="10" class="cd"/>
   <text x="523" y="392" class="t-t">Hash chain</text>
@@ -137,7 +137,7 @@
   <text x="523" y="476" class="t-t">Local-store simulations · outbox</text>
   <text x="523" y="500" class="t-m">connectivity · useActionTransitions · decrementResource</text>
 
-  <text x="700" y="545" text-anchor="middle" class="t-f">engine/*.ts re-export this · engine/similarity.ts adds TF-IDF fault search</text>
+  <text x="700" y="545" text-anchor="middle" class="t-f">engine/*.ts re-exports this · similarity.ts = TF-IDF</text>
 
   <!-- Hub: state/ -->
   <rect x="950" y="132" width="150" height="338" rx="14" class="pan"/>
@@ -175,7 +175,7 @@
   <text x="1154" y="511" class="t-m">CausalTrace · SyncPill</text>
   <text x="1154" y="527" class="t-m">DegradableSurface · Badge</text>
 
-  <path d="M1100 314 H1138" class="ln" marker-end="url(#a1)"/><text x="1120" y="307" text-anchor="middle" class="t-a">useStoreValue</text>
+  <path d="M1100 314 H1138" class="ln" marker-end="url(#a1)"/><text x="1120" y="307" text-anchor="middle" class="t-a">reads</text>
   <path d="M1100 196 H1138" class="ln-f" marker-end="url(#f1)"/><text x="1120" y="189" text-anchor="middle" class="t-f">Sandbox</text>
   <path d="M1140 505 H922" class="ln" marker-end="url(#a1)"/><text x="1000" y="498" text-anchor="middle" class="t-a">runCausalTrace()</text>
 
@@ -211,7 +211,7 @@
   <!-- Bottom row: offline-first path -->
   <text x="60" y="744" class="t-l">OFFLINE-FIRST PATH · STATION EDGE → HQ</text>
   <path d="M600 680 V724 H430 V758" class="ln-f" marker-end="url(#f1)"/>
-  <text x="608" y="716" class="t-f">station:outbox bucket</text>
+  <text x="612" y="744" class="t-f">station:outbox bucket</text>
 
   <rect x="70" y="760" width="200" height="96" rx="12" class="cd-hot"/>
   <text x="86" y="786" class="t-t">Station console</text>

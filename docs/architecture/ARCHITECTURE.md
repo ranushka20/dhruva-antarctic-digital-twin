@@ -16,7 +16,9 @@ Traced from `main @ a35f823` on 2026-09-30: router, the shared contract, `state/
 
 ## 1. Technical diagram (as built)
 
-![Technical architecture diagram](technical.svg)
+![Technical architecture diagram](technical.png)
+
+*Vector version: [technical.svg](technical.svg)*
 
 **How to read it**
 
@@ -28,7 +30,9 @@ Traced from `main @ a35f823` on 2026-09-30: router, the shared contract, `state/
 
 ## 2. Conceptual diagram
 
-![Conceptual architecture diagram](conceptual.svg)
+![Conceptual architecture diagram](conceptual.png)
+
+*Vector version: [conceptual.svg](conceptual.svg)*
 
 Four domains (infrastructure, energy, logistics, environment) feed one station state model. Inside it, one cause-and-effect chain turns a drop in temperature into the date by which fuel must be ordered:
 

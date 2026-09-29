@@ -3,30 +3,26 @@
 // separates this from a ticket list. It carries the operational cost of
 // inaction, straight from the coupling engine.
 //
-// Readability layout: each row leads with the full action title (wrapping,
-// never truncated) and a spaced meta line for station, status, age, owner and
-// location. Only the NEXT sensible step is an inline button; the other
-// transitions sit behind "More" and in the drawer (row click).
+// Readability layout: each row is the title, one meta line (station, age,
+// where it stands) and the cost of inaction. Only the NEXT step is an inline
+// button, from the shared ActionSteps; the other legal moves sit behind the
+// "…" menu and in the drawer (row click). Zone, asset and trigger detail live
+// in the drawer, not here.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal } from 'lucide-react';
-import type { Action } from '@/shared/contracts';
+import { canTransition } from '@/shared/contracts';
 import type { DerivedAction } from '@/state/data';
 import { TierChip } from '@/components/shared/TierChip';
-import { StatusDot } from '@/components/shared/StatusDot';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { STEPS, StepBars, consequenceText, describeStanding, nextStep } from '@/components/shared/ActionSteps';
 import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { formatDuration } from '@/lib/time';
 import { SYNC_OPACITY } from '@/lib/freshness';
 import { usePresence } from '@/hooks/usePresence';
-import { STATE_HINT, STATE_LABEL, TIER_META } from './TierRail';
+import { STATE_HINT, TIER_META } from './TierRail';
 
 export type SortKey = 'priority' | 'tier' | 'title' | 'station' | 'state' | 'age' | 'owner' | 'consequence';
-
-const STATE_DOT: Record<Action['state'], 'ok' | 'watch' | 'warning' | 'unknown'> = {
-  RAISED: 'warning', ACKNOWLEDGED: 'watch', ASSIGNED: 'watch',
-  IN_PROGRESS: 'watch', RESOLVED: 'ok', DEFERRED: 'unknown',
-};
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'priority', label: 'Priority (recommended)' },
@@ -41,11 +37,10 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 
 interface Props {
   actions: DerivedAction[];
-  selectedIds: Set<string>;
   cursorId: string | null;
   canWrite: boolean;
-  onToggleSelect: (id: string) => void;
-  onToggleAll: () => void;
+  /** Shown when the current tab and filters leave nothing to list. */
+  emptyReason: string;
   onOpen: (id: string) => void;
   onAck: (id: string) => void;
   onAssign: (id: string) => void;
@@ -60,8 +55,7 @@ const WINDOW_SIZE = 120;
 const CELL_BORDER = { borderBottom: '1px solid var(--line)' } as const;
 
 export function ActionTable({
-  actions, selectedIds, cursorId, canWrite,
-  onToggleSelect, onToggleAll, onOpen, onAck, onAssign, onDefer, onResolve,
+  actions, cursorId, canWrite, emptyReason, onOpen, onAck, onAssign, onDefer, onResolve,
 }: Props) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'priority', dir: 1 });
   const [windowEnd, setWindowEnd] = useState(WINDOW_SIZE);
@@ -88,39 +82,16 @@ export function ActionTable({
   }, [actions, sort]);
 
   const windowed = sorted.length > WINDOW_THRESHOLD ? sorted.slice(0, windowEnd) : sorted;
-  const allSelected = actions.length > 0 && actions.every((a) => selectedIds.has(a.id));
-
-  const sortBy = (key: SortKey) =>
-    setSort((s) => ({ key, dir: s.key === key && s.dir === 1 ? -1 : 1 }));
 
   if (actions.length === 0) {
-    return (
-      <EmptyState reason="No actions match these filters. Clear a tier or state filter, or widen the station scope to All — a Maitri action can outrank a Bharati one, so scope matters." />
-    );
+    return <EmptyState reason={`${emptyReason} Clear a filter or widen the station scope to All.`} />;
   }
-
-  const headerButton = (key: SortKey, label: string) => (
-    <button
-      type="button"
-      onClick={() => sortBy(key)}
-      className="inline-flex items-center gap-1.5 text-body-sm font-medium min-h-8"
-      style={{ color: sort.key === key ? 'var(--text)' : 'var(--text-3)' }}
-      aria-label={`Sort by ${label}`}
-    >
-      {label}
-      {sort.key === key && (sort.dir === 1 ? <ArrowUp size={14} aria-hidden /> : <ArrowDown size={14} aria-hidden />)}
-    </button>
-  );
 
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Sort toolbar ---- */}
-      <div className="flex items-center gap-x-3 gap-y-2 flex-wrap px-2 pb-3 shrink-0">
-        <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
-          <span className="font-mono tabular-nums" style={{ color: 'var(--text)' }}>{actions.length}</span>{' '}
-          action{actions.length === 1 ? '' : 's'}
-        </p>
-        <label className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center justify-end gap-x-3 gap-y-2 flex-wrap px-2 pb-3 shrink-0">
+        <label className="flex items-center gap-2">
           <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Sort by</span>
           <span className="relative">
             <select
@@ -154,142 +125,70 @@ export function ActionTable({
       </div>
 
       <div className="flex-1 min-h-0 overflow-auto">
-        <table className="w-full min-w-[36rem] border-collapse">
-          <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--panel)' }}>
-            <tr>
-              <th className="w-11 pl-4 pr-2 pb-2 text-left align-bottom" style={{ borderBottom: '1px solid var(--line-strong)' }}>
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={onToggleAll}
-                  aria-label="Select all visible actions"
-                  disabled={!canWrite}
-                  className="w-4 h-4 align-middle cursor-pointer"
-                  style={{ accentColor: 'var(--text-2)' }}
-                />
-              </th>
-              <th className="pb-2 pr-4 text-left font-normal align-bottom" style={{ borderBottom: '1px solid var(--line-strong)' }}>
-                {headerButton('title', 'Action')}
-              </th>
-              <th className="hidden 2xl:table-cell w-[15rem] pb-2 pr-4 text-left font-normal align-bottom" style={{ borderBottom: '1px solid var(--line-strong)' }}>
-                {headerButton('consequence', 'If nobody acts')}
-              </th>
-              <th className="pb-2 pr-4 text-right font-normal align-bottom" style={{ borderBottom: '1px solid var(--line-strong)' }}>
-                <span className="text-body-sm font-medium" style={{ color: 'var(--text-3)' }}>Next step</span>
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {windowed.map((a) => (
-              <tr
+        <ul className="flex flex-col" aria-label="Actions">
+          {windowed.map((a) => {
+            const standing = describeStanding(a);
+            const consequence = consequenceText(a);
+            const overdueBy = a.sla.elapsedSeconds - a.sla.targetSeconds;
+            return (
+              <li
                 key={a.id}
                 onClick={() => onOpen(a.id)}
-                className="cursor-pointer hover:bg-[var(--panel-raised)]"
+                className="flex items-start gap-4 px-3 py-3.5 cursor-pointer rounded-lg hover:bg-[var(--panel-raised)]"
                 style={{
+                  borderBottom: '1px solid var(--line)',
                   opacity: SYNC_OPACITY[a.syncState],
                   backgroundColor: a.id === cursorId ? 'var(--panel-raised)' : undefined,
                   outline: a.id === cursorId ? '1px solid var(--ok-soft)' : undefined,
                 }}
               >
-                <td className="pl-4 pr-2 py-3 align-top" style={CELL_BORDER} onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(a.id)}
-                    onChange={() => onToggleSelect(a.id)}
-                    aria-label={'Select ' + a.title}
-                    disabled={!canWrite}
-                    className="w-4 h-4 mt-1 cursor-pointer"
-                    style={{ accentColor: 'var(--text-2)' }}
-                  />
-                </td>
+                <span className="shrink-0 mt-0.5" title={`${a.tier} — ${TIER_META[a.tier].label}`}>
+                  <TierChip tier={a.tier} />
+                </span>
 
-                <td className="py-3 pr-4 align-top" style={CELL_BORDER}>
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="flex items-center gap-1.5 shrink-0 mt-0.5"
-                      title={`${a.tier} — ${TIER_META[a.tier].label}`}
-                    >
-                      {a.tier === 'T0' && (
-                        <span style={{ width: 9, height: 9, backgroundColor: 'var(--act)', borderRadius: 2 }} aria-hidden />
-                      )}
-                      <TierChip tier={a.tier} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-body font-medium line-clamp-2 max-w-[70ch]" style={{ color: 'var(--text)' }} title={a.title}>
+                    {a.title}
+                  </p>
+
+                  <div className="flex items-center gap-x-3 gap-y-1 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
+                    <span title={STATION_CODE[a.stationId]}>{STATION_LABEL[a.stationId]}</span>
+                    <span aria-hidden>·</span>
+                    <span>
+                      open{' '}
+                      <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{formatDuration(a.ageSeconds)}</span>
+                      {a.syncState !== 'LIVE' && <span> as of last sync</span>}
                     </span>
-
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-body font-medium line-clamp-2 max-w-[70ch]"
-                        style={{ color: 'var(--text)' }}
-                        title={a.title}
+                    <span aria-hidden>·</span>
+                    <span className="inline-flex items-center gap-2" title={`${STATE_HINT[a.state]} (${a.state})`}>
+                      <StepBars action={a} />
+                      <span style={{ color: a.state === 'RAISED' ? 'var(--act-soft)' : 'var(--text-2)' }}>{standing.now}</span>
+                    </span>
+                    {a.sla.breached && (
+                      <span
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
+                        style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
+                        title={`Response target ${formatDuration(a.sla.targetSeconds)} (SLA)`}
                       >
-                        {a.title}
-                      </p>
-
-                      <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-1 text-body-sm" style={{ color: 'var(--text-3)' }}>
-                        <span
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
-                          style={{ backgroundColor: 'var(--panel-alt)', border: '1px solid var(--line)', color: 'var(--text-2)' }}
-                          title={STATION_CODE[a.stationId]}
-                        >
-                          {STATION_LABEL[a.stationId]}
-                        </span>
-
-                        <span className="inline-flex items-center gap-2" title={`${STATE_HINT[a.state]} (${a.state})`}>
-                          <StatusDot status={STATE_DOT[a.state]} size={8} />
-                          <span style={{ color: 'var(--text-2)' }}>{STATE_LABEL[a.state]}</span>
-                        </span>
-
-                        {a.sla.breached && (
-                          <span
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-md text-caption font-medium"
-                            style={{ color: 'var(--act-soft)', border: '1px solid rgba(242,107,33,0.45)' }}
-                            title={`SLA target ${formatDuration(a.sla.targetSeconds)} — over by ${formatDuration(a.sla.elapsedSeconds - a.sla.targetSeconds)}`}
-                          >
-                            Overdue by&nbsp;<span className="font-mono tabular-nums">{formatDuration(a.sla.elapsedSeconds - a.sla.targetSeconds)}</span>
-                          </span>
-                        )}
-
-                        <span>
-                          Open{' '}
-                          <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>
-                            {formatDuration(a.ageSeconds)}
-                          </span>
-                          {a.syncState !== 'LIVE' && <span> (as of last sync)</span>}
-                        </span>
-
-                        <span>
-                          {a.assignee ? (
-                            <>Owner <span style={{ color: 'var(--text-2)' }}>{a.assignee.name}</span></>
-                          ) : (
-                            'No owner yet'
-                          )}
-                        </span>
-
-                        {(a.zoneCode || a.assetId || a.trigger.metricName) && (
-                          <span className="inline-flex items-center gap-2 min-w-0" title="Zone and asset (or the metric that raised it)" style={{ color: 'var(--text-3)' }}>
-                            {a.zoneCode && <span className="font-mono">{a.zoneCode}</span>}
-                            {a.assetId ? (
-                              <span className="font-mono">{a.assetId}</span>
-                            ) : (
-                              <span>{a.trigger.metricName}</span>
-                            )}
-                          </span>
-                        )}
-
-                        {/* Consequence joins the meta line below 2xl, where it has no column. */}
-                        <span className="2xl:hidden">
-                          <Consequence action={a} inline />
-                        </span>
-                      </div>
-                    </div>
+                        Overdue by&nbsp;<span className="font-mono tabular-nums">{formatDuration(overdueBy)}</span>
+                      </span>
+                    )}
                   </div>
-                </td>
 
-                <td className="hidden 2xl:table-cell py-3 pr-4 align-top" style={CELL_BORDER}>
-                  <Consequence action={a} />
-                </td>
+                  {consequence && (
+                    <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
+                      If nobody acts:{' '}
+                      <span
+                        className="font-mono"
+                        style={{ color: a.consequence?.kind === 'safety' ? 'var(--act-soft)' : 'var(--watch-soft)' }}
+                      >
+                        {consequence}
+                      </span>
+                    </p>
+                  )}
+                </div>
 
-                <td className="py-3 pr-4 align-top text-right whitespace-nowrap" style={CELL_BORDER} onClick={(e) => e.stopPropagation()}>
+                <div className="shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                   <RowActions
                     action={a}
                     canWrite={canWrite}
@@ -299,11 +198,11 @@ export function ActionTable({
                     onDefer={onDefer}
                     onResolve={onResolve}
                   />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
 
         {sorted.length > windowed.length && (
           <div className="py-4 text-center">
@@ -324,31 +223,6 @@ export function ActionTable({
   );
 }
 
-function Consequence({ action: a, inline = false }: { action: DerivedAction; inline?: boolean }) {
-  if (a.consequenceLabel) {
-    return (
-      <span className={inline ? 'inline-flex items-baseline gap-2 flex-wrap' : 'block'}>
-        {inline && <span style={{ color: 'var(--text-3)' }}>If nobody acts:</span>}
-        <span
-          className="font-mono text-body-sm"
-          style={{ color: a.consequence?.kind === 'safety' ? 'var(--act-soft)' : 'var(--watch-soft)' }}
-        >
-          {a.consequenceLabel}
-        </span>
-      </span>
-    );
-  }
-  return (
-    <span
-      className="text-body-sm"
-      style={{ color: 'var(--text-3)' }}
-      title="The coupling engine produces no consequence for this trigger"
-    >
-      {inline ? 'If nobody acts: no consequence modelled' : 'No consequence modelled'}
-    </span>
-  );
-}
-
 type Step = { label: string; run: () => void; enabled: boolean };
 
 function RowActions({
@@ -359,21 +233,19 @@ function RowActions({
   onAck: (id: string) => void; onAssign: (id: string) => void;
   onDefer: (id: string) => void; onResolve: (id: string) => void;
 }) {
-  const open = action.state !== 'RESOLVED';
-  // Same enablement rules as before the redesign — only the presentation changed.
+  // Enablement comes from the state machine itself, so the menu never offers
+  // a move it would reject (e.g. re-assigning an ASSIGNED action).
+  const legal = (to: Parameters<typeof canTransition>[1]) => canTransition(action.state, to).ok;
+  const verb = (key: 'ack' | 'assign' | 'resolve') => STEPS.find((s) => s.key === key)!.verb;
   const steps: Record<'ack' | 'assign' | 'defer' | 'resolve', Step> = {
-    ack: { label: 'Acknowledge', run: () => onAck(action.id), enabled: action.state === 'RAISED' },
-    assign: { label: 'Assign', run: () => onAssign(action.id), enabled: open },
-    defer: { label: 'Defer', run: () => onDefer(action.id), enabled: open && action.state !== 'DEFERRED' },
-    resolve: { label: 'Resolve', run: () => onResolve(action.id), enabled: action.state === 'ASSIGNED' || action.state === 'IN_PROGRESS' },
+    ack: { label: verb('ack'), run: () => onAck(action.id), enabled: legal('ACKNOWLEDGED') && action.state === 'RAISED' },
+    assign: { label: verb('assign'), run: () => onAssign(action.id), enabled: legal('ASSIGNED') },
+    defer: { label: 'Defer', run: () => onDefer(action.id), enabled: legal('DEFERRED') },
+    resolve: { label: verb('resolve'), run: () => onResolve(action.id), enabled: legal('RESOLVED') },
   };
 
-  // The one inline step: what this action most plausibly needs next.
-  const primaryKey: keyof typeof steps | null =
-    action.state === 'RAISED' ? 'ack'
-    : action.state === 'ACKNOWLEDGED' || action.state === 'DEFERRED' ? 'assign'
-    : action.state === 'ASSIGNED' || action.state === 'IN_PROGRESS' ? 'resolve'
-    : null;
+  // The one inline step — the same next step the drawer and Overview show.
+  const primaryKey = nextStep(action.state);
   const primary = primaryKey ? steps[primaryKey] : null;
   const rest = (Object.keys(steps) as (keyof typeof steps)[])
     .filter((k) => k !== primaryKey && steps[k].enabled)
@@ -404,7 +276,7 @@ function RowActions({
           {primary.label}
         </button>
       ) : (
-        <span className="text-body-sm px-2" style={{ color: 'var(--text-3)' }}>Closed</span>
+        <span className="text-body-sm px-2" style={{ color: 'var(--text-3)' }}>Resolved</span>
       )}
 
       <MoreMenu
@@ -454,11 +326,10 @@ function MoreMenu({
         aria-expanded={open}
         aria-label={`More options for ${title}`}
         title="More options"
-        className="inline-flex items-center justify-center gap-1.5 px-3 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+        className="inline-flex items-center justify-center w-9 min-h-9 rounded-full hover:bg-[var(--panel-alt)]"
         style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
       >
         <MoreHorizontal size={16} aria-hidden />
-        <span className="hidden xl:inline">More</span>
       </button>
 
       {presence.mounted && (

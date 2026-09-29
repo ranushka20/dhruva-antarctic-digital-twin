@@ -10,19 +10,51 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Rows3, Search } from 'lucide-react';
 import type { Action, Tier } from '@/shared/contracts';
 import { useActionTransitions } from '@/shared/contracts';
-import { TierRail } from './TierRail';
+import { TierFilter } from './TierRail';
 import { ActionTable } from './ActionTable';
 import { ActionBoard } from './ActionBoard';
 import { ActionDrawer } from './ActionDrawer';
 import { Modal } from '@/components/shared/Modal';
 import { useChainBroken } from '@/components/shared/ChainBanner';
-import { getActions, getActionCounts, ROSTER, type DerivedAction } from '@/state/data';
+import { getActions, getActionCounts, OPEN_STATES, ROSTER, type ActionCounts, type DerivedAction } from '@/state/data';
 import { useStoreValue, useTick } from '@/state/useStore';
 import { STATION_LABEL, type StationFilter } from '@/state/stationScope';
 import { currentActor, useCan } from '@/state/auth';
 import { addDays } from '@/lib/time';
 import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
 import { usePresence, useLastWhileOpen } from '@/hooks/usePresence';
+
+/**
+ * The list is organised by the three steps (see ActionSteps): each tab is
+ * "what is waiting on me", with its count shown once, here, and nowhere else.
+ */
+type StepView = 'open' | 'ack' | 'assign' | 'resolve' | 'deferred' | 'resolved';
+
+const STEP_VIEWS: { id: StepView; label: string; hint: string; states: Action['state'][] }[] = [
+  { id: 'open', label: 'All open', hint: 'Everything not yet resolved or deferred, most urgent first.', states: OPEN_STATES },
+  { id: 'ack', label: 'To acknowledge', hint: 'Nobody at HQ has confirmed seeing these yet. Their response clock is running.', states: ['RAISED'] },
+  { id: 'assign', label: 'To assign', hint: 'Seen, but nobody owns them yet. Give each a named person.', states: ['ACKNOWLEDGED'] },
+  { id: 'resolve', label: 'To resolve', hint: 'Someone owns these. Close each with a note once the work is done.', states: ['ASSIGNED', 'IN_PROGRESS'] },
+  { id: 'deferred', label: 'Deferred', hint: 'Paused with a reason and a review date.', states: ['DEFERRED'] },
+  { id: 'resolved', label: 'Resolved', hint: 'Closed, with who resolved them and how.', states: ['RESOLVED'] },
+];
+
+/** Deep links from elsewhere still say ?state=RAISED — map them onto a tab. */
+function viewFromState(state: string | null): StepView {
+  switch (state) {
+    case 'RAISED': return 'ack';
+    case 'ACKNOWLEDGED': return 'assign';
+    case 'ASSIGNED': case 'IN_PROGRESS': return 'resolve';
+    case 'DEFERRED': return 'deferred';
+    case 'RESOLVED': return 'resolved';
+    default: return 'open';
+  }
+}
+
+function viewCount(view: StepView, counts: ActionCounts): number {
+  if (view === 'open') return counts.open;
+  return STEP_VIEWS.find((v) => v.id === view)!.states.reduce((n, st) => n + counts.byState[st], 0);
+}
 
 const STATION_TABS: { id: StationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -42,12 +74,12 @@ export default function ActionsPage() {
   const [tiers, setTiers] = useState<Set<Tier>>(
     () => new Set(searchParams.get('tier') ? [searchParams.get('tier') as Tier] : [])
   );
-  const [states, setStates] = useState<Set<Action['state']>>(
-    () => new Set(searchParams.get('state') ? [searchParams.get('state') as Action['state']] : [])
-  );
+  const [stepView, setStepView] = useState<StepView>(() => viewFromState(searchParams.get('state')));
+  // The nav alert button links to ?state=RAISED while this page may already be open.
+  const stateParam = searchParams.get('state');
+  useEffect(() => { if (stateParam) setStepView(viewFromState(stateParam)); }, [stateParam]);
   const [breachOnly, setBreachOnly] = useState(false);
   const [view, setView] = useState<'table' | 'board'>('table');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [cursorId, setCursorId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ kind: 'assign' | 'defer' | 'resolve'; id: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -65,16 +97,18 @@ export default function ActionsPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // The board lays out all six states as columns, so it ignores the step tab.
+    const states = view === 'board' ? null : STEP_VIEWS.find((v) => v.id === stepView)!.states;
     return allActions.filter((a) => {
       if (tiers.size > 0 && !tiers.has(a.tier)) return false;
-      if (states.size > 0 && !states.has(a.state)) return false;
+      if (states && !states.includes(a.state)) return false;
       if (breachOnly && !a.sla.breached) return false;
       if (!q) return true;
       return [a.title, a.assetId, a.zoneCode, a.assignee?.name, a.reason, a.trigger.metricName]
         .filter(Boolean)
         .some((f) => String(f).toLowerCase().includes(q));
     });
-  }, [allActions, tiers, states, breachOnly, query]);
+  }, [allActions, tiers, stepView, view, breachOnly, query]);
 
   const open = actionId ? allActions.find((a) => a.id === actionId) : undefined;
   // Keep the drawer mounted through its exit, still showing the action it
@@ -136,61 +170,32 @@ export default function ActionsPage() {
     try { await fn(); } catch (e) { setToast(e instanceof Error ? e.message : 'Transition failed'); }
   };
 
+  // FR-3.6: bulk acknowledge only — never bulk resolve, which needs per-action evidence.
   const bulkAck = async () => {
-    for (const id of selectedIds) {
-      const a = allActions.find((x) => x.id === id);
-      if (a?.state === 'RAISED') await guarded(() => transitions.acknowledge(id, actor.name));
+    for (const a of filtered) {
+      if (a.state === 'RAISED') await guarded(() => transitions.acknowledge(a.id, actor.name));
     }
-    setSelectedIds(new Set());
   };
+
+  const applyStepView = (next: StepView) => {
+    setStepView(next);
+    const params = new URLSearchParams(searchParams);
+    params.delete('state');
+    setSearchParams(params, { replace: true });
+  };
+  const activeView = STEP_VIEWS.find((v) => v.id === stepView)!;
 
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* ---- Title row ---- */}
       <div className="px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
-        <div className="flex items-end gap-x-6 gap-y-3 flex-wrap mb-4">
-          <div className="min-w-0">
-            <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
-              Action Centre
-            </h1>
-            <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
-              Everything that needs a decision, most urgent first. Click any row for the full picture.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap text-body-sm">
-            <span
-              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
-              style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', color: 'var(--text-3)' }}
-            >
-              <span className="font-mono text-body-sm font-medium tabular-nums" style={{ color: 'var(--text)' }}>{counts.open}</span>
-              open
-            </span>
-            <span
-              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
-              style={{
-                backgroundColor: counts.unacked > 0 ? 'rgba(242,107,33,0.08)' : 'var(--panel-raised)',
-                border: `1px solid ${counts.unacked > 0 ? 'rgba(242,107,33,0.45)' : 'var(--line)'}`,
-                color: counts.unacked > 0 ? 'var(--act-soft)' : 'var(--text-3)',
-              }}
-              title="Raised, but nobody has acknowledged them yet (unacked)"
-            >
-              <span className="font-mono text-body-sm font-medium tabular-nums">{counts.unacked}</span>
-              not yet acknowledged
-            </span>
-            <span
-              className="inline-flex items-baseline gap-2 px-4 py-1.5 rounded-full"
-              style={{
-                backgroundColor: counts.breaching > 0 ? 'rgba(242,107,33,0.08)' : 'var(--panel-raised)',
-                border: `1px solid ${counts.breaching > 0 ? 'rgba(242,107,33,0.45)' : 'var(--line)'}`,
-                color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)',
-              }}
-              title="Past their response-time target (breaching SLA)"
-            >
-              <span className="font-mono text-body-sm font-medium tabular-nums">{counts.breaching}</span>
-              overdue
-            </span>
-          </div>
+        <div className="mb-4 min-w-0">
+          <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+            Action Centre
+          </h1>
+          <p className="text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
+            Every action moves through three steps: acknowledge, assign, resolve. Open one for the full picture.
+          </p>
         </div>
 
         <div className="flex items-center gap-4 flex-wrap">
@@ -261,45 +266,6 @@ export default function ActionsPage() {
         </div>
       </div>
 
-      {/* ---- Bulk bar (FR-3.6): bulk ACK and assign only. No bulk resolve. ---- */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-x-5 gap-y-2 flex-wrap px-6 py-2.5 shrink-0"
-          style={{ backgroundColor: 'var(--panel-raised)', borderBottom: '1px solid var(--line)' }}>
-          <span className="text-body-sm font-medium" style={{ color: 'var(--text)' }}>
-            <span className="font-mono tabular-nums">{selectedIds.size}</span> selected
-          </span>
-          <button
-            type="button"
-            disabled={!canBulk || chainBroken}
-            onClick={bulkAck}
-            className="px-4 min-h-9 rounded-full text-body-sm font-medium"
-            style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
-          >
-            Acknowledge selected
-          </button>
-          <span
-            className="text-body-sm max-w-[60ch]"
-            style={{ color: 'var(--text-3)' }}
-            title="Bulk resolve is deliberately unavailable — a resolution needs per-action evidence."
-          >
-            Resolving is one at a time — each one needs its own evidence.
-          </span>
-          {chainBroken && (
-            <span className="text-body-sm" style={{ color: 'var(--act-soft)' }}>
-              Bulk operations disabled while the audit chain is broken.
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="ml-auto px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
-            style={{ color: 'var(--text-2)', border: '1px solid var(--line-strong)', fontFamily: 'var(--font-body)' }}
-          >
-            Clear selection
-          </button>
-        </div>
-      )}
-
       {toast && (
         <div key={toast} data-tone="error" className="m-toast px-6 py-2.5 shrink-0" role="alert"
           style={{ backgroundColor: 'rgba(242,107,33,0.10)', borderBottom: '1px solid var(--act)' }}>
@@ -307,33 +273,89 @@ export default function ActionsPage() {
         </div>
       )}
 
-      {/* ---- Rail + content ---- */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-5 px-6 py-5">
-        <TierRail
-          counts={counts}
-          tiers={tiers}
-          states={states}
-          breachOnly={breachOnly}
-          onToggleTier={(t) => setTiers((s) => toggle(s, t))}
-          onToggleState={(s) => setStates((cur) => toggle(cur, s))}
-          onToggleBreach={() => setBreachOnly((v) => !v)}
-        />
+      {/* ---- Step tabs: what is waiting, by step (list layout only) ---- */}
+      {view === 'table' && (
+        <div className="px-6 pt-4 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap" role="tablist" aria-label="Show actions by step">
+            {STEP_VIEWS.map((v, i) => {
+              const active = v.id === stepView;
+              const n = viewCount(v.id, counts);
+              const waiting = v.id === 'ack' && n > 0;
+              return (
+                <span key={v.id} className="contents">
+                  {i === 4 && <span className="w-px h-6 mx-1" style={{ backgroundColor: 'var(--line-strong)' }} aria-hidden />}
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => applyStepView(v.id)}
+                    className="inline-flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
+                    style={{
+                      backgroundColor: active ? 'var(--text)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--text)' : 'var(--line)'}`,
+                      color: active ? 'var(--bg)' : 'var(--text-2)',
+                    }}
+                  >
+                    {v.label}
+                    <span
+                      className="font-mono tabular-nums"
+                      style={{ color: active ? 'var(--bg)' : waiting ? 'var(--act-soft)' : 'var(--text-3)' }}
+                    >
+                      {n}
+                    </span>
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+          <p className="text-body-sm mt-2.5" style={{ color: 'var(--text-3)' }}>{activeView.hint}</p>
+        </div>
+      )}
 
+      <div className="flex-1 min-h-0 flex flex-col px-6 py-4">
         <section
-          className="flex-1 min-w-0 min-h-0 p-4"
+          className="flex-1 min-w-0 min-h-0 p-4 flex flex-col"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
         >
-          <div key={view} className="m-panel h-full">
+          {/* ---- Filters: tier + overdue, and bulk acknowledge on the ack tab ---- */}
+          <div className="flex items-center gap-x-4 gap-y-2.5 flex-wrap px-2 pb-3 shrink-0">
+            <TierFilter counts={counts} tiers={tiers} onToggleTier={(t) => setTiers((s) => toggle(s, t))} />
+            <button
+              type="button"
+              onClick={() => setBreachOnly((v) => !v)}
+              aria-pressed={breachOnly}
+              title="Only show actions past their response-time target (SLA breach)"
+              className="inline-flex items-center gap-2 px-3.5 min-h-9 rounded-full text-body-sm font-medium"
+              style={{
+                backgroundColor: breachOnly ? 'rgba(242,107,33,0.12)' : 'transparent',
+                border: `1px solid ${breachOnly ? 'var(--act)' : 'var(--line)'}`,
+                color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-2)',
+              }}
+            >
+              Overdue only
+              <span className="font-mono tabular-nums">{counts.breaching}</span>
+            </button>
+            {view === 'table' && stepView === 'ack' && filtered.length > 1 && (
+              <button
+                type="button"
+                disabled={!canBulk || chainBroken}
+                onClick={bulkAck}
+                className="ml-auto inline-flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium"
+                style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', opacity: canBulk && !chainBroken ? 1 : 0.4 }}
+                title={chainBroken ? 'Bulk operations are off while the audit chain is broken' : 'Resolving stays one at a time — each needs its own evidence'}
+              >
+                Acknowledge all <span className="font-mono tabular-nums">{filtered.length}</span>
+              </button>
+            )}
+          </div>
+
+          <div key={view} className="m-panel flex-1 min-h-0">
           {view === 'table' ? (
             <ActionTable
               actions={filtered}
-              selectedIds={selectedIds}
               cursorId={cursorId}
               canWrite={canWrite}
-              onToggleSelect={(id) => setSelectedIds((s) => toggle(s, id))}
-              onToggleAll={() =>
-                setSelectedIds((s) => (s.size === filtered.length ? new Set() : new Set(filtered.map((a) => a.id))))
-              }
+              emptyReason={stepView === 'open' ? 'No open actions match these filters.' : 'Nothing is waiting at this step.'}
               onOpen={(id) => navigate('/actions/' + id)}
               onAck={(id) => guarded(() => transitions.acknowledge(id, actor.name))}
               onAssign={(id) => setDialog({ kind: 'assign', id })}

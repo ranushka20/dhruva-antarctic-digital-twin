@@ -17,6 +17,7 @@ import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { TierChip } from '@/components/shared/TierChip';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Modal } from '@/components/shared/Modal';
+import { STEPS, StepTrack, nextStep } from '@/components/shared/ActionSteps';
 import {
   causalTraceInput, getActions, ROSTER, type DerivedAction,
 } from '@/state/data';
@@ -60,6 +61,9 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
   );
 
   const similar = useSimilarActions(action);
+  // The primary footer button is always the one legal next step — never a
+  // Resolve that the state machine would reject from ACKNOWLEDGED.
+  const next = nextStep(action.state);
 
   return (
     <>
@@ -137,11 +141,6 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             {action.assetId && (
               <span>Asset <span className="font-mono" style={{ color: 'var(--text-2)' }}>{action.assetId}</span></span>
             )}
-            <span>
-              {action.assignee ? (
-                <>Owner <span style={{ color: 'var(--text-2)' }}>{action.assignee.name}</span></>
-              ) : 'No owner yet'}
-            </span>
           </div>
 
           {action.slaPausedNow && (
@@ -157,6 +156,11 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
         </header>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+          {/* ---- Where this stands: the three steps, and what the next one does ---- */}
+          <Section title="Where this stands">
+            <StepTrack action={action} />
+          </Section>
+
           {/* ---- Trigger block (FR-5.3) ---- */}
           <Section title="What raised this">
             <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
@@ -339,50 +343,47 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             </p>
           )}
           <div className="flex items-center gap-3 flex-wrap">
-            <button
-              type="button"
-              disabled={!canWrite || action.state === 'RESOLVED' || action.state === 'DEFERRED'}
-              onClick={() => setDialog('defer')}
-              className="px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
-              style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
-            >
-              Defer
-            </button>
-            <button
-              type="button"
-              disabled={!canWrite || action.state === 'RESOLVED'}
-              onClick={() => setDialog('assign')}
-              className="px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
-              style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
-            >
-              Assign
-            </button>
-            <div className="flex-1" />
-            {action.state === 'RAISED' ? (
+            {action.state !== 'RESOLVED' && action.state !== 'DEFERRED' && (
               <button
                 type="button"
                 disabled={!canWrite}
-                onClick={() => run(() => transitions.acknowledge(action.id, actor.name))}
-                className="px-6 min-h-10 rounded-full text-body font-semibold"
-                style={{ backgroundColor: 'var(--act)', color: 'var(--bg)', opacity: canWrite ? 1 : 0.4 }}
+                onClick={() => setDialog('defer')}
+                className="px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
+                style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
               >
-                Acknowledge
+                Defer
               </button>
-            ) : (
+            )}
+            {/* Skipping straight to an owner is legal from RAISED (FR-6.1). */}
+            {next === 'ack' && (
               <button
                 type="button"
-                disabled={!canWrite || action.state === 'RESOLVED'}
-                onClick={() => setDialog('resolve')}
-                className="px-6 min-h-10 rounded-full text-body font-semibold"
-                style={{
-                  backgroundColor: action.state === 'RESOLVED' ? 'transparent' : 'var(--act)',
-                  color: action.state === 'RESOLVED' ? 'var(--text-3)' : 'var(--bg)',
-                  border: action.state === 'RESOLVED' ? '1px solid var(--line)' : 'none',
-                  opacity: canWrite ? 1 : 0.4,
-                }}
+                disabled={!canWrite}
+                onClick={() => setDialog('assign')}
+                className="px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-raised)]"
+                style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: canWrite ? 1 : 0.4 }}
               >
-                {action.state === 'RESOLVED' ? 'Resolved' : 'Resolve'}
+                Assign
               </button>
+            )}
+            <div className="flex-1" />
+            {next ? (
+              <button
+                type="button"
+                disabled={!canWrite}
+                onClick={() =>
+                  next === 'ack'
+                    ? run(() => transitions.acknowledge(action.id, actor.name))
+                    : setDialog(next)
+                }
+                className="px-6 min-h-10 rounded-full text-body font-semibold"
+                style={{ backgroundColor: 'var(--act)', color: 'var(--bg)', opacity: canWrite ? 1 : 0.4 }}
+                title={canWrite ? undefined : 'Your role cannot change action state'}
+              >
+                {STEPS.find((st) => st.key === next)?.verb}
+              </button>
+            ) : (
+              <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>Resolved — nothing left to do</span>
             )}
           </div>
         </footer>

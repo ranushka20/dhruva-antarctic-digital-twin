@@ -1,5 +1,5 @@
 // OWNER: Dev B
-// Tier rail — live counts per tier plus the state and SLA filters.
+// Tier filter — live open counts per tier, as one row of toggle chips.
 // T0 is distinguished from T1 by a FILLED SQUARE marker, not only by colour
 // (FR-2.3): the screen has to survive a bad projector and a colour-blind
 // viewer, so tier is never carried by hue alone.
@@ -40,25 +40,22 @@ const STATE_HINT: Record<Action['state'], string> = {
 interface Props {
   counts: ActionCounts;
   tiers: Set<Tier>;
-  states: Set<Action['state']>;
-  breachOnly: boolean;
   onToggleTier: (tier: Tier) => void;
-  onToggleState: (state: Action['state']) => void;
-  onToggleBreach: () => void;
 }
 
-export function TierRail({
-  counts, tiers, states, breachOnly, onToggleTier, onToggleState, onToggleBreach,
-}: Props) {
-  return (
-    <nav
-      className="flex lg:flex-col gap-1.5 lg:w-[17rem] lg:shrink-0 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto pb-1 lg:pb-0 lg:pr-1"
-      aria-label="Tier and state filters"
-    >
-      <p className="hidden lg:block text-body-sm font-medium mb-1 px-1" style={{ color: 'var(--text-3)' }}>
-        Priority tier
-      </p>
+/** Short names for the chip row; the full label stays in the tooltip. */
+const TIER_SHORT: Record<Tier, string> = {
+  T0: 'Life safety',
+  T1: 'Critical ops',
+  T2: 'Logistics',
+  T3: 'Science',
+};
 
+/** Priority tier filter — one compact row of toggle chips with open counts. */
+export function TierFilter({ counts, tiers, onToggleTier }: Props) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Priority tier filter">
+      <span className="text-body-sm mr-1" style={{ color: 'var(--text-3)' }}>Priority</span>
       {(Object.keys(TIER_META) as Tier[]).map((tier) => {
         const meta = TIER_META[tier];
         const active = tiers.has(tier);
@@ -69,89 +66,24 @@ export function TierRail({
             onClick={() => onToggleTier(tier)}
             aria-pressed={active}
             title={`${tier} — ${meta.label}`}
-            className="flex items-center gap-2.5 px-3 py-2 text-left shrink-0 min-h-10 hover:bg-[var(--panel-raised)]"
+            className="inline-flex items-center gap-2 px-3 min-h-9 rounded-full text-body-sm hover:bg-[var(--panel-raised)]"
             style={{
               backgroundColor: active ? 'var(--panel-raised)' : 'transparent',
               border: `1px solid ${active ? meta.color : 'var(--line)'}`,
-              borderRadius: 'var(--r-inner)',
             }}
           >
             <span
               className="shrink-0"
-              style={{
-                width: 9, height: 9,
-                backgroundColor: meta.color,
-                borderRadius: meta.square ? 2 : 999,
-              }}
+              style={{ width: 8, height: 8, backgroundColor: meta.color, borderRadius: meta.square ? 2 : 999 }}
               aria-hidden
             />
-            <span className="font-mono text-body-sm font-medium shrink-0" style={{ color: 'var(--text)' }}>
-              {tier}
-            </span>
-            <span className="text-body-sm hidden lg:block flex-1 min-w-0 leading-snug" style={{ color: 'var(--text-3)' }}>
-              {meta.label}
-            </span>
-            <span className="font-mono text-body-sm tabular-nums ml-1 shrink-0" style={{ color: 'var(--text-2)' }}>
-              {counts.byTier[tier]}
-            </span>
+            <span className="font-mono font-medium" style={{ color: 'var(--text)' }}>{tier}</span>
+            <span className="hidden xl:inline" style={{ color: 'var(--text-3)' }}>{TIER_SHORT[tier]}</span>
+            <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{counts.byTier[tier]}</span>
           </button>
         );
       })}
-
-      <div className="hidden lg:block h-px my-2.5" style={{ backgroundColor: 'var(--line)' }} />
-
-      <p className="hidden lg:block text-body-sm font-medium mb-1 px-1" style={{ color: 'var(--text-3)' }}>
-        Status
-      </p>
-
-      <div className="flex lg:flex-wrap gap-1.5 shrink-0">
-        {STATES.map((state) => {
-          const active = states.has(state);
-          return (
-            <button
-              key={state}
-              type="button"
-              onClick={() => onToggleState(state)}
-              aria-pressed={active}
-              title={`${STATE_HINT[state]} (${state})`}
-              className="inline-flex items-center gap-1.5 px-3 min-h-8 rounded-full text-body-sm shrink-0 hover:bg-[var(--panel-raised)]"
-              style={{
-                backgroundColor: active ? 'var(--panel-raised)' : 'transparent',
-                border: `1px solid ${active ? 'var(--text-3)' : 'var(--line)'}`,
-                color: active ? 'var(--text)' : 'var(--text-2)',
-              }}
-            >
-              {STATE_LABEL[state]}
-              <span className="font-mono tabular-nums" style={{ color: 'var(--text-3)' }}>
-                {counts.byState[state]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="hidden lg:block h-px my-2.5" style={{ backgroundColor: 'var(--line)' }} />
-
-      <button
-        type="button"
-        onClick={onToggleBreach}
-        aria-pressed={breachOnly}
-        title="Only show actions past their response-time target (SLA breach)"
-        className="flex items-center gap-2.5 px-3 py-2 text-left shrink-0 min-h-10"
-        style={{
-          backgroundColor: breachOnly ? 'rgba(242,107,33,0.12)' : 'transparent',
-          border: `1px solid ${breachOnly ? 'var(--act)' : 'var(--line)'}`,
-          borderRadius: 'var(--r-inner)',
-        }}
-      >
-        <span className="text-body-sm font-medium flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>
-          Overdue only
-        </span>
-        <span className="font-mono text-body-sm tabular-nums" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-2)' }}>
-          {counts.breaching}
-        </span>
-      </button>
-    </nav>
+    </div>
   );
 }
 

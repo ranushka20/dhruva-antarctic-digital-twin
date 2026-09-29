@@ -18,6 +18,8 @@
 // different magnitudes and putting them on one scale would flatten one of them.
 
 import { useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
+import { CHART_DEFAULTS, ChartContainer, ChartLegend, ChartTooltipContent } from '@/components/shared/Chart';
 import { AlertTriangle, Table2, BarChart3 } from 'lucide-react';
 import type { WasteEvent } from '@/shared/contracts';
 import type { WasteBalanceRow } from '@/state/data';
@@ -171,23 +173,17 @@ export function WasteLedger({
           <WasteTable series={series} />
         )}
 
-        {/* Legend — always present for >= 2 series */}
-        <ul className="flex flex-wrap gap-x-6 gap-y-2.5 mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-          {STREAM_ORDER.map((stream) => (
-            <li key={stream} className="flex items-center gap-2">
-              <span className="shrink-0" style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: STREAM_RAMP[stream] }} aria-hidden />
-              <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>
-                {STREAM_LABEL[stream]}
-              </span>
-            </li>
-          ))}
-          <li className="flex items-center gap-2">
-            <span className="shrink-0" style={{ width: 16, height: 2, backgroundColor: 'var(--text-2)' }} aria-hidden />
-            <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>
-              Total stored at station
-            </span>
-          </li>
-        </ul>
+        {/* Stream legend for the table view; the chart carries its own. */}
+        {view === 'table' && series.length > 0 && (
+          <ul className="flex flex-wrap gap-x-6 gap-y-2.5 mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
+            {STREAM_ORDER.map((stream) => (
+              <li key={stream} className="flex items-center gap-2">
+                <span className="shrink-0" style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: STREAM_RAMP[stream] }} aria-hidden />
+                <span className="text-body-sm" style={{ color: 'var(--text-2)' }}>{STREAM_LABEL[stream]}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* ---- Mass balance table (FR-3.1) ---- */}
@@ -344,172 +340,87 @@ export function WasteLedger({
 }
 
 // ---------------------------------------------------------------------------
-// Chart — two panels, one shared x axis. Never two y scales.
+// Chart — one question: how much waste was produced each month, and of what
+// kind. Eight near-identical greens could not be told apart, so the chart
+// stacks three plain groups; the table view keeps all eight streams. The
+// running total stored is a single number, so it is a headline, not a panel.
 // ---------------------------------------------------------------------------
 
-const W = 760;
-const BAR_H = 200;
-const LINE_H = 92;
-const GAP = 30;
-const PAD_L = 64;
-const PAD_R = 14;
-const AXIS_H = 24;
+const WASTE_GROUPS = [
+  { key: 'everyday', label: 'Everyday', streams: ['general', 'recyclable', 'food'], color: 'var(--chart-1)',
+    hint: 'General, recyclable and food waste' },
+  { key: 'sewage_lab', label: 'Sewage & lab', streams: ['sewage', 'scientific'], color: 'var(--chart-3)',
+    hint: 'Sewage and scientific waste' },
+  { key: 'hazardous', label: 'Hazardous', streams: ['medical', 'fuel_oily', 'hazardous'], color: 'var(--chart-2)',
+    hint: 'Medical, fuel / oily and hazardous waste' },
+] as const;
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function WasteChart({ series }: { series: Props['series'] }) {
-  const [hover, setHover] = useState<number | null>(null);
-
-  const monthTotals = series.map((m) => Object.values(m.byStream).reduce((s, v) => s + v, 0));
-  const maxMonth = Math.max(1, ...monthTotals);
-  const maxCumulative = Math.max(1, ...series.map((m) => m.cumulativeStoredKg));
-
-  const plotW = W - PAD_L - PAD_R;
-  const slot = plotW / Math.max(1, series.length);
-  const barW = Math.min(46, slot * 0.62);
-  const totalH = BAR_H + GAP + LINE_H + AXIS_H;
-
-  const linePoints = series.map((m, i) => {
-    const x = PAD_L + slot * i + slot / 2;
-    const y = BAR_H + GAP + LINE_H - (m.cumulativeStoredKg / maxCumulative) * (LINE_H - 8);
-    return [x, y] as const;
-  });
-
-  const labelFor = (month: string) => {
-    const [, mm] = month.split('-');
-    return ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(mm) - 1] ?? month;
-  };
+  const rows = useMemo(
+    () => series.map((m) => {
+      const [yy, mm] = m.month.split('-');
+      const row: Record<string, string | number> = {
+        month: MONTHS[Number(mm) - 1] ?? m.month,
+        full: `${MONTHS[Number(mm) - 1] ?? ''} ${yy}`,
+      };
+      for (const g of WASTE_GROUPS) {
+        row[g.key] = g.streams.reduce((sum, st) => sum + (m.byStream[st] ?? 0), 0);
+      }
+      return row;
+    }),
+    [series],
+  );
+  const stored = series[series.length - 1]?.cumulativeStoredKg ?? 0;
+  const lastMonth = rows[rows.length - 1];
+  const lastTotal = lastMonth ? WASTE_GROUPS.reduce((s, g) => s + Number(lastMonth[g.key] ?? 0), 0) : 0;
 
   return (
-    <div className="relative overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${totalH}`} className="w-full min-w-[40rem]" style={{ height: totalH }}
-        role="img" aria-label="Monthly waste generation by stream, with cumulative stored mass below">
-
-        {/* y grid — generation panel */}
-        {[0, 0.5, 1].map((f) => (
-          <g key={f}>
-            <line x1={PAD_L} y1={BAR_H - f * (BAR_H - 10)} x2={W - PAD_R} y2={BAR_H - f * (BAR_H - 10)}
-              stroke="var(--line)" strokeWidth={1} />
-            <text x={PAD_L - 6} y={BAR_H - f * (BAR_H - 10) + 3}
-              textAnchor="end" fontFamily="var(--font-mono)" fontSize={13} fill="var(--text-4)">
-              {Math.round((maxMonth * f) / 100) * 100}
-            </text>
-          </g>
-        ))}
-        <text x={4} y={13} fontFamily="var(--font-body)" fontSize={13} fill="var(--text-3)">kg per month</text>
-
-        {/* Stacked bars — 2px surface gap between segments */}
-        {series.map((m, i) => {
-          const x = PAD_L + slot * i + (slot - barW) / 2;
-          let cursor = BAR_H;
-          // The topmost visible segment gets the 4px rounded data-end; every
-          // other segment stays square so the stack reads as one bar.
-          const visible = STREAM_ORDER.filter((s) => (m.byStream[s] ?? 0) > 0);
-          const topStream = visible[visible.length - 1];
-          return (
-            <g key={m.month}
-              onMouseEnter={() => setHover(i)}
-              onMouseLeave={() => setHover(null)}>
-              <rect x={PAD_L + slot * i} y={0} width={slot} height={BAR_H} fill="transparent" />
-              {STREAM_ORDER.map((stream) => {
-                const value = m.byStream[stream] ?? 0;
-                if (value <= 0) return null;
-                const h = (value / maxMonth) * (BAR_H - 10);
-                cursor -= h;
-                const isTop = stream === topStream;
-                return (
-                  <rect
-                    key={stream}
-                    x={x}
-                    y={cursor + 1}
-                    width={barW}
-                    height={Math.max(1, h - 2)}
-                    fill={STREAM_RAMP[stream]}
-                    opacity={hover === null || hover === i ? 1 : 0.45}
-                    rx={isTop ? 4 : 1.5}
-                  />
-                );
-              })}
-            </g>
-          );
-        })}
-
-        {/* Cumulative stored mass — its OWN panel, its own scale, same x axis */}
-        <text x={4} y={BAR_H + GAP + 11} fontFamily="var(--font-body)" fontSize={13} fill="var(--text-3)">
-          kg stored
-        </text>
-        <line x1={PAD_L} y1={BAR_H + GAP + LINE_H} x2={W - PAD_R} y2={BAR_H + GAP + LINE_H}
-          stroke="var(--line)" strokeWidth={1} />
-        <polyline
-          fill="none"
-          stroke="var(--text-2)"
-          strokeWidth={2}
-          points={linePoints.map(([x, y]) => `${x},${y}`).join(' ')}
-        />
-        {linePoints.map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r={hover === i ? 4.5 : 3}
-            fill="var(--panel)" stroke="var(--text-2)" strokeWidth={2} />
-        ))}
-        {linePoints.length > 0 && (
-          <text
-            x={linePoints[linePoints.length - 1][0] - 4}
-            y={linePoints[linePoints.length - 1][1] - 8}
-            textAnchor="end"
-            fontFamily="var(--font-mono)" fontSize={13} fill="var(--text-2)"
-          >
-            {series[series.length - 1].cumulativeStoredKg.toLocaleString()} kg
-          </text>
-        )}
-
-        {/* Shared x axis */}
-        {series.map((m, i) => (
-          <text
-            key={m.month}
-            x={PAD_L + slot * i + slot / 2}
-            y={totalH - 6}
-            textAnchor="middle"
-            fontFamily="var(--font-mono)" fontSize={13}
-            fill={hover === i ? 'var(--text-2)' : 'var(--text-4)'}
-          >
-            {labelFor(m.month)}
-          </text>
-        ))}
-      </svg>
-
-      {hover !== null && series[hover] && (
-        <div
-          className="absolute top-2 right-2 p-4 pointer-events-none w-64"
-          style={{
-            backgroundColor: 'var(--panel-alt)',
-            border: '1px solid var(--line-strong)',
-            borderRadius: 'var(--r-inner)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-          }}
-        >
-          <p className="font-mono text-body-sm font-medium mb-2" style={{ color: 'var(--text)' }}>
-            {series[hover].month}
+    <div>
+      <div className="flex items-end gap-x-10 gap-y-2 flex-wrap mb-4">
+        <div>
+          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>Stored at stations now</p>
+          <p className="font-mono text-headline font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+            {stored.toLocaleString()} <span className="text-body-sm font-normal" style={{ color: 'var(--text-3)' }}>kg</span>
           </p>
-          {STREAM_ORDER.map((stream) => {
-            const v = series[hover].byStream[stream] ?? 0;
-            if (v <= 0) return null;
-            return (
-              <div key={stream} className="flex items-center gap-2 py-1">
-                <span className="shrink-0" style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: STREAM_RAMP[stream] }} />
-                <span className="text-body-sm flex-1" style={{ color: 'var(--text-2)' }}>
-                  {STREAM_LABEL[stream]}
-                </span>
-                <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text)' }}>
-                  {v.toLocaleString()}
-                </span>
-              </div>
-            );
-          })}
-          <div className="flex items-center gap-2 pt-2 mt-1.5" style={{ borderTop: '1px solid var(--line)' }}>
-            <span className="text-body-sm flex-1" style={{ color: 'var(--text-2)' }}>Total stored (kg)</span>
-            <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text)' }}>
-              {series[hover].cumulativeStoredKg.toLocaleString()}
-            </span>
-          </div>
         </div>
-      )}
+        <div>
+          <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>Produced last month</p>
+          <p className="font-mono text-headline font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+            {lastTotal.toLocaleString()} <span className="text-body-sm font-normal" style={{ color: 'var(--text-3)' }}>kg</span>
+          </p>
+        </div>
+        <ChartLegend
+          className="ml-auto"
+          items={WASTE_GROUPS.map((g) => ({ label: g.label, color: g.color, hint: g.hint }))}
+        />
+      </div>
+
+      <ChartContainer className="h-60" label="Waste produced per month in kilograms, stacked by type">
+        <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap="30%">
+          <CartesianGrid {...CHART_DEFAULTS.grid} />
+          <XAxis dataKey="month" {...CHART_DEFAULTS.axis} interval={0} />
+          <YAxis
+            {...CHART_DEFAULTS.axis}
+            width={44}
+            tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(v))}
+          />
+          <Tooltip
+            cursor={{ fill: 'var(--panel-raised)' }}
+            content={
+              <ChartTooltipContent
+                unit="kg"
+                hideZero
+                labelFormatter={(l) => rows.find((r) => r.month === l)?.full ?? String(l)}
+              />
+            }
+          />
+          {WASTE_GROUPS.map((g) => (
+            <Bar key={g.key} dataKey={g.key} name={g.label} stackId="waste" fill={g.color} maxBarSize={32} isAnimationActive={false} />
+          ))}
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 }

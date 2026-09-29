@@ -2,11 +2,11 @@
 // Resupply table — ONE row per resource, and that row IS the timeline.
 //
 // This replaces what used to be two stacked panels: a full-width Gantt and a
-// ten-column ledger showing the same thirteen resources twice. An operator
-// scanning for "what do I order first" had to read both and hold the join in
-// their head. Here the depletion bar, its uncertainty band, the ship window
-// and the LSOD tick all live in one cell on a shared axis, so the answer is
-// one left-to-right scan.
+// ten-column ledger showing the same thirteen resources twice. Here each row
+// is one left-to-right scan: days of supply (± range as text), a bar showing
+// how long it lasts against a dashed "ship arrives" line, and the order-by
+// date. The bar deliberately carries only those two marks — the range and the
+// order date are already the numbers on either side of it.
 //
 // Everything the ledger used to show on the surface — stock, burn rate and
 // its trend, margin, reorder point, every provenance badge — is still here,
@@ -18,25 +18,17 @@ import type { Voyage } from '@/shared/contracts';
 import type { DerivedResource } from '@/state/data';
 import { shipWindowDays } from '@/state/data';
 import { StatusDot } from '@/components/shared/StatusDot';
-import { Sparkline } from '@/components/shared/Sparkline';
 import { ProvenanceBadge } from '@/components/shared/ProvenanceBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { STATION_CODE, STATION_LABEL } from '@/state/stationScope';
 import { SYNC_OPACITY } from '@/lib/freshness';
-import { lsodColor, lsodUrgency } from '@/lib/risk';
+import { lsodColor } from '@/lib/risk';
 
 const RISK_COLOR = {
   ok: 'var(--ok)',
   watch: 'var(--watch)',
   warning: 'var(--act)',
   critical: 'var(--act)',
-} as const;
-
-const TICK_COLOR = {
-  unknown: 'var(--text-3)',
-  warning: 'var(--act)',
-  watch: 'var(--watch)',
-  ok: 'var(--text-3)',
 } as const;
 
 interface Props {
@@ -77,19 +69,16 @@ export function ResupplyTable({
         <p className="text-body-sm mt-1 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
           Select any row to see stock, daily usage and to raise an action.
         </p>
-        <ul className="flex items-center gap-x-6 gap-y-2 flex-wrap mt-3.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
-          <LegendItem label="Days of supply (lighter band = likely range)">
-            <span className="block w-7 h-1.5 rounded-full" style={{ backgroundColor: 'var(--ok)' }} />
+        <ul className="flex items-center gap-x-6 gap-y-2 flex-wrap mt-3 text-body-sm" style={{ color: 'var(--text-3)' }}>
+          <LegendItem label="How long supply lasts">
+            <span className="block w-7 h-2 rounded-full" style={{ backgroundColor: 'var(--ok)' }} />
           </LegendItem>
-          <LegendItem label="When the ship can arrive">
-            <span className="block w-7 h-4 rounded-sm" style={{ backgroundColor: 'var(--glow)', opacity: 0.3 }} />
+          <LegendItem label="Ship arrives">
+            <span className="block h-4 border-l-2 border-dashed" style={{ borderColor: 'var(--text-2)' }} />
           </LegendItem>
-          <LegendItem label="Last safe date to order">
-            <span className="block w-0.5 h-4" style={{ backgroundColor: 'var(--text-2)' }} />
-          </LegendItem>
-          <LegendItem label="Station not reporting">
+          <LegendItem label="Station not reporting (last known)">
             <span
-              className="block w-7 h-1.5 rounded-full"
+              className="block w-7 h-2 rounded-full"
               style={{ backgroundImage: 'repeating-linear-gradient(45deg, var(--text-3) 0 3px, transparent 3px 6px)' }}
             />
           </LegendItem>
@@ -105,7 +94,7 @@ export function ResupplyTable({
         <span className="w-[15rem] xl:w-[17rem] shrink-0">Resource</span>
         <span className="w-[8.5rem] shrink-0">Days of supply</span>
         <span className="flex-1 min-w-[12rem]">
-          <span className="block mb-1.5">Supply compared with ship arrival</span>
+          <span className="block mb-1.5">Supply lasts until…</span>
           <Axis horizonDays={horizonDays} />
         </span>
         <span className="w-[7.5rem] shrink-0 text-right" title="Last safe order date — the latest an order can be placed and still arrive before stock runs out">
@@ -263,9 +252,10 @@ function Row({
 }
 
 /**
- * Depletion bar, uncertainty band, ship window and LSOD tick on one shared
- * scale. Each row draws its OWN station's arrival window, because Bharati and
- * Maitri are not reached on the same date by the same ship.
+ * Two marks on a shared day axis: how long supply lasts (bar, coloured by
+ * risk, hatched when the station is not reporting) and when the ship arrives
+ * (dashed line). If the bar stops before the line, it runs out first. The
+ * ± range and the order-by date are the numbers either side of the bar.
  */
 function CoverBar({
   resource, window, horizonDays,
@@ -277,76 +267,32 @@ function CoverBar({
   const pct = (days: number) => Math.max(0, Math.min(100, (days / horizonDays) * 100));
   const stale = resource.lsodDays === null && resource.lsodUnavailableReason === 'stale';
   const color = RISK_COLOR[resource.risk];
-
-  const bandLow = Math.max(0, resource.autonomyDays - resource.autonomyBandDays);
-  const bandHigh = resource.autonomyDays + resource.autonomyBandDays;
+  const shipDay = window && window.latestDay > 0 ? window.earliestDay : null;
 
   return (
     <span
       className="relative block w-full"
-      style={{ height: 24 }}
+      style={{ height: 20 }}
       title={
-        stale
-          ? 'Station link is stale — cover shown from last known state, no order-by date'
-          : `Supply lasts ${Math.round(bandLow)}–${Math.round(bandHigh)} days` +
-            (window ? ` · ship arrives between day ${window.earliestDay} and ${window.latestDay}` : '')
+        (stale ? 'Last known figure — station not reporting. ' : '')
+        + `Supply lasts about ${Math.round(resource.autonomyDays)} days`
+        + (window ? `; ship arrives between day ${window.earliestDay} and ${window.latestDay}` : '; no ship scheduled')
       }
     >
-      {/* Ship window — the thing the bar has to reach */}
-      {window && window.latestDay > 0 && (
-        <span
-          className="absolute top-0 bottom-0"
-          style={{
-            left: pct(window.earliestDay) + '%',
-            width: Math.max(1.2, pct(window.latestDay) - pct(window.earliestDay)) + '%',
-            backgroundColor: 'var(--glow)',
-            opacity: 0.16,
-            borderLeft: '1px solid rgba(79,209,165,0.5)',
-            borderRadius: 3,
-          }}
-        />
-      )}
-
-      {/* Track */}
-      <span
-        className="absolute left-0 right-0"
-        style={{ top: 9, height: 6, backgroundColor: 'var(--track)', borderRadius: 999 }}
-      />
-
-      {/* Uncertainty band — never a bare point estimate */}
-      <span
-        className="absolute"
-        style={{
-          left: pct(bandLow) + '%',
-          width: Math.max(0.6, pct(bandHigh) - pct(bandLow)) + '%',
-          top: 5, height: 14,
-          backgroundColor: color, opacity: 0.2, borderRadius: 4,
-        }}
-      />
-
-      {/* Depletion bar */}
+      <span className="absolute left-0 right-0" style={{ top: 6, height: 8, backgroundColor: 'var(--track)', borderRadius: 999 }} />
       <span
         className="absolute left-0"
         style={{
           width: pct(resource.autonomyDays) + '%',
-          top: 9, height: 6,
-          borderRadius: 999,
+          top: 6, height: 8, borderRadius: 999,
           backgroundColor: stale ? 'transparent' : color,
-          backgroundImage: stale
-            ? `repeating-linear-gradient(45deg, ${color} 0 3px, transparent 3px 6px)`
-            : undefined,
+          backgroundImage: stale ? `repeating-linear-gradient(45deg, ${color} 0 3px, transparent 3px 6px)` : undefined,
         }}
       />
-
-      {/* LSOD tick — absent by design when we cannot compute one */}
-      {resource.lsodDays !== null && (
+      {shipDay !== null && (
         <span
-          className="absolute"
-          style={{
-            left: pct(Math.max(0, resource.lsodDays)) + '%',
-            top: 1, width: 3, height: 22, borderRadius: 2,
-            backgroundColor: TICK_COLOR[lsodUrgency(resource.lsodDays)],
-          }}
+          className="absolute top-0 bottom-0 border-l-2 border-dashed"
+          style={{ left: pct(shipDay) + '%', borderColor: 'var(--text-2)' }}
         />
       )}
     </span>
@@ -357,30 +303,32 @@ function CoverBar({
 function RowDetail({
   resource, onRaiseAction, canRaise,
 }: { resource: DerivedResource; onRaiseAction: () => void; canRaise: boolean }) {
-  const series = resource.burnSeries12w ?? [];
-  const trend = burnTrend(series);
+  const trend = burnTrend(resource.burnSeries12w ?? []);
 
   return (
     <div className="px-5 pb-5 pt-1" style={{ backgroundColor: 'var(--panel-raised)' }}>
-      <div className="flex flex-wrap items-end gap-x-8 gap-y-4 pl-9">
-        <Detail label="In stock">
+      <div className="flex flex-wrap items-end gap-x-10 gap-y-4 pl-9">
+        <Detail label="In stock" badge={<ProvenanceBadge measurement={resource.stock} label={resource.name + ' stock'} abbreviated />}>
           <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
             {typeof resource.stock.value === 'number' ? resource.stock.value.toLocaleString() : '—'}
           </span>
           <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>{resource.unit}</span>
-          <ProvenanceBadge measurement={resource.stock} label={resource.name + ' stock'} />
         </Detail>
 
-        <Detail label="Used per day" hint="Burn rate, with its 12-week trend">
-          <span className="font-mono text-body font-medium tabular-nums" style={{ color: TREND_COLOR[trend] }}>
+        <Detail label="Used per day" badge={<ProvenanceBadge measurement={resource.burnRate} label={resource.name + ' burn rate'} abbreviated />}>
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
             {typeof resource.burnRate.value === 'number' ? resource.burnRate.value.toLocaleString() : '—'}
           </span>
-          <Sparkline series={series} width={72} height={20} />
-          <ProvenanceBadge measurement={resource.burnRate} label={resource.name + ' burn rate'} />
+          <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>{resource.unit}</span>
+          {trend !== 'flat' && (
+            <span className="text-body-sm" style={{ color: 'var(--watch-soft)' }} title="Compared with 12 weeks ago">
+              {trend === 'sharp' ? 'rising fast' : 'rising'}
+            </span>
+          )}
         </Detail>
 
-        <Detail label="Spare days when ship arrives" hint="Margin to ship, worst case">
-          <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
+        <Detail label="Left when the ship arrives" hint="Worst-case days of supply remaining at the ship's latest arrival">
+          <span className="font-mono text-body font-medium tabular-nums" style={{ color: resource.marginDays && resource.marginDays.min < 0 ? 'var(--act-soft)' : 'var(--text)' }}>
             {resource.marginDays
               ? `${resource.marginDays.min < 0 ? '−' : '+'}${Math.abs(Math.round(resource.marginDays.min))}`
               : '—'}
@@ -388,7 +336,7 @@ function RowDetail({
           {resource.marginDays && <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>days</span>}
         </Detail>
 
-        <Detail label="Reorder point">
+        <Detail label="Reorder at">
           <span className="font-mono text-body font-medium tabular-nums" style={{ color: 'var(--text)' }}>
             {resource.reorderPoint?.toLocaleString() ?? '—'}
           </span>
@@ -418,18 +366,19 @@ function RowDetail({
   );
 }
 
-function Detail({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Detail({ label, hint, badge, children }: { label: string; hint?: string; badge?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div title={hint}>
-      <p className="text-body-sm mb-1" style={{ color: 'var(--text-3)' }}>
+      <p className="flex items-center gap-2 text-body-sm mb-1" style={{ color: 'var(--text-3)' }}>
         {label}
+        {badge}
       </p>
       <div className="flex items-center gap-2.5">{children}</div>
     </div>
   );
 }
 
-/** Rising burn is amber; sharply rising is orange — it needs an operator. */
+/** Burn-rate trend over the last 12 weeks. */
 function burnTrend(series: { t: string; v: number }[]): 'flat' | 'rising' | 'sharp' {
   if (series.length < 4) return 'flat';
   const first = series[0].v;
@@ -441,4 +390,3 @@ function burnTrend(series: { t: string; v: number }[]): 'flat' | 'rising' | 'sha
   return 'flat';
 }
 
-const TREND_COLOR = { flat: 'var(--text-2)', rising: 'var(--watch-soft)', sharp: 'var(--act-soft)' } as const;

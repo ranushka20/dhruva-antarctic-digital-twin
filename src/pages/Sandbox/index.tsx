@@ -43,6 +43,8 @@ import {
 } from '@/state/sandbox';
 import PRESETS from '@/mock/scenarios/presets.json';
 import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
+import { CartesianGrid, Line, LineChart, ReferenceArea, Tooltip, XAxis, YAxis } from 'recharts';
+import { CHART_DEFAULTS, ChartContainer, ChartLegend, ChartTooltipContent } from '@/components/shared/Chart';
 
 const GROUPS: ParamGroup[] = ['environmental', 'energy', 'logistics', 'crew'];
 
@@ -449,9 +451,12 @@ export default function SandboxPage() {
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
                 aria-label="Autonomy projection"
               >
-                <h2 className="text-title font-semibold mb-4" style={{ color: 'var(--text)' }}>
-                  Stock depletion
+                <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                  Does the stock last until the ship?
                 </h2>
+                <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
+                  Fuel left over time, today's settings against your what-if.
+                </p>
                 <DepletionChart
                   baselineDays={base.result.autonomyDays}
                   baselineBand={base.result.autonomyBandDays}
@@ -806,92 +811,69 @@ function TraceDiff({
 }
 
 /**
- * FR-5.1–5.3 — two depletion lines with their ± bands, the ship window as a
- * vertical band and an LSOD marker on each line. Built inline because the
- * shared TimeSeriesChart takes a single series and draws no bands.
+ * FR-5 — one question: does the stock last until the ship arrives? Two lines
+ * (now vs what-if, different colour AND dash, FR-5.3) and the ship window as
+ * a labelled band. The ± ranges and order-by dates are on the cards above; a
+ * chart that also drew them was four overlapping ideas in one small box.
  */
 function DepletionChart({
-  baselineDays, baselineBand, scenarioDays, scenarioBand, shipWindow, lsodBaseline, lsodScenario,
+  baselineDays, scenarioDays, shipWindow,
 }: {
-  baselineDays: number; baselineBand: number;
-  scenarioDays: number; scenarioBand: number;
+  baselineDays: number; baselineBand?: number;
+  scenarioDays: number; scenarioBand?: number;
   shipWindow: { earliestDay: number; latestDay: number };
-  lsodBaseline: number | null; lsodScenario: number | null;
+  lsodBaseline?: number | null; lsodScenario?: number | null;
 }) {
-  const W = 620, H = 200, PAD_L = 38, PAD_B = 24, PAD_T = 8, PAD_R = 8;
+  const horizon = Math.max(30, Math.ceil(Math.max(baselineDays, scenarioDays, shipWindow.latestDay) * 1.1));
+  const left = (days: number, d: number) =>
+    !isFinite(days) || days <= 0 ? (d === 0 ? 100 : 0) : Math.max(0, Math.round(100 * (1 - d / days)));
 
-  const horizon = Math.max(
-    30,
-    Math.ceil(Math.max(baselineDays, scenarioDays, shipWindow.latestDay) * 1.1)
-  );
-  const x = (d: number) => PAD_L + (clamp(d, 0, horizon) / horizon) * (W - PAD_L - PAD_R);
-  const y = (pct: number) => PAD_T + (1 - clamp(pct, 0, 1)) * (H - PAD_T - PAD_B);
-
-  // Stock runs from 100% today to 0% at the autonomy day: a constant rate.
-  const line = (days: number) => `M ${x(0)} ${y(1)} L ${x(days)} ${y(0)}`;
-  const band = (days: number, bandDays: number) =>
-    `M ${x(0)} ${y(1)} L ${x(Math.max(0, days - bandDays))} ${y(0)} L ${x(days + bandDays)} ${y(0)} Z`;
+  const xs = [...new Set([0, baselineDays, scenarioDays, shipWindow.earliestDay, shipWindow.latestDay, horizon]
+    .filter((d) => isFinite(d) && d >= 0 && d <= horizon)
+    .map((d) => Math.round(d)))].sort((a, b) => a - b);
+  const rows = xs.map((d) => ({ d, now: left(baselineDays, d), whatIf: left(scenarioDays, d) }));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img"
-      aria-label="Stock depletion, baseline against scenario, with the ship window and last safe order dates">
-      {/* ship window */}
-      <rect
-        x={x(shipWindow.earliestDay)} y={PAD_T}
-        width={Math.max(2, x(shipWindow.latestDay) - x(shipWindow.earliestDay))}
-        height={H - PAD_T - PAD_B}
-        fill="var(--ok)" opacity={0.10}
+    <div>
+      <ChartLegend
+        className="mb-3"
+        items={[
+          { label: `Now — lasts ${Math.round(baselineDays)} days`, color: 'var(--chart-3)' },
+          { label: `What-if — lasts ${Math.round(scenarioDays)} days`, color: 'var(--sim)', dashed: true },
+          { label: 'Ship can arrive', color: 'var(--ok)' },
+        ]}
       />
-      <text x={x(shipWindow.earliestDay) + 4} y={PAD_T + 10} fontFamily="var(--font-body)" fontSize={12}
-        fill="var(--ok-soft)">Ship window</text>
-
-      {/* axes */}
-      <line x1={PAD_L} y1={y(0)} x2={W - PAD_R} y2={y(0)} stroke="var(--line-strong)" strokeWidth={1} />
-      <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={y(0)} stroke="var(--line-strong)" strokeWidth={1} />
-      {[0, 0.5, 1].map((t) => (
-        <text key={t} x={PAD_L - 5} y={y(t) + 3} textAnchor="end"
-          fontFamily="var(--font-mono)" fontSize={12} fill="var(--text-4)">
-          {Math.round(t * 100)}%
-        </text>
-      ))}
-
-      {/* uncertainty bands */}
-      <path d={band(baselineDays, baselineBand)} fill="var(--text-3)" opacity={0.12} />
-      <path d={band(scenarioDays, scenarioBand)} fill="var(--sim)" opacity={0.18} />
-
-      {/* FR-5.3 — colour AND line style differ */}
-      <path d={line(baselineDays)} fill="none" stroke="var(--text-2)" strokeWidth={1.6} />
-      <path d={line(scenarioDays)} fill="none" stroke="var(--sim)" strokeWidth={2} strokeDasharray="6 4" />
-
-      {/* LSOD markers */}
-      {lsodBaseline !== null && <LsodTick d={lsodBaseline} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--text-3)" />}
-      {lsodScenario !== null && <LsodTick d={lsodScenario} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--sim-soft)" label />}
-
-      <text x={W - PAD_R} y={H - 6} textAnchor="end" fontFamily="var(--font-mono)" fontSize={12} fill="var(--text-4)">
-        {horizon} d
-      </text>
-      <text x={PAD_L} y={H - 6} fontFamily="var(--font-body)" fontSize={12} fill="var(--text-4)">today</text>
-    </svg>
-  );
-}
-
-function LsodTick({
-  d, x, yTop, yBottom, color, label,
-}: {
-  d: number; x: (d: number) => number; yTop: number; yBottom: number;
-  color: string; label?: boolean;
-}) {
-  if (d < 0) return null;
-  return (
-    <g>
-      <line x1={x(d)} y1={yTop} x2={x(d)} y2={yBottom} stroke={color} strokeWidth={1} strokeDasharray="2 3" />
-      <circle cx={x(d)} cy={yBottom} r={3} fill={color} />
-      {label && (
-        <text x={x(d) + 4} y={yBottom - 5} fontFamily="var(--font-mono)" fontSize={12} fill={color}>
-          LSOD {Math.round(d)} d
-        </text>
-      )}
-    </g>
+      <ChartContainer className="h-56" label="Fuel remaining over time, now versus the what-if scenario, with the ship arrival window">
+        <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+          <CartesianGrid {...CHART_DEFAULTS.grid} />
+          <XAxis
+            dataKey="d"
+            type="number"
+            domain={[0, horizon]}
+            {...CHART_DEFAULTS.axis}
+            tickFormatter={(d: number) => (d === 0 ? 'Today' : `${d} d`)}
+          />
+          <YAxis {...CHART_DEFAULTS.axis} width={40} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(v: number) => `${v}%`} />
+          <ReferenceArea
+            x1={shipWindow.earliestDay}
+            x2={Math.max(shipWindow.latestDay, shipWindow.earliestDay + 1)}
+            fill="var(--ok)"
+            fillOpacity={0.1}
+            ifOverflow="extendDomain"
+          />
+          <Tooltip
+            content={
+              <ChartTooltipContent
+                unit="% left"
+                labelFormatter={(d) => (Number(d) === 0 ? 'Today' : `Day ${d}`)}
+              />
+            }
+          />
+          <Line dataKey="now" name="Now" type="linear" stroke="var(--chart-3)" {...CHART_DEFAULTS.line} dot={false} isAnimationActive={false} />
+          <Line dataKey="whatIf" name="What-if" type="linear" stroke="var(--sim)" strokeDasharray="6 4" {...CHART_DEFAULTS.line} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }
 

@@ -153,6 +153,21 @@
   - Some labels were renamed: "Drain now" → "Send now" (the tooltip still says drain), "SLA breach" → "Overdue only", and the Table/Board toggle is now List/Board.
   - Dev A backlog, pre-existing and not caused by this pass: the Environment tiles and charts render empty because the pages pass `StatTile`/`TimeSeriesChart` props the components don't accept (these are among the 17 `tsc` errors); the 3D view could not be checked in a hidden automation tab, but its wiring is untouched; the Maitri card on `AntarcticaMap` wraps its warning count at the new sizes.
 
+### [2026-09-29 15:30] Shared (at the user's request) — Simpler charts, one chart spec, map chip overlap
+- Status: done (build passes; visual check pending — the browser extension disconnected before this pass could be screenshotted)
+- Files changed: `src/components/shared/Chart.tsx` (new), `src/styles/chart.css` (new), `src/styles/tokens.css` (`--chart-1/2/3`, `--brand` alias), `src/components/shared/TimeSeriesChart.tsx` (rebuilt), `StatTile.tsx`, `CausalTrace.tsx`, `src/components/viz/AntarcticaMap.tsx`, `src/pages/Compliance/{Obligations,WasteLedger,AuditLog}.tsx`, `src/pages/Logistics/ResupplyTable.tsx`, `src/pages/Sandbox/index.tsx`, `src/pages/Actions/ActionDrawer.tsx`.
+- Summary: The user's rule for this pass: every chart says one thing. All charts now follow one spec, ported from `~/Temp-ui-comps` (`CHART_DEFAULTS` + `ChartContainer` / tooltip / legend): a horizontal hairline grid, no axis lines, sans labels with mono numbers, and data series in status-free `--chart-*` colours.
+  - **Season calendar:** was dots on a ±days strip; now "What falls due each month", stacked by status.
+  - **Waste chart:** was two stacked panels with eight near-identical greens; now one stacked bar chart of 3 groups plus two headline numbers. The table view keeps all 8 streams.
+  - **Sandbox depletion:** was 2 lines + 2 bands + ship band + 2 LSOD ticks; now "Does the stock last until the ship?", two lines and a ship window.
+  - **Resupply bar:** was the bar + a range band + the ship window + an LSOD tick; now the bar + a dashed "ship arrives" line. The row detail drops the sparkline.
+  - **`TimeSeriesChart`:** was a stub; now a real Recharts area chart. It accepts the single- and multi-series shapes the pages pass, never interpolates across gaps, and draws thresholds dashed.
+  - **Audit chain card:** collapsed to one row plus a slim strip. The legend and the "not non-repudiable" note moved to an info tooltip; the duration moved into Verify's "Verified in N ms". FR-5.3, 5.4, 5.7 and 5.8 are still met.
+  - **Map station chips:** sized from the root font, so they no longer clip at larger text.
+- Touches shared contract? no. `StatTile` `value`/`unit` are now optional (they default from `measurement`) and it accepts `trend`; `CausalTrace` gained `hideHeading`. All changes are additive.
+- Touchpoint completed? none
+- Notes for the other developer: new charts use `ChartContainer` + `CHART_DEFAULTS` from `components/shared/Chart.tsx`. Status colours (`--ok`, `--watch`, `--act`) are for statuses only; a measured series uses `--chart-1/2/3`. This fixed 11 of the 17 pre-existing `tsc` errors, and the Environment tiles and charts now render; the remaining 6 are Twin/Assets/IsoStationModel prop mismatches.
+
 ---
 
 ## Integration & Review

@@ -9,7 +9,7 @@
 // is that nothing disappears.
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { Download, ShieldCheck, ShieldAlert, Unlink } from 'lucide-react';
+import { Download, ShieldCheck, ShieldAlert, Info } from 'lucide-react';
 import type { ChainEntry, ChainStatus } from '@/lib/hashChain';
 import { shortHash } from '@/lib/hashChain';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -64,40 +64,55 @@ export function AuditLog({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ---- Verifier ---- */}
+      {/* ---- Verifier (FR-5.3/5.4/5.7/5.8) — one compact row + the strip ---- */}
       <section
-        className="p-5"
+        className="px-5 py-4"
         style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
       >
-        <div className="flex items-center gap-3 flex-wrap">
-          <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
-            Tamper-evident hash chain
-          </h3>
-          <span className="font-mono text-body-sm" style={{ color: 'var(--text-3)' }}>SHA-256</span>
-          {status && (
-            <span
-              className="flex items-center gap-2 text-body-sm font-medium px-4 py-1.5 rounded-full"
-              style={{
-                border: `1px solid ${status.ok ? 'var(--ok)' : 'var(--act)'}`,
-                color: status.ok ? 'var(--ok-soft)' : 'var(--act-soft)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {status.ok ? <ShieldCheck size={16} aria-hidden /> : <ShieldAlert size={16} aria-hidden />}
-              {status.ok ? (
-                <span>Chain verified — <span className="font-mono tabular-nums">{status.verified}</span> entries</span>
-              ) : (
-                <span>Chain broken at entry <span className="font-mono tabular-nums">{status.brokenAt}</span></span>
-              )}
-            </span>
+        <div className="flex items-center gap-x-4 gap-y-2 flex-wrap">
+          {status?.ok === false ? (
+            <ShieldAlert size={20} className="shrink-0" style={{ color: 'var(--act-soft)' }} aria-hidden />
+          ) : (
+            <ShieldCheck size={20} className="shrink-0" style={{ color: 'var(--ok-soft)' }} aria-hidden />
           )}
+          <div className="min-w-0">
+            <h3 className="text-body font-semibold" style={{ color: 'var(--text)' }}>
+              Tamper-evident hash chain <span className="font-mono text-body-sm font-normal" style={{ color: 'var(--text-3)' }}>(SHA-256)</span>
+            </h3>
+            {status && (
+              <p className="text-body-sm" style={{ color: status.ok ? 'var(--text-3)' : 'var(--act-soft)' }}>
+                {status.ok ? (
+                  <>All <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{status.verified}</span> records unaltered</>
+                ) : (
+                  <>Broken at entry <span className="font-mono tabular-nums">{status.brokenAt}</span> — records after it can no longer be proven unaltered</>
+                )}
+                <span style={{ color: 'var(--text-3)' }}>
+                  {' '}· checked <span className="font-mono tabular-nums">{formatShortIST(status.checkedAt)}</span>
+                </span>
+              </p>
+            )}
+          </div>
+          <span
+            className="inline-flex items-center justify-center w-7 h-7 rounded-full cursor-help"
+            style={{ color: 'var(--text-3)', border: '1px solid var(--line)' }}
+            tabIndex={0}
+            aria-label="About this chain"
+            title={
+              'Every record is linked to the one before it by a SHA-256 hash, so any later edit breaks the chain at that point.\n\n'
+              + 'Strip colours: green = recorded online, amber = written offline and synced later, grey = superseded, orange = broken link.\n\n'
+              + 'Tamper-evident, not non-repudiable: it proves records were not altered after writing; it carries no digital signature.'
+            }
+          >
+            <Info size={14} aria-hidden />
+          </span>
+
           <div className="flex items-center gap-2.5 ml-auto flex-wrap">
             <AsyncButton
               onClick={onVerify}
               pendingLabel="Verifying…"
-              doneLabel={status?.ok === false ? null : 'Verified'}
+              doneLabel={status?.ok === false ? null : status ? `Verified in ${status.durationMs} ms` : 'Verified'}
               disabled={verifying}
-              className="inline-flex items-center gap-2 px-5 min-h-10 rounded-full text-body-sm font-semibold hover:bg-[var(--panel-alt)]"
+              className="inline-flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-semibold hover:bg-[var(--panel-alt)]"
               style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line-strong)', color: 'var(--text)', fontFamily: 'var(--font-body)', opacity: verifying ? 0.5 : 1 }}
             >
               {verifying ? 'Verifying…' : 'Verify chain'}
@@ -108,39 +123,29 @@ export function AuditLog({
               className="flex items-center gap-2 px-4 min-h-9 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
               style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
             >
-              <Download size={16} aria-hidden /> Export JSON
+              <Download size={15} aria-hidden /> Export JSON
             </button>
           </div>
         </div>
 
-        {status && (
-          <p className="flex items-center gap-x-5 gap-y-1 flex-wrap mt-3 text-body-sm" style={{ color: 'var(--text-3)' }}>
-            <span>
-              Checked <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{status.verified}</span> entries
-            </span>
-            <span>
-              in <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{status.durationMs}</span> ms
-            </span>
-            <span>
-              Last check <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{formatShortIST(status.checkedAt)}</span>
-            </span>
-          </p>
-        )}
-
-        {/* ---- Chain strip (FR-5.4) ---- */}
-        <div className="flex items-center gap-[3px] flex-wrap mt-5" role="img"
-          aria-label={status?.ok ? 'Chain intact' : `Chain broken at entry ${status?.brokenAt}`}>
+        {/* Chain strip (FR-5.4): one block per entry, a break shows in orange at its exact position. */}
+        <div
+          className="flex items-center gap-[2px] flex-wrap mt-3.5"
+          role="img"
+          aria-label={status?.ok === false ? `Chain broken at entry ${status.brokenAt}` : 'Chain intact'}
+        >
           {chain.map((entry) => {
             const broken = status && !status.ok && entry.seq === status.brokenAt;
             return (
               <button
                 key={entry.seq}
                 type="button"
+                data-press="none"
                 onClick={() => setExpanded(entry.seq)}
-                title={`#${entry.seq} ${entry.transition} — ${entry.payloadSummary}`}
+                title={`#${entry.seq} ${entry.transition} — ${entry.payloadSummary}${entry.writtenOffline ? ' (written offline)' : ''}${entry.superseded ? ' (superseded)' : ''}`}
                 style={{
-                  width: 10,
-                  height: 20,
+                  width: 8,
+                  height: broken ? 18 : 14,
                   borderRadius: 2,
                   backgroundColor: broken
                     ? 'var(--act)'
@@ -149,34 +154,12 @@ export function AuditLog({
                       : entry.writtenOffline
                         ? 'var(--watch)'
                         : 'var(--ok)',
-                  opacity: entry.superseded ? 0.4 : 0.85,
+                  opacity: broken ? 1 : entry.superseded ? 0.35 : 0.7,
                 }}
               />
             );
           })}
         </div>
-
-        {/* Strip legend — the blocks are never colour-alone. */}
-        <ul className="flex items-center gap-x-5 gap-y-1.5 flex-wrap mt-3 text-body-sm" style={{ color: 'var(--text-3)' }}>
-          <LegendSwatch color="var(--ok)" label="Recorded online" />
-          <LegendSwatch color="var(--watch)" label="Written offline" />
-          <LegendSwatch color="var(--unknown)" label="Superseded" faded />
-          {status && !status.ok && <LegendSwatch color="var(--act)" label="Broken link" />}
-        </ul>
-
-        {status && !status.ok && (
-          <p className="flex items-start gap-2 text-body mt-4" style={{ color: 'var(--act-soft)' }}>
-            <Unlink size={18} className="mt-0.5 shrink-0" aria-hidden />
-            <span>
-              Severed link at position <span className="font-mono tabular-nums">{status.brokenAt}</span>. Everything
-              after it is no longer provably unaltered.
-            </span>
-          </p>
-        )}
-        <p className="text-body-sm mt-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
-          Tamper-evident, not non-repudiable: this chain proves records have not been altered since
-          they were written. It carries no digital signature.
-        </p>
       </section>
 
       {/* ---- Filters (FR-5.2) ---- */}
@@ -323,15 +306,6 @@ export function AuditLog({
         )}
       </section>
     </div>
-  );
-}
-
-function LegendSwatch({ color, label, faded }: { color: string; label: string; faded?: boolean }) {
-  return (
-    <li className="flex items-center gap-2">
-      <span className="shrink-0" style={{ width: 10, height: 16, borderRadius: 2, backgroundColor: color, opacity: faded ? 0.4 : 0.85 }} aria-hidden />
-      {label}
-    </li>
   );
 }
 

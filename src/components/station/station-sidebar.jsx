@@ -20,7 +20,7 @@ function LocationCard() {
         <span className="font-medium text-foreground text-xs">
           Larsemann Hills
         </span>
-        <span className="text-muted-foreground text-[0.6875rem]" data-numeric="">
+        <span className="text-muted-foreground text-caption" data-numeric="">
           69.41° S, 76.11° E
         </span>
       </div>
@@ -73,7 +73,7 @@ export function StationSidebar({
                 </Badge>
               )}
               {disabled && (
-                <span className="ml-auto text-[0.6875rem] text-muted-foreground">
+                <span className="ml-auto text-caption text-muted-foreground">
                   Soon
                 </span>
               )}
@@ -88,16 +88,16 @@ export function StationSidebar({
           exists and it is the weather station. */}
       <div className="mt-2.5 flex flex-col gap-1.5 border-t pt-2.5">
         <div className="flex items-center justify-between px-2">
-          <span className="text-[0.6875rem] text-muted-foreground">Connected</span>
-          <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
+          <span className="text-caption text-muted-foreground">Connected</span>
+          <span className="text-caption text-muted-foreground" data-numeric="">
             {FEED_COVERAGE.live} of {FEED_COVERAGE.total}
           </span>
         </div>
         <div className="flex items-center justify-between px-2">
-          <span className="text-[0.6875rem] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             Integration boundaries
           </span>
-          <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
+          <span className="text-caption text-muted-foreground" data-numeric="">
             {FEED_COVERAGE.boundaries}
           </span>
         </div>

@@ -1,8 +1,10 @@
 // OWNER: Dev B
 // Drawer — slide-over overlay panel on --panel-alt.
-// See FRONTEND.md §7.
+// See FRONTEND.md §7. Slides + fades in, and plays a faster exit before
+// unmounting (usePresence) with its last content still showing.
 
 import { type ReactNode, useEffect } from 'react';
+import { usePresence, useLastWhileOpen } from '@/hooks/usePresence';
 
 interface DrawerProps {
   open: boolean;
@@ -12,7 +14,11 @@ interface DrawerProps {
   className?: string;
 }
 
-export function Drawer({ open, onClose, title, children, className = '' }: DrawerProps) {
+export function Drawer({ open, onClose, title: titleProp, children: childrenProp, className = '' }: DrawerProps) {
+  const { mounted, state } = usePresence(open, 160);
+  const title = useLastWhileOpen(open, titleProp);
+  const children = useLastWhileOpen(open, childrenProp);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -22,19 +28,23 @@ export function Drawer({ open, onClose, title, children, className = '' }: Drawe
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40"
+        data-overlay
+        data-state={state}
+        className="m-backdrop fixed inset-0 z-40"
         style={{ backgroundColor: 'rgba(10,13,12,0.60)' }}
         onClick={onClose}
       />
       {/* Panel */}
       <aside
-        className={`fixed top-0 right-0 bottom-0 z-50 w-96 max-w-[90vw] overflow-y-auto ${className}`}
+        data-overlay
+        data-state={state}
+        className={`m-sheet fixed top-0 right-0 bottom-0 z-50 w-[32rem] max-w-[92vw] overflow-y-auto ${className}`}
         style={{
           backgroundColor: 'var(--panel-alt)',
           borderLeft: '1px solid var(--line-strong)',
@@ -42,13 +52,14 @@ export function Drawer({ open, onClose, title, children, className = '' }: Drawe
         }}
       >
         {title && (
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--line)' }}>
-            <h3 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
+            <h3 className="text-title font-semibold" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
               {title}
             </h3>
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--panel-raised)]"
+              data-press="icon"
+              className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full text-body hover:bg-[var(--panel-raised)]"
               style={{ color: 'var(--text-3)' }}
               aria-label="Close drawer"
             >
@@ -56,7 +67,7 @@ export function Drawer({ open, onClose, title, children, className = '' }: Drawe
             </button>
           </div>
         )}
-        <div className="p-4">{children}</div>
+        <div className="p-5 text-body">{children}</div>
       </aside>
     </>
   );

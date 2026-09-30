@@ -40,6 +40,7 @@ export function ProgressBar({
       aria-label={label}
     >
       <div
+        className="m-bar-fill"
         style={{
           width: pct + '%',
           height: '100%',
@@ -48,7 +49,7 @@ export function ProgressBar({
           backgroundImage: hatched
             ? `repeating-linear-gradient(45deg, ${color} 0 3px, transparent 3px 6px)`
             : undefined,
-          transition: 'width 220ms ease',
+          transition: 'width 320ms var(--ease-out)',
         }}
       />
     </div>

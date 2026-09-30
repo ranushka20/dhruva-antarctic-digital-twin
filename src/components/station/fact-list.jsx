@@ -22,7 +22,7 @@ function FactRow({ fact }) {
         {fact.value}
       </span>
       {fact.note && (
-        <span className="text-[0.6875rem] text-muted-foreground leading-snug">
+        <span className="text-caption text-muted-foreground leading-snug">
           {fact.note}
         </span>
       )}
@@ -43,7 +43,7 @@ function BoundaryRow({ fact }) {
           {fact.label}
         </span>
         {fact.source && (
-          <span className="text-[0.6875rem] text-muted-foreground leading-snug">
+          <span className="text-caption text-muted-foreground leading-snug">
             {fact.source}
           </span>
         )}
@@ -78,7 +78,7 @@ export function FactList({ facts = [] }) {
       {boundaries.length > 0 && (
         <div>
           <Label className="mb-1 block">Not connected</Label>
-          <p className="mb-1 text-[0.6875rem] text-muted-foreground leading-relaxed">
+          <p className="mb-1 text-caption text-muted-foreground leading-relaxed">
             Real, documented, and carrying no public feed. Each is an
             integration boundary this platform would close.
           </p>

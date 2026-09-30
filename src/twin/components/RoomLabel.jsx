@@ -29,7 +29,7 @@ export default function RoomLabel({ room, selected, onSelect }) {
         }}
         type="button"
       >
-        <span className="flex items-center gap-1.5 font-medium text-[13px] text-popover-foreground leading-none">
+        <span className="flex items-center gap-1.5 font-medium text-body-sm text-popover-foreground leading-none">
           <span
             className={cn(
               "size-1.5 rounded-full",
@@ -38,7 +38,7 @@ export default function RoomLabel({ room, selected, onSelect }) {
           />
           {room.name}
         </span>
-        <span className="text-[11px] text-muted-foreground leading-none">
+        <span className="text-micro text-muted-foreground leading-none">
           {room.category || room.type}
         </span>
       </button>

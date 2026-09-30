@@ -24,7 +24,7 @@ import { setConnectivity } from '@/shared/contracts';
  * half-populated store — the missing bucket would otherwise show up as a
  * silently empty panel, which is exactly what NFR-G2 forbids.
  */
-const SEED_VERSION = 'devb-3';
+const SEED_VERSION = 'devb-4';
 
 interface StoredChainEntry extends AuditEntry {
   payload: Record<string, unknown>;

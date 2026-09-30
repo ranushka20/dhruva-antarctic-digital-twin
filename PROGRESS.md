@@ -121,6 +121,200 @@
   - **Touchpoint 10 is now easy to check:** the Sandbox's BEFORE column is `runCausalTrace(causalTraceInput(stationId))` with nothing overridden, so it must equal the Twin's trace and the Action Centre drawer's for the same station. If those three ever disagree, the Sandbox will show it immediately.
   - **Violet is a provenance class, not this page's accent colour.** I had it on the changed-parameter chip, the group badges, the slider accents, the toast, the trace deltas, the zone row borders and the scenario card border — none of which are simulated *values*. It now appears in exactly four places, all of them spec'd: the banner (FR-1.1), the `SIM` badge on every AFTER value (FR-4.4, via the shared `ProvenanceBadge`), the scenario line/band/LSOD tick on the chart (FR-5.3) and the zone `SIM` marker (FR-8.2). Changed-parameter state now reads as neutral emphasis, the toast is the same mint confirmation the other pages use, and trace deltas use orange-worse / mint-better like every other delta in the product. The banner also matches `ChainBanner`'s geometry now — same 14% tint, same padding, body-font text — with only the safety label kept mono and letter-spaced.
 
+### [2026-09-28 18:05] Shared (both devs' pages, at the user's request) — Type scale: nothing below 11px
+- Status: done
+- Files changed: `src/index.css` (type scale in `@theme`), `src/lib/utils.js` (`cn` knows the new sizes), `src/components/viz/AntarcticaMap.tsx`, `src/pages/Actions/ActionTable.tsx`, `src/components/shared/StatTile.tsx`, plus a mechanical class rename across ~60 files in `src/pages/`, `src/components/` and `src/twin/`.
+- Summary: The UI used 26 ad-hoc sizes, and ~490 elements were at 8–10.5px. Replaced every `text-[Npx]` with an 8-step role-based scale: `text-micro` 11 · `caption` 12 · `body-sm` 13 · `body` 14 · `title` 16 · `headline` 20 · `display` 28 · `hero` 32. Wide tracking on mono uppercase labels (0.08–0.14em) is now `tracking-label` (0.06em). Mono was also removed from prose, names, form controls and buttons on Assets, Twin, Environment and Station Console; it stays on numbers, IDs, codes and micro-labels.
+- Touches shared contract? no
+- Touchpoint completed? none
+- Notes for the other developer:
+  - **Don't write `text-[9px]` again.** Pick a size by role from the comment block above `--text-micro` in `src/index.css`. If a new size name is ever added there, add it to the `extendTailwindMerge` list in `src/lib/utils.js` too — otherwise `cn('text-caption text-muted-foreground')` reads `text-caption` as a colour and silently drops it.
+  - `AntarcticaMap` draws in a 1000-unit viewBox but renders ~500px wide, so its labels and chips were halved on screen. They are now counter-scaled via `useViewBoxUnit` and render at their real CSS size at any panel width.
+  - Back-button labels no longer include `← ` — `PageHeader` already draws the arrow.
+  - Pre-existing, not fixed here (Dev A): `src/pages/Environment/index.tsx` renders `StatTile` without `value`/`unit`, so the five current-conditions tiles show "—"; `tsc` also flags `Twin` and `Assets` passing `compact` to `ActionCard` and `trend` to `StatTile`, which neither accepts.
+
+### [2026-09-28 18:30] Shared (both devs' pages, at the user's request) — Motion system: route transitions, loading states, button states
+- Status: done
+- Files changed: `src/styles/motion.css` (new, imported from `index.css`), `src/hooks/usePresence.ts`, `src/components/shared/{ActiveIndicator,AsyncButton,Loading,RollingValue}.tsx` (new), `src/components/shell/navTabs.ts` (new — NAV_TABS/getActiveTab moved out of NavBar), NavBar, AppShell, PageHeader, `router.tsx`, Drawer, Modal, Popover, ProgressBar, StatTile, SyncPill, ZoneCell, `station/viewport-skeleton.jsx`; pages: Actions (index, ActionDrawer), Compliance (index, AuditLog, WasteLedger), Comms (index, OutboxPanel), Settings, Handover, Sandbox, Logistics (index, Manifest), StationConsole, Twin, Environment — each a small, local edit.
+- Summary: One motion vocabulary for the whole app, modelled on the ~/Temp-ui-comps kit. Top-level route changes fade + slide 14px in nav-tab order (left/right), sections assemble with a 30ms stagger; the nav pill is a clip-path over a duplicate tab layer so pill and label colour move together. Every in-page tab bar / segmented control (Compliance tabs, Table↔Board, chart↔table, Settings rail, LIVE/LAGGING/DARK, all station-scope pickers) has a sliding `ActiveIndicator`, and switched tab content fades in. Drawer / Modal / Popover / account menu / Action drawer animate in AND out (`usePresence` keeps them mounted for the exit, with their last content). Route Suspense and bootstrap show a synced-shimmer `PageSkeleton`; long work shows `PixelLoader` (pixel wavefront + shimmer label + elapsed timer). All buttons get press feedback (scale 0.97, icons 0.9) and a mint `:focus-visible` ring (NFR-G5) from one unlayered rule; real async buttons (Verify chain, Drain now, Generate capsule, acknowledge, Rebuild demo data) use `AsyncButton` (spinner only after 120ms → drawn check → idle; errors shake). StatTile values roll per changed digit; progress fills wipe in; LIVE dots breathe; the T0/T1 bell dot pings.
+- Touches shared contract? no
+- Touchpoint completed? none
+- Notes for the other developer: (1) New segmented controls: make the container `data-segmented className="relative isolate …"`, put `aria-pressed`/`aria-selected` on each button, drop the inline active `backgroundColor`, and add `<ActiveIndicator style={{ backgroundColor: … }} />` as the last child. (2) New overlays: use `Drawer`/`Modal`, or `usePresence` + the `m-backdrop`/`m-sheet`/`m-dialog`/`m-pop` classes, and mark fixed overlays `data-overlay` so the page stagger skips them. (3) Enter keyframes use `backwards` fill on purpose — a leftover transform on a page wrapper would trap every `position: fixed` child. (4) Command palette deliberately does not animate (keyboard-driven). (5) `prefers-reduced-motion` still kills all motion via the existing rule in `index.css`, now also zeroing animation delays so staggered items never sit invisible. (6) `tsc` still reports the 17 pre-existing errors in Twin/Environment/Assets/IsoStationModel — none introduced here.
+
+### [2026-09-28 19:10] Shared (every page, at the user's request) — Readability pass for an older audience
+- Status: done
+- Files changed: `src/index.css` (type scale + `--spacing`), `src/styles/tokens.css` (text/line contrast), `src/styles/motion.css`, `src/main.jsx`, `src/state/textSize.ts` (new), NavBar, PageHeader, AppShell, CommandPalette, shared Modal/Drawer/Popover/ChainBanner/DegradableSurface/ActionCard/ProvenanceBadge/StatTile/ResourceRow/EmptyState/MetricRow/CausalTrace; every page folder under `src/pages/` (Overview, Actions, Logistics incl. Manifest, Comms, Compliance, Handover, Settings, Twin, Assets, Environment, Sandbox, StationConsole, Login).
+- Summary: The user reported the UI as cluttered for its mostly older users. Type scale raised to body 15 / title 17 / headline 20 / display 26 / micro 11.5 (a first pass at 16px body was judged too big and stepped back one notch); `--spacing` 0.26rem; `--text-4` raised from 4.1:1 (failed AA) to ~6:1 and `--text-2/3` brightened. New "Aa · Text size" control in the NavBar (Standard / Large 112.5% / Larger 125%, per-browser, applied before first paint). Every page was decluttered to one brief, with the Manifest builder as the reference: sans for prose and mono only for numbers/IDs; `·`-joined meta strings split into spaced pieces and chips; plain-language labels with the jargon kept in `title`; at most one inline primary action per row; wrap instead of truncate; layouts rebalanced per breakpoint so they survive 125% text. Notable structural changes: Action Centre table 11 → 3–4 columns with one "next step" button + a More menu (every transition still reachable there and in the drawer); Overview is a container-query grid (1 → 2 → 3 columns); Manifest rows get an explicit Carry | Defer switch; Settings booleans are an On | Off switch; Obligations table 8 → 6 columns.
+- Touches shared contract? no. (`CausalTrace` gained an optional presentational `hideHeading` prop; it still calls `runCausalTrace()` and its numbers are unchanged.)
+- Touchpoint completed? none. Touchpoints #1, #2, #4 and #6 were re-checked: same functions, same handlers.
+- Notes for the other developer:
+  - Size by role from the comment block in `src/index.css`. Anything a person reads uses `--text-3` or brighter; `--text-4` is for decoration and axis ticks only.
+  - Pick new sizes on the reference pages, then check them at the 125% Text size.
+  - Some labels were renamed: "Drain now" → "Send now" (the tooltip still says drain), "SLA breach" → "Overdue only", and the Table/Board toggle is now List/Board.
+  - Dev A backlog, pre-existing and not caused by this pass: the Environment tiles and charts render empty because the pages pass `StatTile`/`TimeSeriesChart` props the components don't accept (these are among the 17 `tsc` errors); the 3D view could not be checked in a hidden automation tab, but its wiring is untouched; the Maitri card on `AntarcticaMap` wraps its warning count at the new sizes.
+
+### [2026-09-29 15:30] Shared (at the user's request) — Simpler charts, one chart spec, map chip overlap
+- Status: done (build passes; visual check pending — the browser extension disconnected before this pass could be screenshotted)
+- Files changed: `src/components/shared/Chart.tsx` (new), `src/styles/chart.css` (new), `src/styles/tokens.css` (`--chart-1/2/3`, `--brand` alias), `src/components/shared/TimeSeriesChart.tsx` (rebuilt), `StatTile.tsx`, `CausalTrace.tsx`, `src/components/viz/AntarcticaMap.tsx`, `src/pages/Compliance/{Obligations,WasteLedger,AuditLog}.tsx`, `src/pages/Logistics/ResupplyTable.tsx`, `src/pages/Sandbox/index.tsx`, `src/pages/Actions/ActionDrawer.tsx`.
+- Summary: The user's rule for this pass: every chart says one thing. All charts now follow one spec, ported from `~/Temp-ui-comps` (`CHART_DEFAULTS` + `ChartContainer` / tooltip / legend): a horizontal hairline grid, no axis lines, sans labels with mono numbers, and data series in status-free `--chart-*` colours.
+  - **Season calendar:** was dots on a ±days strip; now "What falls due each month", stacked by status.
+  - **Waste chart:** was two stacked panels with eight near-identical greens; now one stacked bar chart of 3 groups plus two headline numbers. The table view keeps all 8 streams.
+  - **Sandbox depletion:** was 2 lines + 2 bands + ship band + 2 LSOD ticks; now "Does the stock last until the ship?", two lines and a ship window.
+  - **Resupply bar:** was the bar + a range band + the ship window + an LSOD tick; now the bar + a dashed "ship arrives" line. The row detail drops the sparkline.
+  - **`TimeSeriesChart`:** was a stub; now a real Recharts area chart. It accepts the single- and multi-series shapes the pages pass, never interpolates across gaps, and draws thresholds dashed.
+  - **Audit chain card:** collapsed to one row plus a slim strip. The legend and the "not non-repudiable" note moved to an info tooltip; the duration moved into Verify's "Verified in N ms". FR-5.3, 5.4, 5.7 and 5.8 are still met.
+  - **Map station chips:** sized from the root font, so they no longer clip at larger text.
+- Touches shared contract? no. `StatTile` `value`/`unit` are now optional (they default from `measurement`) and it accepts `trend`; `CausalTrace` gained `hideHeading`. All changes are additive.
+- Touchpoint completed? none
+- Notes for the other developer: new charts use `ChartContainer` + `CHART_DEFAULTS` from `components/shared/Chart.tsx`. Status colours (`--ok`, `--watch`, `--act`) are for statuses only; a measured series uses `--chart-1/2/3`. This fixed 11 of the 17 pre-existing `tsc` errors, and the Environment tiles and charts now render; the remaining 6 are Twin/Assets/IsoStationModel prop mismatches.
+
+### [2026-09-29 23:20] Dev B (at the user's request) — Action pipeline made legible; Overview and Action Centre decluttered
+- Status: done (`tsc` clean for every file touched; the 6 remaining errors are the pre-existing Twin/Assets/IsoStationModel ones). The user is checking the screens visually.
+- Files changed: `src/components/shared/ActionSteps.tsx` (new), `src/pages/Overview/{index,NeedsAttention,ResourceWatch,ZonesToWatch}.tsx` (`ZonesToWatch` new, `StationZonesPanel.tsx` deleted), `src/pages/Actions/{index,ActionTable,ActionDrawer,TierRail}.tsx`, `src/mock/seed.ts`, `src/state/bootstrap.ts`. Part of this is already in `74d86f6`.
+- Summary: The user asked where an acknowledgement goes and why the pipeline was hard to follow. The spec's intent is three human steps: **Acknowledge** ("HQ has seen it"; stops the per-tier response clock, FR-7.1), **Assign** (a named owner, FR-6.3) and **Resolve** (a note, plus evidence for T0/T1). `ActionSteps.tsx` is now the one source for "where this stands / what's next". The Overview flag, the Action Centre rows and the drawer all read from it.
+  - **Bug fixed:** the drawer offered **Resolve** on an ACKNOWLEDGED action, which `canTransition` rejects. The primary button is now always the one legal next step. The table's "…" menu takes its enablement from `canTransition`, so it no longer offers Assign on an ASSIGNED action.
+  - **Overview:** Needs attention is now a flag beside the title. It opens a panel of the top 3 read-only items, each linking to `/actions/:id`. The page is two rows. Row 1 is the comparator, map and sync queue. Row 2 is "Supplies to watch" (top 5, linking to Logistics) and "Zones to watch" (both stations; non-normal zones only, each opening that station's twin on the zone). Title-row search, Filter and Reports were removed as duplicates of the nav search, Action Centre and Compliance.
+  - **Action Centre:** the left rail and the three header count pills are replaced by step tabs (All open · To acknowledge · To assign · To resolve · Deferred · Resolved) and a one-line tier chip filter. Each count now appears once. Rows drop checkboxes, zone/metric text and "no consequence modelled". Bulk ACK becomes "Acknowledge all n" on the To-acknowledge tab. `?state=RAISED` deep links still work.
+  - **Seed:** `act-mtr-002` was ACKNOWLEDGED with an assignee, which the state machine can't produce. The assignee was removed (V. Chandran's version still arrives as the seeded sync conflict), and `SEED_VERSION` moved to `devb-4`, so local demo data reseeds once.
+- **Spec deviations, all user-directed:** FR-4.3/4.5 (the ACK button on the Overview card is gone; acting happens only in the Action Centre). FR-2.4 (the state filter is grouped by step; Board still shows all six columns). FR-7.1/7.2 (the light-cone zone grid for the primary station is replaced by a non-normal-zones list for both stations). FR-9 (the selection summary is gone; a zone opens the twin instead). FR-8 (ambient and wind appear in the zones card header; the SYNTH load tile was dropped). FR-2.2/2.4 (title-row search and Filter removed).
+- Touches shared contract? no — `contracts.ts` untouched; `ActionSteps` only reads `Action`.
+- Touchpoint completed? none. Touchpoint #7 still holds: `?state=` pre-fills the matching step tab.
+- Notes for the other developer: if Twin or Asset detail needs to show action progress, import `StepBars` / `describeStanding` / `nextStep` from `components/shared/ActionSteps` rather than mapping states locally. The shared `ActionCard` was not changed.
+
+### [2026-09-29 23:55] Dev A (at the user's request) — "Why this matters" reads as our model's estimate
+- Status: done. `tsc` shows no errors in `CausalTrace.tsx`. A server-side render with Bharati's mock inputs gives the same numbers as before (220 ±18 d, order within 177 d). The user is checking the screens visually.
+- Files changed: `src/components/shared/CausalTrace.tsx` only. Twin page call site left to the session rewriting `src/pages/Twin/index.tsx` (agreed over cross-session message).
+- Summary: The user said the panel didn't read as our model's insight. It was a column of engine labels (`AMBIENT`, `↓ HEATING`, `HDD`, `LSOD`) with five identical MODELED chips. The panel now reads answer-first, in plain language:
+  1. A framing line: "Our model's estimate for {scope}. Calculated, not read from a sensor." In a Sandbox run it says "A Sandbox what-if… Not a forecast."
+  2. An answer card: "Fuel will last about 220 days ±18", then "Order more fuel within 177 days" with one plain sentence explaining the deadline.
+  3. "How the model got there": a one-line causal summary and the four engine steps with plain labels. The engine label goes in the tooltip. Last comes one line tying stock ÷ burn to the headline.
+  4. A note that insulation, generator efficiency and shipping times are assumptions, linking to `/settings`. Hidden in SIM.
+- Also fixed: every step badge's hover card showed the orange "derived value with no declared parents — report this" warning, because `runCausalTrace` returns steps without `parents`. The component now attaches each step's parents for display only. The latest safe order date also gets its own badge.
+- Touches shared contract? no. Every number still comes from `runCausalTrace()`. The new optional `scope?: string` prop is additive; `hideHeading` still works.
+- Touchpoint completed? none. Touchpoint #10 is unaffected: same engine call, same numbers on every page.
+- Spec deviation, user-directed: FR-10.3 puts the operational consequence in the final row. It now sits at the top, so older users see the answer first. FR-10.2's per-value badges are kept.
+- Notes for the other developer: the Action Centre drawer picks up the new layout automatically. It needs no change, but `scope` is available if the drawer wants to say what the estimate covers.
+
+### [2026-09-29 23:18] Dev A (at the user's request) — Twin page: floors are back, zones follow the floor, page simplified
+- Status: done. `tsc` shows no errors in the Twin page (this also clears 4 old ones there: `openActionCount`, `compact`, missing `Bharati3D` props). Checked in Chrome on Bharati 3D (all three floors, room clicks), Bharati Diagram and Maitri. No console errors.
+- Files changed: `src/pages/Twin/index.tsx` (rewritten), `src/twin/zoneRooms.js` (new).
+- Summary: The 20 Sep Twin page rendered `<Bharati3D />` with no `floor` prop, so the model was stuck on the ground floor. The page was also `h-screen` inside the shell, which clipped its bottom 56px. The left rail is now a Floors list (Ground / First / Second). Opening a floor shows the zones on it, most urgent first. Choosing a zone jumps to its floor and highlights its room; clicking a room in 3D selects its zone. The 3D rooms are tinted by zone status. A room outside any zone says "Not monitored yet" instead of showing a status. `?zone=A1` from the Overview opens that zone on the right floor.
+- `zoneRooms.js` is the one join between the six mock zones and the 17 rooms in `stationData.js`. Control room, briefing room, main entry and the RO and wastewater plants belong to no zone yet.
+- Touches shared contract? no. It reads `getActions()`/`getResources()` and calls `useActionTransitions().acknowledge()`, all unchanged.
+- Touchpoint completed? #1: Acknowledge now calls the real `useActionTransitions('hq')`. It replaces the `alert()` placeholders. Assign and Defer need a person or a date, so they moved behind "Open in Action Centre".
+- Spec deviations, user-directed ("UI seems too complex… it's a government website"):
+  - FR-4: the Colour-by radios (Status / Provenance / Freshness) are removed. They only ever affected the Diagram view, not the 3D, and the labels were jargon. Provenance is still on every value via its badge.
+  - FR-5: the autonomy strip is now one line: the shortest-lasting supply, from the same `getResources()` as `/` and `/logistics`, plus a "See all" link.
+  - FR-8.1/8.2: status is shown in words (Normal / Watch / Needs action / No data). The tier chip is gone. The latest-reading box and the asset progress bars are replaced by plain rows showing the value, its limit, and a badge.
+- Notes for the other developer: nothing needed. Open-action counts on the Twin now come from the live store, so they change when an action is acknowledged or resolved in the Action Centre.
+
+### [2026-09-30 00:30] Shared (at the user's request, agreed with Dev B's session) — Provenance hover card no longer clipped
+- Status: done. `tsc` shows no errors in the touched files. The user is checking visually.
+- Files changed: `src/components/shared/ProvenanceBadge.tsx` (Dev B's file; the Dev B session agreed to this change).
+- Summary: The user's screenshot showed the MODELED hover card in the Twin inspector with its left third cut off. Any `overflow-y-auto` ancestor clips the x axis too, so the card, rendered in place with `position: absolute`, could not escape the inspector or the Action Centre drawer. The card is now portalled to `<body>` with `position: fixed`, placed from the badge's `getBoundingClientRect()`. It is clamped 8px inside the viewport, flips above the badge when there is no room below, and follows the badge when any ancestor scrolls or the window resizes. It sits at `z-[60]`, above the drawer and modal layers. It is placed in a layout effect, so it never paints at a stale spot.
+- Touches shared contract? no. The props API (`measurement`, `label`, `abbreviated`, `align`, `className`), the four styles, the card contents and the aria wiring are unchanged. `align` still sets the preferred side.
+- Touchpoint completed? none
+- Notes for the other developer: the per-zone "Why this matters" item was started here, then handed to the Twin session mid-way, at its request. Already written: `src/engine/zoneTrace.ts` (new; `runZoneTrace(input, profile)`, built on `runCausalTrace` and the `compute*` functions) and one additive `"trace"` line per zone in `src/mock/bharati.json` / `maitri.json`. That session owns the rest and may keep or replace both.
+
+### [2026-09-29 23:34] Dev A (at the user's request) — Twin: each zone gets its own "Why this matters"; foldable floors; resizable panels; link state
+- Status: done. `tsc` shows no errors in the touched files. Checked in Chrome: Bharati Power House / Storage & Workshop / Fuel Storage / Labs & Science, Maitri Fuel Depot, panel drag and reset, and the hover card inside the inspector.
+- Files changed: `src/components/shared/ZoneTrace.tsx` (new), `src/components/shared/CausalTrace.tsx` (ship-window row), `src/pages/Twin/index.tsx`. Kept the Dev B session's `src/engine/zoneTrace.ts` and the mock `trace` lines as they were.
+- Summary: The user pointed out that every zone and floor showed the same station fuel panel. Each zone's panel now answers that zone's own question, with numbers from `runZoneTrace()` (the engine on the zone's share of heat and load):
+  - A zone with a fault gives a verdict ("Needs attention" / "Worth watching"), the days of fuel the fault costs, and fuel now vs. once fixed. Bharati: Generator #2 costs ≈7 d, the workshop door seal ≈2 d.
+  - A healthy zone says "All right", with its share of the station's fuel.
+  - The zone that holds the fuel keeps the station fuel story (`CausalTrace`).
+- The Twin now builds its engine input with `causalTraceInput(stationId)` instead of hand-copying `mock/*.json` `engineInputs`. Bharati's fuel therefore reads 140 d, the figure Dev B measured in the drawer.
+- `CausalTrace` also shows the next ship's arrival window, with a badge. When the fuel runs out before the earliest ship it says so in `--act-soft`. Maitri today: 70 d of fuel against a 107–114 d window, which "order within 27 days" alone hid.
+- Floors: the floor already in view folds and unfolds its zone list. The side panels can be dragged wider or narrower, via pointer or arrow keys; double-click resets. Widths are remembered per viewer in `localStorage`.
+- Touches shared contract? no existing signature. See "Contract changes" for the adopted `engine/zoneTrace.ts` and the mock `trace` field.
+- Touchpoint completed? #9 (Twin side only). The 3D fades and shows the "No contact / HQ behind" banner from `useSyncInfo()`. Assets and Environment still don't read connectivity. #10: see the note on the tracker row.
+- Notes for the other developer: the drawer calls `causalTraceInput(stationId, { zoneCode })`, which models a warning zone as extra envelope loss. `runZoneTrace` models Generator #2 as an efficiency loss. So for an A1 action, the drawer's "days of fuel" and the Twin's "fuel lasts … now" differ. The station figure without a zone (140 d) matches. One of the two fault models should win; ask the user before changing either.
+
+### [2026-09-30 00:30] Dev B (at the user's request) — Compliance page rewritten for a government audience
+- Status: done. `tsc` is clean for every Compliance file; the 2 errors left are the known IsoStationModel/Assets ones. The user is checking visuals. Built by four parallel sub-agents from one shared brief (shell, Reports, Waste, Inspections + Record history), then integrated here.
+- Files changed: `src/pages/Compliance/{index,Obligations,WasteLedger,Inspections,AuditLog}.tsx`, `src/components/shell/CommandPalette.tsx` (entry title "Compliance").
+- Summary: The user asked "what even is this page?". Its job is the stations' official paperwork under the Antarctic Treaty's environmental rules and India's Antarctic Act, plus proof nobody changed it afterwards. The page is now built around four plain questions. Each is a card that shows its own answer and acts as the tab:
+  - **Reports:** are reports filed on time?
+  - **Waste:** is all waste accounted for?
+  - **Inspections:** were inspections passed?
+  - **Record history:** are the records untouched?
+  - These cards replace the header count chips, the "Chain verified" chip and the tab bar. One line shows the whole pipeline: station writes a record → reaches HQ, or waits for the satellite link → locked into the record history.
+  - **Reports:** grouped by urgency; "waiting for the link" is visibly not overdue; "Filed" is collapsed.
+  - **Waste:** one table checking that produced = stored + shipped out, with "Adds up?" and "Raise action".
+  - **Inspections:** one card per inspection, failed items listed inline with their action.
+  - **Record history:** a plain newest-first timeline. Fingerprints (hashes) appear only under per-row "Technical details". The JSON export and the tamper demo sit in a collapsed "For auditors" section.
+- Removed as redundant or engineer-only: the monthly "what falls due" chart, the chain-strip visual, the actor filter, always-visible hashes and "SHA-256" labels, and the per-row tamper buttons. Actions this page raises now read in plain words ("Hazardous waste doesn't add up").
+- **Spec deviations (user-directed):**
+  - FR-1.1: title is "Compliance", not "Compliance & Audit".
+  - FR-1.3/1.4: the counts and chain chip are folded into the cards.
+  - FR-2.1: no calendar strip.
+  - FR-5.4: no chain strip; the changed record is marked in the timeline instead.
+  - FR-5.8's label now appears as the plain explanation "sealed together with the one before it", with "tamper-evident, not signed" under "For auditors".
+- Kept: `?tab=` (obligations / waste / inspections / audit), `?record=` and `?seq=` deep links; QUEUED OFFLINE ≠ OVERDUE; SYNTH on every waste figure; superseded entries greyed, never hidden; JSON export with hashes; no "blockchain" anywhere.
+- Touches shared contract? no.
+- Touchpoint completed? #8 unchanged: shipped waste still links to its voyage.
+- Notes for the other developer: `Inspections` gained an optional `onOpen` prop. `STREAM_RAMP` is no longer exported from WasteLedger; nothing imported it. On your #10 note: agreed that the zone-level fuel figures must match; that choice is with the user.
+
+### [2026-09-29 23:44] Dev A (at the user's request) — Twin: per-room figures, shorter "Why this matters"
+- Status: done. `tsc` shows no errors in the touched files. Checked in Chrome: Power House, Living Quarters (its five rooms add up to the zone's 24%), Galley, Control Room (no zone), and the workshop door seal (same cost in the room and in the zone).
+- Files changed: `src/twin/roomProfiles.js` (new), `src/components/shared/ZoneTrace.tsx` (rewritten shorter), `src/pages/Twin/index.tsx`, `src/mock/bharati.json` (removed the six `trace` lines added earlier today; Maitri keeps its lines).
+- Summary: The user asked for figures that follow the room. Each of Bharati's 18 indoor rooms now has a hand-set share of the station's equipment load, and a share of the heated shell taken from its floor area in the 3D, weighted for roof and underside exposure. Both sum to 1, so rooms always add up to exactly the station. Faults sit in their rooms: Generator #2 in the CHP room, the door seal in the workshop. A Bharati zone is the sum of its rooms. Clicking any room, including the five outside a zone, shows that room's own panel; a zone lists its rooms with each room's share.
+- "Why this matters" is now one sentence with the answer and its badge, one line of context, and the workings folded behind "How we worked it out", which starts closed. The fuel zone uses the same short shape.
+- Deviation: FR-10.2 wants the chain rows visible. They are now one click away, at the user's request ("make this concise").
+- Touches shared contract? no. Bharati's zone profiles now come from `twin/roomProfiles.js` rather than `mock/bharati.json`.
+- Touchpoint completed? none.
+- Notes for the other developer: none.
+
+### [2026-09-30 01:00] Shared (at the user's request, agreed with Dev B's session) — Action Centre drawer uses the Twin's zone model
+- Status: done. `tsc` shows no errors in the touched files. The other 4 errors are in files other sessions are editing (Actions/index, StationConsole, Assets, IsoStationModel). Not checked in a browser.
+- Files changed: `src/twin/zoneSubject.ts` (new), `src/components/shared/ZoneTrace.tsx` (optional `hideHeading`), `src/pages/Actions/ActionDrawer.tsx` (the trace input and the "Why this matters" render only; the Dev B session agreed).
+- Summary: The user chose one zone-fault model, resolving the open #10 note in the entry above. The drawer used `causalTraceInput(stationId, { resourceId, zoneCode })`, which adds a flat +8% heat loss to any warning zone. The Twin uses `runZoneTrace` with each zone's actual fault. So an A1 action showed different "days of fuel" in the two places. Now:
+  - **Input:** the drawer builds `causalTraceInput(action.stationId)`, the same call as the Twin.
+  - **Zone actions:** when the action has a zone with a profile, the drawer renders `<ZoneTrace subject={zoneSubject(stationId, zoneCode)} hideHeading />`. Otherwise it keeps `CausalTrace`.
+  - **One lookup:** `zoneSubject()` is the single place that picks a zone's profile and status: Bharati from `twin/roomProfiles.js`, Maitri from `mock/maitri.json`. An action on a zone now shows the Twin's numbers for that zone by construction.
+- Also fixed: the drawer passed the action's `resourceId` into the fuel chain. For act-mtr-004 (generator spares) and the RO/science/medical actions, "fuel will last" was computed from that resource's stock. The chain now always uses the station's fuel.
+- Still on the old model: `state/sandbox.ts` `zoneImpacts()` uses `causalTraceInput(…, { zoneCode })` for its per-zone risk chips. It is a what-if risk label, not a "days now" figure, so it was left alone; worth aligning later.
+- Touches shared contract? no. `ZoneTrace` `hideHeading` is additive; `data.ts` is unchanged.
+- Touchpoint completed? #10: the drawer and the Twin now share one input and one zone model. The Twin could use `zoneSubject()` instead of its inline copy of the same rule (`Twin/index.tsx`, `zoneProfile`); suggested to the Twin session.
+- Notes for the other developer: none beyond the above.
+
+### [2026-09-30 00:05] Dev B (at the user's request; one edit in Dev A's Twin page) — Every action step asks for a note; no silent transitions
+- Status: done. `tsc` clean apart from the 2 known IsoStationModel/Assets errors. Checked in Chrome: Acknowledge (preset phrase) → Assign (owner + note) → Resolve on a T0 blocks without evidence. The chain re-verified at 42 entries, and the note shows in the drawer history and in the audit-chain payload.
+- Files changed: `src/components/shared/StepDialog.tsx` (new), `src/shared/contracts.ts`, `src/pages/Actions/{index,ActionDrawer,ActionBoard}.tsx`, `src/pages/Twin/index.tsx` (the zone inspector's Acknowledge only), `src/pages/StationConsole/index.tsx` (one `assign` call), `src/components/shared/ActionSteps.tsx` (step explainer text).
+- Summary: The user asked why Acknowledge worked in one click with no reason given, and wanted every step logged. One rule now holds everywhere: **no step changes an action without a note**. Who and when are filled in automatically; the person writes one line.
+  - **One dialog:** `StepDialog` handles Acknowledge, Assign, Start, Defer and Resolve. Every entry point uses it: drawer footer, table row buttons, "Acknowledge all n", the `a` key, Board drops and the Twin zone inspector.
+  - **Fast input:** Acknowledge and Assign offer preset phrases, one tap each, so acknowledging is still two clicks. The dialog says exactly what gets written: name, time, note, history and audit log.
+  - **Enforced in the contract**, not just the UI. `apply()` rejects an empty note, so no call site can write a silent transition.
+  - **Notes are tamper-evident:** each note sits inside the hashed payload. Before, the ACK/assign text lived only in the unhashed `payloadSummary`.
+  - **Bug fixed:** Board drag called `transitionTo`, which skipped every required field. It could RESOLVE a T0 with no note or evidence, DEFER with no reason or review date, and ASSIGN with no owner. Dropping a card now opens the matching dialog, and `transitionTo` refuses ASSIGNED/DEFERRED/RESOLVED.
+  - **Bulk acknowledge:** one note covers the batch, but each action still gets its own chain entry, written in sequence.
+  - The duplicate Assign/Defer/Resolve dialogs in `ActionDrawer` and `Actions/index` (`QuickDialog`) are gone; both now use `StepDialog`.
+- **Spec deviation (user-directed):** FR-6.2 / FR-4.5 / NFR-3.6 describe Acknowledge as recording actor + timestamp only, in one action. It now also needs a note. The `a` key opens the dialog instead of acknowledging directly.
+- Touches shared contract? **yes** — see Contract changes (2026-09-30 rows).
+- Touchpoint completed? #1 still 🟢. The Twin's Acknowledge now goes through `StepDialog`, so both sides call the same component.
+- Notes for the other developer: in `Twin/index.tsx` I replaced the direct `transitions.acknowledge(id, actor.name)` with `<StepDialog>`. Only the `acknowledge` handler, one `useState`, the imports and the dialog element below the ack error changed. If a Twin or Asset surface needs to change an action's state, open `StepDialog` rather than calling `useActionTransitions` directly.
+
+### [2026-09-30 01:30] Dev B (at the user's request) — Action Centre split by station; HQ can raise an action; one toolbar row
+- Status: done. `tsc` is clean for every Actions file (the 2 known IsoStationModel/Assets errors remain). The user is checking visuals.
+- Files changed: `src/pages/Actions/{index,ActionTable,TierRail}.tsx`, `src/pages/Actions/RaiseActionDialog.tsx` (new).
+- Summary:
+  - **Split by station:** with "All stations", the list is now a Bharati section and a Maitri section. Each has a heading with its count and a single "Out of contact" note, which replaces the per-row "as of last sync". Rows no longer repeat the station name, and the "Station" sort option is gone.
+  - **Raise action:** each station heading has a "Raise action" button, the HQ path for a problem reported by phone, radio or email. The form asks what's wrong, optional details, tier, an optional zone and an optional owner; the owner is recorded as a normal assign step with a note. The trigger reads "Reported by HQ staff", mirroring the Station Console's operator entry.
+  - **One toolbar row:** the tier filter, "Overdue only", bulk acknowledge and "Sort by" now share one row; before, "Sort by" sat alone on a second row. Tier chips with a zero count are dimmed.
+  - **Subtitle** now says what the page is for.
+- **Spec deviation (user-directed):** FR-1.2 / §3.6 "a Maitri T1 outranks a Bharati T2" still holds *within* the priority order, but the two stations are no longer interleaved in one list.
+- Touches shared contract? no. `raise` and `assign` are used as they are.
+- Touchpoint completed? none. #7 (`?station=` / `?tier=` / `?state=`) still pre-fills.
+- Notes for the other developer: if the Twin needs a "Raise action" entry point, reuse `RaiseActionDialog` (props: `stationId`, `onClose`, `onRaised`).
+
+### [2026-09-30 01:45] Dev A (at the user's request) — Full-screen view for the 3D twin
+- Status: done. The build passes and `tsc` shows nothing new. I tested it in headless Chrome: full screen opens, the floors switch, and exit restores the page.
+- Files changed: `src/hooks/useFullscreen.ts` (new), `src/twin/Bharati3D.jsx`, `src/pages/Twin/index.tsx`.
+- Summary: A full-screen button now sits next to the "Zone model" badge in the 3D view. It uses the browser Fullscreen API on the centre viewport, so the legend, caption and staleness banner come along. In full screen the button reads "Exit full screen" (Esc also works). A floor picker stacked top floor first replaces the hidden left panel and shows the same worst-status dot. Browsers without the Fullscreen API (iPhone Safari) don't show the button.
+- Touches shared contract? no. `Bharati3D` gained an optional `controls` prop, rendered beside the badge.
+- Touchpoint completed? none.
+- Notes for the other developer: none.
+
 ---
 
 ## Integration & Review
@@ -135,7 +329,7 @@ checklist at the bottom) before either side merges to `main`.
 
 | # | Touchpoint | Dev A side | Dev B side | Status |
 |---|---|---|---|---|
-| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟢 both sides done, needs review — Dev A calls it from the zone inspector; Dev B's implementation validates transitions and writes the chain |
+| 1 | Twin zone inspector → ACK/Assign/Defer/Log service | Calls `useActionTransitions()` | Owns real implementation | 🟢 both sides done, needs review — the zone inspector's Acknowledge now opens the shared `StepDialog` (note required, 2026-09-30); Dev B's implementation validates transitions and writes the chain |
 | 2 | Action Centre drawer → `CausalTrace` | Owns `runCausalTrace()` + `CausalTrace` component | Consumes read-only in drawer | 🟢 both sides done, needs review — drawer consumes it via `causalTraceInput()`, no local maths. **See #10: the numbers have not been compared across the two pages yet.** |
 | 3 | Twin / Environment → "Open in Sandbox" | Owns both ends (pre-load payload) | n/a | 🟢 both sides done, needs review (Dev A owns both ends) |
 | 4 | Maintenance "Log service" → resource decrement | Calls `decrementResource()` | Owns real atomic implementation | 🟢 both sides done, needs review — `decrementResource()` is the single stock write path; Dev A's maintenance log and the station console Inventory change both use it |
@@ -143,7 +337,7 @@ checklist at the bottom) before either side merges to `main`.
 | 6 | Logistics ledger row → "Raise action" | n/a | Owns both ends (pre-fill + route) | ✅ reviewed & merged — pre-fills resource, consequence and LSOD, routes to `/actions/:id` |
 | 7 | Overview "View all" → Action Centre | n/a | Owns both ends (query-param filter) | ✅ reviewed & merged — `/actions?station=&tier=&state=` all pre-fill the filters |
 | 8 | Compliance waste shipped → voyage link | n/a | Owns both ends (`voyageId`) | ✅ reviewed & merged — shipped rows link through to the voyage manifest |
-| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | 🟡 one side done (Dev B) — toggle + demo outage scenario live; Dev A's branch still marks this side not started, so Twin/Assets/Environment have yet to read it |
+| 9 | `/comms` connectivity toggle → every `<DegradableSurface>` app-wide | Reads `state/connectivity.ts`, never writes it | Owns `state/connectivity.ts` + the toggle UI on `/comms` | 🟡 one side done (Dev B) — toggle + demo outage scenario live. Twin now reads it (3D fades + "No contact / HQ behind" banner, 2026-09-29); Assets and Environment have yet to |
 | 10 | Shared invariant: `CausalTrace` numbers identical on Twin, Environment, Sandbox, and Action Centre drawer for the same asset/conditions | Verify on Twin/Environment/Sandbox | Verify in Action Centre drawer | 🟢 both sides done, needs review — each side verified its own pages in isolation. **The cross-page comparison the checklist asks for has NOT been run:** Dev B measured 140 d for Bharati HSD in the drawer; nobody has checked the Twin against that number. |
 
 Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides done, needs review` → `✅ reviewed & merged`.
@@ -179,6 +373,10 @@ Status values: `⬜ not started` → `🟡 one side done` → `🟢 both sides d
 | 2026-09-20 | Dev B | New module `src/engine/similarity.ts` (TF-IDF cosine, top 5, min score 0.35) | `engine/similarity.ts` is listed in FRONTEND.md §12 but did not exist, and both `/actions` (similar past faults) and `/handover` (recurring faults) need it. **This sits in Dev A's `engine/` folder — please adopt or replace it rather than writing a second one.** |
 | 2026-09-20 | Dev B | New parameters: `energy.fuelEnergyKwhPerL`, `thermal.zoneWarningLossPct`, `thermal.zoneWatchLossPct`, `logistics.targetCoverDays` | NFR-B1: every constant the engine consumes must be editable on `/settings`. The first converts the engine's kW-equivalent burn into the litres the fuel ledger uses. |
 | 2026-09-20 | Dev B | Added `tsconfig.json` and `typescript` as a dev dependency (`bun add -d typescript`) | The `@/*` alias existed only in `vite.config.js`, so the IDE and any type-check could not resolve it. `.js`/`.jsx` are included but unchecked, so the 3D twin is unaffected. |
+| 2026-09-29 | Dev A | New module `src/engine/zoneTrace.ts`: `runZoneTrace(input, profile)`, `ZoneTraceProfile`, `ZoneCondition`, `ZoneTraceResult`. Additive optional `trace` field per zone in `mock/maitri.json` (not yet on the `ZoneModel` type). Bharati's comes from its rooms in `src/twin/roomProfiles.js` | Per-zone "Why this matters" on the Twin. Built on `runCausalTrace` + `compute*`, with no existing signature changed. `result.station` is exactly `runCausalTrace(input)`. |
+| 2026-09-30 | Dev B | **Breaking:** `acknowledge(actionId, note)` (the 2nd arg was `actorName`, now the note; the actor comes from the hook). `assign(actionId, assignee, note)` gains a required `note`. `start(actionId, note)` and `transitionTo(actionId, to, note)` now require the note | Every step must carry a person's note for the log. All call sites updated (Actions, drawer, Twin, StationConsole). A leftover `acknowledge(id, actor.name)` would type-check but log the name as the note, so search for that call. |
+| 2026-09-30 | Dev B | Every transition rejects an empty note. The note is stored inside the hashed `payload` (`{ from, to, note, … }`), and `payloadSummary` is the note | Makes the note tamper-evident. Entries written earlier still verify, because their stored payloads are unchanged. |
+| 2026-09-30 | Dev B | `transitionTo` refuses ASSIGNED / DEFERRED / RESOLVED | Those states carry required fields; the generic mover had let the Board skip them. Use `assign` / `defer` / `resolve`. |
 
 #### ⚠ Open question for Dev A — suspected sign bug in `computeMarginDays`
 

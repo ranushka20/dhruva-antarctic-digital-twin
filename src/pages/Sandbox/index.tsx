@@ -42,6 +42,9 @@ import {
   type ParamGroup, type ScenarioValues,
 } from '@/state/sandbox';
 import PRESETS from '@/mock/scenarios/presets.json';
+import { ActiveIndicator } from '@/components/shared/ActiveIndicator';
+import { CartesianGrid, Line, LineChart, ReferenceArea, Tooltip, XAxis, YAxis } from 'recharts';
+import { CHART_DEFAULTS, ChartContainer, ChartLegend, ChartTooltipContent } from '@/components/shared/Chart';
 
 const GROUPS: ParamGroup[] = ['environmental', 'energy', 'logistics', 'crew'];
 
@@ -167,113 +170,119 @@ export default function SandboxPage() {
           here and on simulated values; it is not this page's accent. */}
       <div
         role="status"
-        className="flex items-center gap-2.5 px-5 py-2 shrink-0 flex-wrap"
+        className="flex items-center gap-x-4 gap-y-1 px-6 py-2.5 shrink-0 flex-wrap"
         style={{
           backgroundColor: 'rgba(155,132,196,0.14)',
           borderBottom: '1px solid var(--sim)',
         }}
       >
-        <FlaskConical size={15} style={{ color: 'var(--sim)' }} aria-hidden />
-        <span className="text-[12.5px]" style={{ color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] font-semibold">
-            Simulation — not live station data
-          </span>
-          {' · '}forked from {STATION_LABEL[stationId]} state at {formatShortIST(forkedAt)} IST.
+        <FlaskConical size={16} style={{ color: 'var(--sim)' }} aria-hidden />
+        <span className="text-body-sm font-semibold" style={{ color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}>
+          Simulation — not live station data
+        </span>
+        <span className="text-body-sm" style={{ color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}>
+          Copied from {STATION_LABEL[stationId]} at <span className="font-mono tabular-nums">{formatShortIST(forkedAt)}</span> IST.
           Nothing on this page is written to any record.
         </span>
       </div>
 
       {/* ---- Title row, same shape as every other page ---- */}
       <div
-        className="flex items-center gap-3 h-[52px] px-6 shrink-0 flex-wrap"
+        className="flex items-center gap-x-4 gap-y-3 min-h-[4.25rem] py-3 px-6 shrink-0 flex-wrap"
         style={{ borderBottom: '1px solid var(--line)' }}
       >
-        <h1 className="text-[27px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
+        <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
           Research Sandbox
         </h1>
 
-        <div className="flex items-center gap-1 ml-2 p-0.5 rounded-full" style={{ border: '1px solid var(--line)' }}>
+        <div data-segmented className="relative isolate flex items-center gap-1 p-1 rounded-full" style={{ border: '1px solid var(--line)' }}>
           {(['bharati', 'maitri'] as const).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => reFork(id)}
-              className="px-3 py-1.5 rounded-full text-[11.5px]"
+              aria-pressed={stationId === id}
+              className="px-4 min-h-9 rounded-full text-body-sm font-medium"
               style={{
-                backgroundColor: stationId === id ? 'var(--text)' : 'transparent',
                 color: stationId === id ? 'var(--bg)' : 'var(--text-3)',
               }}
             >
               {STATION_LABEL[id]}
             </button>
           ))}
+          <ActiveIndicator className="rounded-full" style={{ backgroundColor: 'var(--text)' }} />
         </div>
 
         <span
-          className="font-mono text-[9.5px] uppercase tracking-[0.08em] px-2.5 py-1 rounded-full"
+          className="text-body-sm px-4 py-1.5 rounded-full"
           style={{
             border: `1px solid ${changed.length ? 'var(--line-strong)' : 'var(--line)'}`,
-            color: changed.length ? 'var(--text-2)' : 'var(--text-4)',
+            color: changed.length ? 'var(--text-2)' : 'var(--text-3)',
           }}
         >
-          {changed.length} of {PARAMETERS.length} parameters changed
+          <span className="font-mono tabular-nums">{changed.length}</span> of <span className="font-mono tabular-nums">{PARAMETERS.length}</span> settings changed
         </span>
 
         <div className="flex-1" />
 
-        <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
           {formatClockIST()}
         </span>
 
         <button
           type="button"
-          onClick={reset}
-          disabled={changed.length === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
-          style={{ border: '1px solid var(--line)', color: 'var(--text-2)', opacity: changed.length ? 1 : 0.4 }}
-        >
-          <RotateCcw size={12} /> Reset
-        </button>
-        <button
-          type="button"
           onClick={() => setSaveOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
-          style={{ border: '1px solid var(--line)', color: 'var(--text-2)' }}
+          className="flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
         >
-          <Save size={12} /> Save scenario
+          <Save size={16} aria-hidden /> Save scenario
         </button>
         <button
           type="button"
           onClick={onExport}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium"
+          className="flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
           style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+          title="Download this scenario as JSON (every simulated value is tagged SIM)"
         >
-          <Download size={12} /> Export
+          <Download size={16} aria-hidden /> Export
         </button>
       </div>
 
       {toast && (
         <div
-          className="px-6 py-2 shrink-0"
+          key={toast}
+          className="m-toast px-6 py-2.5 shrink-0"
           role="status"
           style={{ backgroundColor: 'rgba(79,174,133,0.10)', borderBottom: '1px solid var(--ok)' }}
         >
-          <span className="font-mono text-[10.5px]" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
+          <span className="text-body-sm" style={{ color: 'var(--ok-soft)' }}>{toast}</span>
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-5">
-        <div className="flex flex-col xl:flex-row gap-3.5 min-h-full">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <div className="flex flex-col xl:flex-row gap-5 min-h-full">
           {/* ---- LEFT: parameters ---- */}
-          <div className="flex flex-col gap-3.5 w-full xl:w-[340px] xl:shrink-0">
+          <div className="flex flex-col gap-5 w-full xl:w-[21rem] 2xl:w-[24rem] xl:shrink-0">
             <section
-              className="p-4 w-full min-w-0"
+              className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Scenario parameters"
             >
-              <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>
-                Scenario parameters
-              </h2>
+              <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
+                  Scenario settings
+                </h2>
+                <button
+                  type="button"
+                  onClick={reset}
+                  disabled={changed.length === 0}
+                  className="flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium"
+                  style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', opacity: changed.length ? 1 : 0.4 }}
+                  title="Reset every setting to the station's current values"
+                >
+                  <RotateCcw size={16} aria-hidden /> Reset
+                </button>
+              </div>
 
               {GROUPS.map((group) => {
                 const open = openGroups.has(group);
@@ -285,25 +294,26 @@ export default function SandboxPage() {
                     <button
                       type="button"
                       onClick={() => setOpenGroups((s) => toggle(s, group))}
-                      className="flex items-center gap-1.5 w-full py-2.5 text-left"
+                      className="flex items-center gap-2 w-full min-h-10 py-2 text-left"
                       aria-expanded={open}
                     >
                       {open
-                        ? <ChevronDown size={12} style={{ color: 'var(--text-4)' }} />
-                        : <ChevronRight size={12} style={{ color: 'var(--text-4)' }} />}
-                      <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
+                        ? <ChevronDown size={16} style={{ color: 'var(--text-3)' }} />
+                        : <ChevronRight size={16} style={{ color: 'var(--text-3)' }} />}
+                      <span className="text-body font-medium" style={{ color: 'var(--text-2)' }}>
                         {GROUP_LABEL[group]}
                       </span>
                       {groupChanged > 0 && (
-                        <span className="font-mono text-[8.5px] ml-auto px-1.5 py-0.5 rounded"
-                          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}>
+                        <span className="font-mono text-body-sm tabular-nums ml-auto px-2.5 py-0.5 rounded-full"
+                          style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)' }}
+                          title={`${groupChanged} changed in this group`}>
                           {groupChanged}
                         </span>
                       )}
                     </button>
 
                     {open && (
-                      <div className="pb-3 space-y-4">
+                      <div className="pt-1 pb-4 space-y-5">
                         {groupParams.map((param) => (
                           <ParameterSlider
                             key={param.key}
@@ -323,29 +333,30 @@ export default function SandboxPage() {
 
             {/* ---- Presets (FR-7.1/7.2) ---- */}
             <section
-              className="p-4 w-full min-w-0"
+              className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Preset scenarios"
             >
-              <h2 className="text-[13.5px] font-semibold mb-1" style={{ color: 'var(--text)' }}>
-                Presets
+              <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                Ready-made scenarios
               </h2>
-              <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
-                Data rows in mock/scenarios/presets.json — adding one is not a code change.
+              <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}
+                title="Data rows in mock/scenarios/presets.json — adding one is not a code change.">
+                Pick one to load its settings. You can adjust them afterwards.
               </p>
-              <div className="space-y-1.5">
+              <div className="flex flex-col gap-2">
                 {(PRESETS as unknown as Preset[]).map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => applyPreset(preset)}
-                    className="w-full text-left p-2.5 rounded transition-colors hover:bg-[var(--panel-alt)]"
+                    className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-[var(--panel-alt)]"
                     style={{ border: '1px solid var(--line)', backgroundColor: 'var(--panel-raised)' }}
                   >
-                    <span className="block text-[12px] font-medium" style={{ color: 'var(--text)' }}>
+                    <span className="block text-body font-medium" style={{ color: 'var(--text)' }}>
                       {preset.name}
                     </span>
-                    <span className="block text-[10.5px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                    <span className="block text-body-sm mt-1" style={{ color: 'var(--text-3)' }}>
                       {preset.note}
                     </span>
                   </button>
@@ -354,31 +365,33 @@ export default function SandboxPage() {
 
               {saved.length > 0 && (
                 <>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.12em] mt-4 mb-2" style={{ color: 'var(--text-4)' }}>
-                    Saved
+                  <p className="text-body-sm font-medium mt-5 mb-2" style={{ color: 'var(--text-3)' }}>
+                    Your saved scenarios
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="flex flex-col gap-2">
                     {saved.map((s) => (
-                      <div key={s.id} className="flex items-center gap-2 p-2 rounded"
+                      <div key={s.id} className="flex items-center gap-3 pl-4 pr-2 py-3 rounded-lg"
                         style={{ border: '1px solid var(--line)', backgroundColor: 'var(--panel-raised)' }}>
                         <button
                           type="button"
                           onClick={() => setValues(clampAll({ ...baseline, ...s.values }))}
                           className="flex-1 min-w-0 text-left"
                         >
-                          <span className="block text-[12px] truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
-                          <span className="block font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
-                            {STATION_LABEL[s.stationId]} · {formatShortIST(s.savedAt)}
+                          <span className="block text-body font-medium break-words" style={{ color: 'var(--text)' }}>{s.name}</span>
+                          <span className="flex flex-wrap gap-x-4 text-body-sm mt-0.5" style={{ color: 'var(--text-3)' }}>
+                            <span>{STATION_LABEL[s.stationId]}</span>
+                            <span className="font-mono tabular-nums">{formatShortIST(s.savedAt)}</span>
                           </span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onDelete(s.id)}
                           aria-label={`Delete scenario ${s.name}`}
-                          className="shrink-0 p-1 rounded"
-                          style={{ color: 'var(--text-4)' }}
+                          title="Delete this saved scenario"
+                          className="shrink-0 grid place-items-center min-h-9 min-w-9 rounded-full hover:bg-[var(--panel-alt)]"
+                          style={{ color: 'var(--text-3)' }}
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
@@ -389,39 +402,40 @@ export default function SandboxPage() {
           </div>
 
           {/* ---- RIGHT: results ---- */}
-          <div className="flex flex-col gap-3.5 flex-1 min-w-0">
+          <div className="flex flex-col gap-5 flex-1 min-w-0">
             {/* Diff cards (FR-4) */}
             <section
-              className="p-4 w-full min-w-0"
+              className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Scenario impact"
             >
-              <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+              <div className="flex items-baseline gap-x-4 gap-y-1 mb-4 flex-wrap">
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Scenario impact
                 </h2>
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
-                  Before is the live modelled state · after is SIM
+                <span className="text-body-sm" style={{ color: 'var(--text-3)' }}
+                  title="Before is the live modelled state · after is SIM">
+                  Before = current modelled state. After = simulated (SIM).
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
                 {diffMetrics.map((m) => <DiffCard key={m.key} metric={m} />)}
               </div>
             </section>
 
             {/* Cause → effect (FR-6) — the panel that proves this is physics */}
             <section
-              className="p-4 w-full min-w-0"
+              className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
               aria-label="Cause and effect trace"
             >
-              <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+              <div className="flex items-baseline gap-x-4 gap-y-1 mb-4 flex-wrap">
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Cause → effect
                 </h2>
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--text-4)' }}>
-                  Same engine as the twin · hover a row for the formula
+                <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+                  Same engine as the twin. Hover a row to see its formula.
                 </span>
               </div>
               <TraceDiff
@@ -430,16 +444,19 @@ export default function SandboxPage() {
               />
             </section>
 
-            <div className="flex flex-col lg:flex-row gap-3.5">
+            <div className="flex flex-col 2xl:flex-row gap-5">
               {/* Projection (FR-5) */}
               <section
-                className="p-4 flex-1 min-w-0"
+                className="p-5 flex-1 min-w-0"
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
                 aria-label="Autonomy projection"
               >
-                <h2 className="text-[13.5px] font-semibold mb-3" style={{ color: 'var(--text)' }}>
-                  Stock depletion
+                <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                  Does the stock last until the ship?
                 </h2>
+                <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
+                  Fuel left over time, today's settings against your what-if.
+                </p>
                 <DepletionChart
                   baselineDays={base.result.autonomyDays}
                   baselineBand={base.result.autonomyBandDays}
@@ -449,7 +466,7 @@ export default function SandboxPage() {
                   lsodBaseline={base.result.lsodDays}
                   lsodScenario={scenario.result.lsodDays}
                 />
-                <p className="font-mono text-[9px] mt-2.5" style={{ color: 'var(--text-4)' }}>
+                <p className="text-body-sm mt-3 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
                   Projection from the entered rate — not a prediction. Both paths assume the burn
                   rate their own parameters produce, held constant.
                 </p>
@@ -457,42 +474,44 @@ export default function SandboxPage() {
 
               {/* Zone impact (FR-8) */}
               <section
-                className="p-4 w-full lg:w-[300px] lg:shrink-0 min-w-0"
+                className="p-5 w-full 2xl:w-[22rem] 2xl:shrink-0 min-w-0"
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
                 aria-label="Zone impact"
               >
-                <h2 className="text-[13.5px] font-semibold mb-1" style={{ color: 'var(--text)' }}>
+                <h2 className="text-title font-semibold mb-1" style={{ color: 'var(--text)' }}>
                   Zone impact
                 </h2>
-                <p className="font-mono text-[9px] mb-3" style={{ color: 'var(--text-4)' }}>
+                <p className="text-body-sm mb-4" style={{ color: 'var(--text-3)' }}>
                   Each zone re-run with its own envelope penalty. Engine output, not a threshold on
                   the slider.
                 </p>
                 {zones.length === 0 ? (
                   <EmptyState reason="No zones reported for this station." />
                 ) : (
-                  <ul className="space-y-1.5">
+                  <ul className="flex flex-col gap-2">
                     {zones.map((z) => (
                       <li
                         key={z.zone.code}
-                        className="flex items-center gap-2 p-2 rounded"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg"
                         style={{
                           backgroundColor: 'var(--panel-raised)',
                           border: `1px ${z.worsened ? 'solid var(--line-strong)' : 'solid var(--line)'}`,
                         }}
                       >
-                        <span className="font-mono text-[9px] uppercase tracking-[0.10em] w-6 shrink-0"
+                        <span className="font-mono text-body-sm w-8 shrink-0"
                           style={{ color: 'var(--text-3)' }}>
                           {z.zone.code}
                         </span>
-                        <span className="text-[11.5px] flex-1 truncate" style={{ color: 'var(--text)' }}>
+                        <span className="text-body flex-1 min-w-0" style={{ color: 'var(--text)' }}>
                           {z.zone.name}
                         </span>
-                        <StatusDot status={RISK_DOT[z.before]} size={6} />
-                        <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>→</span>
-                        <StatusDot status={RISK_DOT[z.after]} size={6} />
+                        <span className="flex items-center gap-1.5 shrink-0" title="Status before → after">
+                          <StatusDot status={RISK_DOT[z.before]} size={8} />
+                          <span className="text-body-sm" style={{ color: 'var(--text-3)' }} aria-hidden>→</span>
+                          <StatusDot status={RISK_DOT[z.after]} size={8} />
+                        </span>
                         {z.worsened && (
-                          <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded shrink-0"
+                          <span className="font-mono text-caption px-2 py-0.5 rounded-full shrink-0"
                             style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)' }}>
                             Sim
                           </span>
@@ -506,7 +525,7 @@ export default function SandboxPage() {
 
             {/* Full scenario trace, for the formula detail */}
             <section
-              className="p-4 w-full min-w-0"
+              className="p-5 w-full min-w-0"
               style={{
                 backgroundColor: 'var(--panel)',
                 border: '1px solid var(--line)',
@@ -514,8 +533,8 @@ export default function SandboxPage() {
               }}
               aria-label="Scenario causal trace"
             >
-              <div className="flex items-baseline gap-2.5 mb-3 flex-wrap">
-                <h2 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
+              <div className="flex items-baseline gap-3 mb-4 flex-wrap">
+                <h2 className="text-title font-semibold" style={{ color: 'var(--text)' }}>
                   Scenario trace
                 </h2>
                 <ProvenanceBadge
@@ -530,7 +549,7 @@ export default function SandboxPage() {
       </div>
 
       <Modal open={saveOpen} onClose={() => setSaveOpen(false)} title="Save scenario">
-        <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="text-body-sm mb-4 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
           Parameters are saved, results are not. A stored result is a simulated number waiting to be
           read as fact.
         </p>
@@ -538,17 +557,18 @@ export default function SandboxPage() {
           value={scenarioName}
           onChange={(e) => setScenarioName(e.target.value)}
           placeholder="Scenario name"
-          className="w-full px-3 mb-3 text-[12.5px] outline-none"
+          aria-label="Scenario name"
+          className="w-full px-4 mb-4 text-body outline-none"
           style={{
-            minHeight: 40, backgroundColor: 'var(--panel)',
-            border: '1px solid var(--line)', borderRadius: 'var(--r-inner)', color: 'var(--text)',
+            minHeight: 44, backgroundColor: 'var(--panel)',
+            border: '1px solid var(--line-strong)', borderRadius: 'var(--r-inner)', color: 'var(--text)',
           }}
         />
         <button
           type="button"
           onClick={onSave}
           disabled={!scenarioName.trim()}
-          className="w-full py-2.5 rounded-full text-[12.5px] font-medium"
+          className="w-full min-h-10 py-2.5 rounded-full text-body font-medium"
           style={{
             backgroundColor: 'var(--text)', color: 'var(--bg)',
             opacity: scenarioName.trim() ? 1 : 0.4,
@@ -576,12 +596,12 @@ function ParameterSlider({
 
   return (
     <div>
-      <div className="flex items-baseline gap-2 mb-1">
-        <label className="text-[11.5px] flex-1 min-w-0 truncate" style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}>
+      <div className="flex items-baseline gap-3 mb-1.5">
+        <label className="text-body-sm flex-1 min-w-0" style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}>
           {param.label}
         </label>
         <span
-          className="font-mono text-[11.5px] tabular-nums shrink-0"
+          className="font-mono text-body font-medium tabular-nums shrink-0"
           style={{ color: changed ? 'var(--text)' : 'var(--text-2)' }}
         >
           {value.toFixed(digits)} {param.unit}
@@ -611,26 +631,26 @@ function ParameterSlider({
         />
       </div>
 
-      <div className="flex items-center gap-2 mt-0.5">
-        <span className="font-mono text-[8.5px]" style={{ color: 'var(--text-4)' }}>
-          baseline {baseline.toFixed(digits)}
+      <div className="flex items-center gap-3 mt-1 flex-wrap">
+        <span className="text-caption" style={{ color: 'var(--text-3)' }} title="Baseline — the station's current value">
+          Now <span className="font-mono tabular-nums">{baseline.toFixed(digits)}</span>
         </span>
         <button
           type="button"
           onClick={() => setShowWhy((v) => !v)}
-          className="ml-auto font-mono text-[8.5px] underline shrink-0"
-          style={{ color: 'var(--text-4)' }}
+          className="ml-auto text-caption underline underline-offset-2 shrink-0 min-h-8 px-1"
+          style={{ color: 'var(--text-3)' }}
           aria-expanded={showWhy}
         >
-          {showWhy ? 'hide' : 'what does this do?'}
+          {showWhy ? 'Hide explanation' : 'What does this do?'}
         </button>
       </div>
 
       {showWhy && (
-        <div className="mt-1.5 p-2 rounded" style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}>
-          <p className="text-[10.5px] mb-1" style={{ color: 'var(--text-2)' }}>{param.mechanism}</p>
-          <p className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>
-            bounds: {param.boundSource}
+        <div className="mt-2 px-4 py-3 rounded-lg" style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}>
+          <p className="text-body-sm mb-1.5" style={{ color: 'var(--text-2)' }}>{param.mechanism}</p>
+          <p className="text-caption" style={{ color: 'var(--text-3)' }}>
+            Limits based on: {param.boundSource}
           </p>
         </div>
       )}
@@ -687,21 +707,21 @@ function DiffCard({ metric: m }: { metric: Metric }) {
   const delta = m.after - m.before;
   const worse = m.higherIsWorse ? delta > 0 : delta < 0;
   const deltaColor = nearlyEqual(delta, 0)
-    ? 'var(--text-4)'
+    ? 'var(--text-3)'
     : worse ? 'var(--act-soft)' : 'var(--ok-soft)';
 
   return (
     <div
-      className="p-2.5 rounded-xl min-w-0 overflow-hidden"
+      className="px-4 py-3.5 rounded-xl min-w-0 overflow-hidden"
       style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}
     >
-      <p className="font-mono text-[9px] uppercase tracking-[0.10em] truncate mb-1.5" style={{ color: 'var(--text-3)' }}>
+      <p className="text-body-sm font-medium mb-2" style={{ color: 'var(--text-2)' }}>
         {m.label}
       </p>
 
-      <div className="flex items-baseline gap-1.5 mb-1">
-        <span className="font-mono text-[9px] uppercase w-10 shrink-0" style={{ color: 'var(--text-4)' }}>Before</span>
-        <span className="font-mono text-[13px] tabular-nums" style={{ color: 'var(--text-2)' }}>
+      <div className="flex items-baseline gap-2 mb-1">
+        <span className="text-caption w-12 shrink-0" style={{ color: 'var(--text-3)' }}>Before</span>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: 'var(--text-2)' }}>
           {fmt(m.before)}{m.beforeBand ? ` ±${fmt(m.beforeBand)}` : ''}
         </span>
         <ProvenanceBadge
@@ -714,9 +734,9 @@ function DiffCard({ metric: m }: { metric: Metric }) {
         />
       </div>
 
-      <div className="flex items-baseline gap-1.5">
-        <span className="font-mono text-[9px] uppercase w-10 shrink-0" style={{ color: 'var(--text-3)' }}>After</span>
-        <span className="font-mono text-[15px] font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
+      <div className="flex items-baseline gap-2">
+        <span className="text-caption w-12 shrink-0" style={{ color: 'var(--text-3)' }}>After</span>
+        <span className="font-mono text-title font-semibold tabular-nums" style={{ color: 'var(--text)' }}>
           {fmt(m.after)}{m.afterBand ? ` ±${fmt(m.afterBand)}` : ''}
         </span>
         <ProvenanceBadge
@@ -727,15 +747,15 @@ function DiffCard({ metric: m }: { metric: Metric }) {
         />
       </div>
 
-      <div className="flex items-center gap-1.5 mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--line)' }}>
-        <span className="font-mono text-[11px] tabular-nums" style={{ color: deltaColor }}>
+      <div className="flex items-center gap-2 mt-2.5 pt-2.5" style={{ borderTop: '1px solid var(--line)' }}>
+        <span className="font-mono text-body-sm tabular-nums" style={{ color: deltaColor }}>
           {delta > 0 ? '+' : delta < 0 ? '−' : ''}{fmt(Math.abs(delta))} {m.unit}
         </span>
         {m.afterRisk && (
-          <span className="flex items-center gap-1 ml-auto shrink-0">
-            <StatusDot status={RISK_DOT[m.beforeRisk ?? 'ok']} size={5} />
-            <span className="font-mono text-[9px]" style={{ color: 'var(--text-4)' }}>→</span>
-            <StatusDot status={RISK_DOT[m.afterRisk]} size={5} />
+          <span className="flex items-center gap-1.5 ml-auto shrink-0" title="Status before → after">
+            <StatusDot status={RISK_DOT[m.beforeRisk ?? 'ok']} size={7} />
+            <span className="text-caption" style={{ color: 'var(--text-3)' }} aria-hidden>→</span>
+            <StatusDot status={RISK_DOT[m.afterRisk]} size={7} />
           </span>
         )}
       </div>
@@ -748,7 +768,7 @@ function TraceDiff({
   before, after,
 }: { before: TraceResult['steps']; after: TraceResult['steps'] }) {
   return (
-    <ol className="space-y-1">
+    <ol className="flex flex-col gap-1">
       {after.map((step, i) => {
         const b = Number(before[i]?.value.value ?? 0);
         const a = Number(step.value.value ?? 0);
@@ -757,30 +777,30 @@ function TraceDiff({
         return (
           <li
             key={step.label}
-            className="flex items-baseline gap-2 py-1.5 px-2 rounded flex-wrap"
+            className="flex items-baseline gap-x-3 gap-y-1 py-2.5 px-4 rounded-lg flex-wrap"
             style={{ backgroundColor: i % 2 ? 'transparent' : 'var(--panel-raised)' }}
             title={step.formula}
           >
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-caption uppercase tracking-label w-28 shrink-0" style={{ color: 'var(--text-3)' }}>
               {step.label.replace('↓ ', '')}
             </span>
-            <span className="font-mono text-[11.5px] tabular-nums w-20 shrink-0 text-right" style={{ color: 'var(--text-3)' }}>
+            <span className="font-mono text-body-sm tabular-nums w-20 shrink-0 text-right" style={{ color: 'var(--text-3)' }}>
               {fmt(b)}
             </span>
-            <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>→</span>
-            <span className="font-mono text-[12.5px] tabular-nums w-20 shrink-0 text-right font-semibold" style={{ color: 'var(--text)' }}>
+            <span className="font-mono text-caption shrink-0" style={{ color: 'var(--text-3)' }} aria-hidden>→</span>
+            <span className="font-mono text-body tabular-nums w-20 shrink-0 text-right font-semibold" style={{ color: 'var(--text)' }}>
               {fmt(a)}
             </span>
-            <span className="font-mono text-[9.5px] shrink-0" style={{ color: 'var(--text-4)' }}>
+            <span className="font-mono text-caption shrink-0" style={{ color: 'var(--text-3)' }}>
               {step.value.unit}
             </span>
             <span
-              className="font-mono text-[10.5px] tabular-nums w-16 shrink-0 text-right"
+              className="font-mono text-body-sm tabular-nums w-20 shrink-0 text-right"
               style={{ color: deltaColor(step.label, delta) }}
             >
               {nearlyEqual(delta, 0) ? '—' : `${delta > 0 ? '+' : '−'}${fmt(Math.abs(delta))}`}
             </span>
-            <span className="font-mono text-[9px] flex-1 min-w-0 truncate" style={{ color: 'var(--text-4)' }}>
+            <span className="font-mono text-caption flex-1 min-w-[12rem] truncate" style={{ color: 'var(--text-3)' }}>
               {step.formula}
             </span>
           </li>
@@ -791,92 +811,69 @@ function TraceDiff({
 }
 
 /**
- * FR-5.1–5.3 — two depletion lines with their ± bands, the ship window as a
- * vertical band and an LSOD marker on each line. Built inline because the
- * shared TimeSeriesChart takes a single series and draws no bands.
+ * FR-5 — one question: does the stock last until the ship arrives? Two lines
+ * (now vs what-if, different colour AND dash, FR-5.3) and the ship window as
+ * a labelled band. The ± ranges and order-by dates are on the cards above; a
+ * chart that also drew them was four overlapping ideas in one small box.
  */
 function DepletionChart({
-  baselineDays, baselineBand, scenarioDays, scenarioBand, shipWindow, lsodBaseline, lsodScenario,
+  baselineDays, scenarioDays, shipWindow,
 }: {
-  baselineDays: number; baselineBand: number;
-  scenarioDays: number; scenarioBand: number;
+  baselineDays: number; baselineBand?: number;
+  scenarioDays: number; scenarioBand?: number;
   shipWindow: { earliestDay: number; latestDay: number };
-  lsodBaseline: number | null; lsodScenario: number | null;
+  lsodBaseline?: number | null; lsodScenario?: number | null;
 }) {
-  const W = 620, H = 190, PAD_L = 34, PAD_B = 22, PAD_T = 8, PAD_R = 8;
+  const horizon = Math.max(30, Math.ceil(Math.max(baselineDays, scenarioDays, shipWindow.latestDay) * 1.1));
+  const left = (days: number, d: number) =>
+    !isFinite(days) || days <= 0 ? (d === 0 ? 100 : 0) : Math.max(0, Math.round(100 * (1 - d / days)));
 
-  const horizon = Math.max(
-    30,
-    Math.ceil(Math.max(baselineDays, scenarioDays, shipWindow.latestDay) * 1.1)
-  );
-  const x = (d: number) => PAD_L + (clamp(d, 0, horizon) / horizon) * (W - PAD_L - PAD_R);
-  const y = (pct: number) => PAD_T + (1 - clamp(pct, 0, 1)) * (H - PAD_T - PAD_B);
-
-  // Stock runs from 100% today to 0% at the autonomy day: a constant rate.
-  const line = (days: number) => `M ${x(0)} ${y(1)} L ${x(days)} ${y(0)}`;
-  const band = (days: number, bandDays: number) =>
-    `M ${x(0)} ${y(1)} L ${x(Math.max(0, days - bandDays))} ${y(0)} L ${x(days + bandDays)} ${y(0)} Z`;
+  const xs = [...new Set([0, baselineDays, scenarioDays, shipWindow.earliestDay, shipWindow.latestDay, horizon]
+    .filter((d) => isFinite(d) && d >= 0 && d <= horizon)
+    .map((d) => Math.round(d)))].sort((a, b) => a - b);
+  const rows = xs.map((d) => ({ d, now: left(baselineDays, d), whatIf: left(scenarioDays, d) }));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img"
-      aria-label="Stock depletion, baseline against scenario, with the ship window and last safe order dates">
-      {/* ship window */}
-      <rect
-        x={x(shipWindow.earliestDay)} y={PAD_T}
-        width={Math.max(2, x(shipWindow.latestDay) - x(shipWindow.earliestDay))}
-        height={H - PAD_T - PAD_B}
-        fill="var(--ok)" opacity={0.10}
+    <div>
+      <ChartLegend
+        className="mb-3"
+        items={[
+          { label: `Now — lasts ${Math.round(baselineDays)} days`, color: 'var(--chart-3)' },
+          { label: `What-if — lasts ${Math.round(scenarioDays)} days`, color: 'var(--sim)', dashed: true },
+          { label: 'Ship can arrive', color: 'var(--ok)' },
+        ]}
       />
-      <text x={x(shipWindow.earliestDay) + 4} y={PAD_T + 10} fontFamily="var(--font-mono)" fontSize={8.5}
-        fill="var(--ok-soft)" letterSpacing="0.6">SHIP WINDOW</text>
-
-      {/* axes */}
-      <line x1={PAD_L} y1={y(0)} x2={W - PAD_R} y2={y(0)} stroke="var(--line-strong)" strokeWidth={1} />
-      <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={y(0)} stroke="var(--line-strong)" strokeWidth={1} />
-      {[0, 0.5, 1].map((t) => (
-        <text key={t} x={PAD_L - 5} y={y(t) + 3} textAnchor="end"
-          fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">
-          {Math.round(t * 100)}%
-        </text>
-      ))}
-
-      {/* uncertainty bands */}
-      <path d={band(baselineDays, baselineBand)} fill="var(--text-3)" opacity={0.12} />
-      <path d={band(scenarioDays, scenarioBand)} fill="var(--sim)" opacity={0.18} />
-
-      {/* FR-5.3 — colour AND line style differ */}
-      <path d={line(baselineDays)} fill="none" stroke="var(--text-2)" strokeWidth={1.6} />
-      <path d={line(scenarioDays)} fill="none" stroke="var(--sim)" strokeWidth={2} strokeDasharray="6 4" />
-
-      {/* LSOD markers */}
-      {lsodBaseline !== null && <LsodTick d={lsodBaseline} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--text-3)" />}
-      {lsodScenario !== null && <LsodTick d={lsodScenario} x={x} yTop={PAD_T} yBottom={y(0)} color="var(--sim-soft)" label />}
-
-      <text x={W - PAD_R} y={H - 6} textAnchor="end" fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">
-        {horizon} d
-      </text>
-      <text x={PAD_L} y={H - 6} fontFamily="var(--font-mono)" fontSize={8.5} fill="var(--text-4)">today</text>
-    </svg>
-  );
-}
-
-function LsodTick({
-  d, x, yTop, yBottom, color, label,
-}: {
-  d: number; x: (d: number) => number; yTop: number; yBottom: number;
-  color: string; label?: boolean;
-}) {
-  if (d < 0) return null;
-  return (
-    <g>
-      <line x1={x(d)} y1={yTop} x2={x(d)} y2={yBottom} stroke={color} strokeWidth={1} strokeDasharray="2 3" />
-      <circle cx={x(d)} cy={yBottom} r={3} fill={color} />
-      {label && (
-        <text x={x(d) + 4} y={yBottom - 5} fontFamily="var(--font-mono)" fontSize={8.5} fill={color}>
-          LSOD {Math.round(d)} d
-        </text>
-      )}
-    </g>
+      <ChartContainer className="h-56" label="Fuel remaining over time, now versus the what-if scenario, with the ship arrival window">
+        <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+          <CartesianGrid {...CHART_DEFAULTS.grid} />
+          <XAxis
+            dataKey="d"
+            type="number"
+            domain={[0, horizon]}
+            {...CHART_DEFAULTS.axis}
+            tickFormatter={(d: number) => (d === 0 ? 'Today' : `${d} d`)}
+          />
+          <YAxis {...CHART_DEFAULTS.axis} width={40} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(v: number) => `${v}%`} />
+          <ReferenceArea
+            x1={shipWindow.earliestDay}
+            x2={Math.max(shipWindow.latestDay, shipWindow.earliestDay + 1)}
+            fill="var(--ok)"
+            fillOpacity={0.1}
+            ifOverflow="extendDomain"
+          />
+          <Tooltip
+            content={
+              <ChartTooltipContent
+                unit="% left"
+                labelFormatter={(d) => (Number(d) === 0 ? 'Today' : `Day ${d}`)}
+              />
+            }
+          />
+          <Line dataKey="now" name="Now" type="linear" stroke="var(--chart-3)" {...CHART_DEFAULTS.line} dot={false} isAnimationActive={false} />
+          <Line dataKey="whatIf" name="What-if" type="linear" stroke="var(--sim)" strokeDasharray="6 4" {...CHART_DEFAULTS.line} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }
 
@@ -889,7 +886,7 @@ function LsodTick({
  * an input and carries no verdict.
  */
 function deltaColor(label: string, delta: number): string {
-  if (nearlyEqual(delta, 0)) return 'var(--text-4)';
+  if (nearlyEqual(delta, 0)) return 'var(--text-3)';
   if (label.includes('AMBIENT')) return 'var(--text-2)';
   const worse = label.includes('AUTONOMY') ? delta < 0 : delta > 0;
   return worse ? 'var(--act-soft)' : 'var(--ok-soft)';

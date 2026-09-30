@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Charts — one spec for every Recharts chart (ported from the ~/Temp-ui-comps
+   kit's CHART_DEFAULTS): horizontal hairline grid only, no axis lines, axis
+   text in a text token (never a series colour), 2px lines, 10% area washes,
+   bars ≤ 24px. Applied through the `.chart` class on ChartContainer.
+   Sizes are rem so charts follow the Text size setting.
+   ========================================================================== */
+
+.chart .recharts-surface { outline: none; overflow: visible; }
+.chart .recharts-layer,
+.chart .recharts-sector { outline: none; }
+
+.chart .recharts-cartesian-axis-tick-value,
+.chart .recharts-cartesian-axis-tick text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  fill: var(--text-3);
+}
+.chart .recharts-cartesian-grid-horizontal line { stroke: var(--line); }
+.chart .recharts-reference-line line { stroke-width: 1.5; }
+.chart .recharts-label,
+.chart .recharts-reference-line .recharts-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+}
+.chart .recharts-tooltip-cursor { stroke: var(--line-strong); }
+.chart .recharts-rectangle.recharts-tooltip-cursor { fill: var(--panel-raised); stroke: none; }

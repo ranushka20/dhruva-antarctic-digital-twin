@@ -1,0 +1,355 @@
+/* ==========================================================================
+   DHRUVA — MOTION
+   One place for every easing, duration and keyframe in the app, so motion
+   reads as one system instead of per-page improvisation.
+
+   Rules this file follows (instrument-grade dashboard, not a marketing site):
+   - Enter uses ease-out, movement uses ease-out/ease-in-out, never ease-in.
+   - UI motion stays under ~300ms; exits are faster than entrances.
+   - Only transform, opacity, clip-path and filter are animated.
+   - Keyboard-driven surfaces (command palette) never animate.
+   - Enter keyframes use `backwards` fill, never `both`/`forwards`: a
+     transform left behind on a page or drawer would become the containing
+     block for every `position: fixed` descendant (modals, toasts).
+   - prefers-reduced-motion is handled in index.css (global kill switch).
+   ========================================================================== */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-link: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --dur-press: 140ms;
+  --dur-fast: 160ms;
+  --dur-base: 220ms;
+  --dur-slow: 280ms;
+
+  /* Skeleton / shimmer highlight — decoration only, never status. */
+  --shimmer: rgba(255, 255, 255, 0.05);
+
+  /* Set on <main> by AppShell per navigation: sideways when moving between
+     top-level tabs (sign follows tab order), zero for drill-ins. */
+  --route-dx: 0px;
+}
+
+/* ---------------------------------------------------------------- keyframes */
+
+@keyframes m-route-in {
+  from { opacity: 0; transform: translate3d(var(--route-dx), 0, 0); }
+}
+@keyframes m-rise-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+}
+@keyframes m-panel-in {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+}
+@keyframes m-fade-in {
+  from { opacity: 0; }
+}
+@keyframes m-sheet-in {
+  from { opacity: 0; transform: translate3d(32px, 0, 0); }
+}
+@keyframes m-dialog-in {
+  from { opacity: 0; transform: scale(0.97); }
+}
+@keyframes m-pop-in {
+  from { opacity: 0; transform: scale(0.97) translate3d(0, -2px, 0); }
+}
+@keyframes m-toast-in {
+  from { opacity: 0; transform: translate3d(0, -4px, 0); }
+}
+@keyframes m-swap-in {
+  from { opacity: 0; filter: blur(2px); transform: translate3d(0, 3px, 0); }
+}
+@keyframes m-digit-in {
+  from { opacity: 0; filter: blur(2px); transform: translate3d(0, 0.45em, 0); }
+}
+@keyframes m-bump {
+  30% { scale: 1.025; }
+  60% { scale: 0.99; }
+}
+@keyframes m-shake {
+  25% { translate: -3px 0; }
+  50% { translate: 3px 0; }
+  75% { translate: -3px 0; }
+}
+@keyframes m-reveal-x {
+  from { clip-path: inset(0 100% 0 0); }
+}
+@keyframes m-draw {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes m-spin {
+  to { transform: rotate(1turn); }
+}
+@keyframes m-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes m-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@keyframes m-shimmer-text {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+@keyframes m-skeleton {
+  to { background-position: -200% 0; }
+}
+@keyframes m-pixel-on {
+  0%, 100% { opacity: 0.15; }
+  18%, 42% { opacity: 1; }
+  62% { opacity: 0.15; }
+}
+
+/* ------------------------------------------------------- route transitions */
+
+/* The page fades in (and slides a few px when changing top-level tab), then
+   its top-level sections assemble top-down. Steps are short because tab
+   switching happens dozens of times a day. */
+.route-view {
+  height: 100%;
+  animation: m-route-in var(--dur-slow) var(--ease-out) backwards;
+}
+/* :where() holds these at the specificity of one class, so any component
+   class declared below (.m-panel, .m-toast, overlays) wins when an element
+   is both a page section and something with its own entrance. */
+.route-view > * > :where(:not([data-overlay])) {
+  animation: m-rise-in 300ms var(--ease-out) backwards;
+}
+.route-view > * > :where(:nth-child(2)) { animation-delay: 30ms; }
+.route-view > * > :where(:nth-child(3)) { animation-delay: 60ms; }
+.route-view > * > :where(:nth-child(4)) { animation-delay: 90ms; }
+.route-view > * > :where(:nth-child(5)) { animation-delay: 120ms; }
+.route-view > * > :where(:nth-child(n + 6)) { animation-delay: 150ms; }
+
+/* In-page tab content (Compliance tabs, Table ↔ Board, chart ↔ table). */
+.m-panel {
+  animation: m-panel-in var(--dur-base) var(--ease-out) backwards;
+}
+
+/* Generic entrance for anything that mounts into an existing layout. */
+.m-rise { animation: m-rise-in var(--dur-base) var(--ease-out) backwards; }
+.m-fade { animation: m-fade-in var(--dur-base) var(--ease-out) backwards; }
+
+/* Loading surfaces wait 150ms before showing, so a fast load never flashes
+   a skeleton for a single frame. */
+.m-delay-show {
+  animation: m-fade-in 200ms var(--ease-out) 150ms backwards;
+}
+
+/* ----------------------------------------------------------- button states */
+
+/* Unlayered on purpose: unlayered CSS outranks every Tailwind layer, so one
+   rule gives every button in the app the same transition list and press
+   feedback without touching each call site. :where() keeps specificity at 0
+   so any component can still override it. */
+:where(button, [role="button"], [role="tab"], a[data-press]) {
+  transition-property: color, background-color, border-color, outline-color,
+    box-shadow, opacity, transform, translate, scale, rotate, filter;
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Press: a subtle scale so the UI visibly hears the click. Uses the
+   individual `scale` property, which composes with Tailwind v4's own
+   `translate`/`rotate` utilities instead of overwriting `transform`. */
+:where(button, [role="button"], [role="tab"], a[data-press]):where(:not(:disabled, [aria-disabled="true"], [data-press="none"])):active {
+  scale: 0.97;
+  transition-duration: 80ms;
+}
+/* Icon-only buttons are small targets; they need a deeper press to read. */
+:where([data-press="icon"]):where(:not(:disabled)):active {
+  scale: 0.9;
+}
+
+:where(button, [role="button"]):where(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+
+/* NFR-G5 — visible 2px mint focus ring for keyboard users. Components built
+   on the coss/shadcn primitives (data-slot) draw their own ring. */
+:where(button, a, [role="button"], [role="tab"], input, select, textarea):where(:not([data-slot])):focus-visible {
+  outline: 2px solid var(--ok-soft);
+  outline-offset: 2px;
+}
+
+/* Back pill: the arrow leans the way it goes. */
+@media (hover: hover) and (pointer: fine) {
+  .m-back:hover svg { translate: -2px 0; }
+  .m-back svg { transition: translate var(--dur-fast) var(--ease-out); }
+
+  /* Hover lift for clickable cards. Gated to real pointers so a tap on a
+     touch screen does not leave a card stuck in its hover state. */
+  .m-lift:hover {
+    translate: 0 -1px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  }
+}
+.m-lift {
+  transition: translate var(--dur-fast) var(--ease-out), scale var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+/* Async buttons (AsyncButton): the label morphs between idle → pending →
+   done with a short blur crossfade; errors shake. */
+.m-async-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: m-swap-in 180ms var(--ease-out) backwards;
+}
+.m-async[data-status="done"] { animation: m-bump 320ms var(--ease-out); }
+.m-async[data-status="error"] { animation: m-shake 280ms var(--ease-out); }
+.m-async[data-status="pending"] { cursor: progress; }
+
+.m-spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  animation: m-spin 600ms linear infinite;
+}
+.m-check path {
+  stroke-dasharray: 16;
+  animation: m-draw 260ms var(--ease-out) 60ms backwards;
+}
+
+/* --------------------------------------------------- sliding tab indicator */
+
+/* The pill behind the active segment (ActiveIndicator). Its container must be
+   `relative isolate` so the -1 z-index stays inside it. Position is written
+   straight to `transform` from JS; the transition only switches on after the
+   first placement, so it never flies in from the corner on mount. */
+.m-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+}
+.m-indicator[data-ready] {
+  transition: transform 240ms var(--ease-out), width 240ms var(--ease-out),
+    height 240ms var(--ease-out), opacity var(--dur-fast) ease,
+    background-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* Segments ride on a pill that does not scale, so the press is the slide. */
+:where([role="tablist"], [data-segmented]) > :active {
+  scale: none;
+}
+
+/* Nav tabs: a duplicate "active" layer clipped to the active tab. Moving the
+   clip slides the pill AND swaps the text colour in one continuous motion —
+   no mid-slide moment where the label is the wrong colour. */
+.m-nav-clip[data-ready] {
+  transition: clip-path var(--dur-slow) var(--ease-out);
+}
+
+/* ----------------------------------------------------------------- overlays */
+
+.m-backdrop {
+  animation: m-fade-in var(--dur-base) var(--ease-out) backwards;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.m-sheet {
+  animation: m-sheet-in var(--dur-slow) var(--ease-drawer) backwards;
+}
+.m-dialog {
+  animation: m-dialog-in var(--dur-base) var(--ease-out) backwards;
+}
+.m-pop {
+  transform-origin: var(--pop-origin, top left);
+  animation: m-pop-in var(--dur-fast) var(--ease-out) backwards;
+}
+
+/* Exit — driven by usePresence flipping data-state to "closed". Faster than
+   the entrance: the system is responding, the user is not waiting on it. */
+.m-backdrop[data-state="closed"],
+.m-sheet[data-state="closed"],
+.m-dialog[data-state="closed"],
+.m-pop[data-state="closed"] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+}
+.m-sheet[data-state="closed"] { transform: translate3d(32px, 0, 0); }
+.m-dialog[data-state="closed"] { transform: scale(0.98); }
+.m-pop[data-state="closed"] { transform: scale(0.97); transition-duration: 120ms; }
+
+/* ------------------------------------------------------------------ toasts */
+
+.m-toast {
+  animation: m-toast-in var(--dur-base) var(--ease-out) backwards;
+}
+.m-toast[data-tone="error"] {
+  animation: m-toast-in var(--dur-base) var(--ease-out) backwards,
+    m-shake 280ms var(--ease-out) 160ms;
+}
+
+/* --------------------------------------------------------- loading states */
+
+/* All skeleton blocks share one fixed-attachment gradient, so the sheen
+   sweeps across the whole page in sync instead of each block on its own. */
+.m-skeleton {
+  border-radius: var(--r-inner);
+  background: linear-gradient(110deg, transparent 40%, var(--shimmer) 50%, transparent 60%)
+    var(--panel-raised) 0 0 / 200% 100% fixed;
+  animation: m-skeleton 1.8s linear infinite;
+}
+
+.m-shimmer-text {
+  background: linear-gradient(90deg, var(--text-3) 35%, var(--text) 50%, var(--text-3) 65%)
+    0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: m-shimmer-text 1.4s linear infinite;
+}
+
+.m-pixel {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background-color: var(--text-2);
+  opacity: 0.15;
+}
+
+/* Progress fills wipe in from the left on mount (clip-path, so the rounded
+   cap is never squashed the way a scaleX wipe would squash it). */
+.m-bar-fill {
+  animation: m-reveal-x 700ms var(--ease-out) backwards;
+}
+
+/* Rolling value — only the characters that changed re-enter. */
+.m-digit {
+  display: inline-block;
+  animation: m-digit-in 260ms var(--ease-out) backwards;
+}
+
+/* ---------------------------------------------------------- live signals */
+
+/* Attention ring behind an orange "act on this" dot. Orange stays reserved
+   for action — this only ever wraps an existing act-coloured dot. */
+.m-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background-color: inherit;
+  animation: m-ping 1.8s var(--ease-out) infinite;
+}
+
+/* LIVE link dot: a slow opacity breathe, no glow on the colour itself. */
+.m-breathe {
+  animation: m-breathe 2.4s ease-in-out infinite;
+}

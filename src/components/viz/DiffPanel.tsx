@@ -27,31 +27,31 @@ export function DiffPanel({ metrics, className = '' }: DiffPanelProps) {
         
         return (
           <div key={m.key} className="p-3 rounded-xl flex flex-col gap-2" style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)' }}>
-            <span className="font-mono text-[10px] uppercase text-[var(--text-3)]">{m.label}</span>
+            <span className="font-mono text-caption uppercase text-[var(--text-3)]">{m.label}</span>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="font-mono text-[9px] text-[var(--text-4)] mb-0.5">BEFORE</span>
+                <span className="font-mono text-micro text-[var(--text-4)] mb-0.5">BEFORE</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-mono text-[14px] text-[var(--text)] font-medium">
+                  <span className="font-mono text-title text-[var(--text)] font-medium">
                     {Math.round(m.before.value)}{m.before.band ? ` ±${Math.round(m.before.band)}` : ''}
                   </span>
-                  <span className="font-mono text-[9px] text-[var(--text-3)]">{m.unit}</span>
+                  <span className="font-mono text-micro text-[var(--text-3)]">{m.unit}</span>
                 </div>
               </div>
-              <div className="text-[12px] text-[var(--text-4)]">→</div>
+              <div className="text-body text-[var(--text-4)]">→</div>
               <div className="flex flex-col items-end">
-                <span className="font-mono text-[9px] text-[var(--sim-soft)] mb-0.5">AFTER</span>
+                <span className="font-mono text-micro text-[var(--sim-soft)] mb-0.5">AFTER</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-mono text-[14px] text-[var(--text)] font-medium">
+                  <span className="font-mono text-title text-[var(--text)] font-medium">
                     {Math.round(m.after.value)}{m.after.band ? ` ±${Math.round(m.after.band)}` : ''}
                   </span>
-                  <span className="font-mono text-[9px] text-[var(--text-3)]">{m.unit}</span>
+                  <span className="font-mono text-micro text-[var(--text-3)]">{m.unit}</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between mt-1 pt-2" style={{ borderTop: '1px solid var(--line)' }}>
               <ProvenanceBadge measurement={{ provenance: 'SIM', value: null, unit: '', timestamp: '', source: '', freshnessSeconds: 0 }} />
-              <span className="font-mono text-[11px] font-semibold" style={{ color: deltaColor }}>
+              <span className="font-mono text-body-sm font-semibold" style={{ color: deltaColor }}>
                 {sign}{Math.round(m.delta)} {m.unit}
               </span>
             </div>

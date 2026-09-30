@@ -1,5 +1,5 @@
 // OWNER: Dev B
-// Tier rail — live counts per tier plus the state and SLA filters.
+// Tier filter — live open counts per tier, as one row of toggle chips.
 // T0 is distinguished from T1 by a FILLED SQUARE marker, not only by colour
 // (FR-2.3): the screen has to survive a bad projector and a colour-blind
 // viewer, so tier is never carried by hue alone.
@@ -18,24 +18,44 @@ const STATES: Action['state'][] = [
   'RAISED', 'ACKNOWLEDGED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'DEFERRED',
 ];
 
+/** Plain-language state names. The raw state code stays available in `title`. */
+const STATE_LABEL: Record<Action['state'], string> = {
+  RAISED: 'Raised',
+  ACKNOWLEDGED: 'Acknowledged',
+  ASSIGNED: 'Assigned',
+  IN_PROGRESS: 'In progress',
+  RESOLVED: 'Resolved',
+  DEFERRED: 'Deferred',
+};
+
+const STATE_HINT: Record<Action['state'], string> = {
+  RAISED: 'New — nobody has acknowledged it yet',
+  ACKNOWLEDGED: 'Seen by someone, not yet given an owner',
+  ASSIGNED: 'Has a named owner',
+  IN_PROGRESS: 'Work has started',
+  RESOLVED: 'Closed with a resolution note',
+  DEFERRED: 'Postponed with a reason and a review date',
+};
+
 interface Props {
   counts: ActionCounts;
   tiers: Set<Tier>;
-  states: Set<Action['state']>;
-  breachOnly: boolean;
   onToggleTier: (tier: Tier) => void;
-  onToggleState: (state: Action['state']) => void;
-  onToggleBreach: () => void;
 }
 
-export function TierRail({
-  counts, tiers, states, breachOnly, onToggleTier, onToggleState, onToggleBreach,
-}: Props) {
+/** Short names for the chip row; the full label stays in the tooltip. */
+const TIER_SHORT: Record<Tier, string> = {
+  T0: 'Life safety',
+  T1: 'Critical ops',
+  T2: 'Logistics',
+  T3: 'Science',
+};
+
+/** Priority tier filter — one compact row of toggle chips with open counts. */
+export function TierFilter({ counts, tiers, onToggleTier }: Props) {
   return (
-    <nav
-      className="flex lg:flex-col gap-1.5 lg:w-[190px] lg:shrink-0 overflow-x-auto lg:overflow-visible"
-      aria-label="Tier and state filters"
-    >
+    <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Priority tier filter">
+      <span className="text-body-sm mr-1" style={{ color: 'var(--text-3)' }}>Priority</span>
       {(Object.keys(TIER_META) as Tier[]).map((tier) => {
         const meta = TIER_META[tier];
         const active = tiers.has(tier);
@@ -45,88 +65,28 @@ export function TierRail({
             type="button"
             onClick={() => onToggleTier(tier)}
             aria-pressed={active}
-            className="flex items-center gap-2 px-2.5 py-2 text-left shrink-0 min-h-[40px]"
+            title={`${tier} — ${meta.label}`}
+            className="inline-flex items-center gap-2 px-3 min-h-9 rounded-full text-body-sm hover:bg-[var(--panel-raised)]"
             style={{
               backgroundColor: active ? 'var(--panel-raised)' : 'transparent',
               border: `1px solid ${active ? meta.color : 'var(--line)'}`,
-              borderRadius: 'var(--r-inner)',
+              // An empty tier stays clickable but recedes, so the eye goes to tiers with work.
+              opacity: counts.byTier[tier] === 0 && !active ? 0.5 : 1,
             }}
           >
             <span
               className="shrink-0"
-              style={{
-                width: 9, height: 9,
-                backgroundColor: meta.color,
-                borderRadius: meta.square ? 1 : 999,
-              }}
+              style={{ width: 8, height: 8, backgroundColor: meta.color, borderRadius: meta.square ? 2 : 999 }}
               aria-hidden
             />
-            <span className="min-w-0 lg:flex-1">
-              <span className="font-mono text-[10.5px] tracking-[0.06em] block" style={{ color: 'var(--text)' }}>
-                {tier}
-              </span>
-              <span className="text-[10px] hidden lg:block truncate" style={{ color: 'var(--text-3)' }}>
-                {meta.label}
-              </span>
-            </span>
-            <span className="font-mono text-[12px] tabular-nums ml-2" style={{ color: 'var(--text-2)' }}>
-              {counts.byTier[tier]}
-            </span>
+            <span className="font-mono font-medium" style={{ color: 'var(--text)' }}>{tier}</span>
+            <span className="hidden xl:inline" style={{ color: 'var(--text-3)' }}>{TIER_SHORT[tier]}</span>
+            <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{counts.byTier[tier]}</span>
           </button>
         );
       })}
-
-      <div className="hidden lg:block h-px my-2" style={{ backgroundColor: 'var(--line)' }} />
-
-      <p className="hidden lg:block font-mono text-[9px] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--text-4)' }}>
-        State
-      </p>
-
-      {STATES.map((state) => {
-        const active = states.has(state);
-        return (
-          <button
-            key={state}
-            type="button"
-            onClick={() => onToggleState(state)}
-            aria-pressed={active}
-            className="flex items-center gap-2 px-2.5 py-1.5 text-left shrink-0 min-h-[34px]"
-            style={{
-              backgroundColor: active ? 'var(--panel-raised)' : 'transparent',
-              border: `1px solid ${active ? 'var(--line-strong)' : 'transparent'}`,
-              borderRadius: 'var(--r-inner)',
-            }}
-          >
-            <span className="font-mono text-[10px] flex-1" style={{ color: active ? 'var(--text)' : 'var(--text-3)' }}>
-              {state.replace('_', ' ')}
-            </span>
-            <span className="font-mono text-[11px] tabular-nums" style={{ color: 'var(--text-3)' }}>
-              {counts.byState[state]}
-            </span>
-          </button>
-        );
-      })}
-
-      <button
-        type="button"
-        onClick={onToggleBreach}
-        aria-pressed={breachOnly}
-        className="flex items-center gap-2 px-2.5 py-2 mt-1 text-left shrink-0 min-h-[40px]"
-        style={{
-          backgroundColor: breachOnly ? 'rgba(242,107,33,0.12)' : 'transparent',
-          border: `1px solid ${breachOnly ? 'var(--act)' : 'var(--line)'}`,
-          borderRadius: 'var(--r-inner)',
-        }}
-      >
-        <span className="font-mono text-[10px] uppercase tracking-[0.06em] flex-1" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-          SLA breach
-        </span>
-        <span className="font-mono text-[12px] tabular-nums" style={{ color: counts.breaching > 0 ? 'var(--act-soft)' : 'var(--text-3)' }}>
-          {counts.breaching}
-        </span>
-      </button>
-    </nav>
+    </div>
   );
 }
 
-export { TIER_META, STATES };
+export { TIER_META, STATES, STATE_LABEL, STATE_HINT };

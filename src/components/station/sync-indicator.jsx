@@ -46,7 +46,7 @@ export function SyncIndicator({ state, label, className }) {
                 {meta.label}
               </span>
             </div>
-            <span className="text-[0.6875rem] text-muted-foreground" data-numeric="">
+            <span className="text-caption text-muted-foreground" data-numeric="">
               {label}
             </span>
           </div>

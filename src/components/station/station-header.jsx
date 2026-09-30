@@ -40,7 +40,7 @@ export function StationHeader({
           <span className="font-semibold text-foreground text-sm tracking-tight">
             Bharati
           </span>
-          <span className="mt-1 text-[0.6875rem] text-muted-foreground">
+          <span className="mt-1 text-caption text-muted-foreground">
             Antarctic Research Station
           </span>
         </div>
@@ -76,7 +76,7 @@ export function StationHeader({
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
         <div className="hidden flex-col items-end leading-none sm:flex">
-          <span className="text-[0.6875rem] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             {clock.date}
           </span>
           <span

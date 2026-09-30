@@ -24,15 +24,15 @@ export function ActionCard({ action, variant = 'compact', onAcknowledge, classNa
 
   return (
     <div
-      className={`rounded-lg p-3 ${className}`}
+      className={`rounded-xl p-4 ${className}`}
       style={{
         backgroundColor: 'var(--panel-raised)',
         border: `1px solid ${isUrgent ? 'rgba(242,107,33,0.30)' : 'var(--line)'}`,
       }}
     >
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="flex items-center gap-2.5 mb-2">
         <TierChip tier={action.tier} />
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.08em]" style={{ color: 'var(--text-3)' }}>
+        <span className="font-mono text-caption uppercase tracking-label" style={{ color: 'var(--text-3)' }}>
           {action.stationId.toUpperCase()} · {formatAge(action.ageSeconds)}
         </span>
         <span className="ml-auto">
@@ -40,11 +40,11 @@ export function ActionCard({ action, variant = 'compact', onAcknowledge, classNa
         </span>
       </div>
 
-      <p className="text-[12.5px] font-medium mb-1" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+      <p className="text-body font-medium mb-1.5" style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
         {action.title}
       </p>
 
-      <p className="text-[11px]" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}>
+      <p className="text-body-sm" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-body)' }}>
         {action.state}
         {action.assignee ? ` · ${action.assignee.name}` : ''}
       </p>
@@ -52,7 +52,7 @@ export function ActionCard({ action, variant = 'compact', onAcknowledge, classNa
       {variant === 'full' && action.state === 'RAISED' && onAcknowledge && (
         <button
           onClick={() => onAcknowledge(action.id)}
-          className="mt-2 px-3 py-1 rounded text-[11px] font-medium"
+          className="mt-3 px-4 min-h-10 rounded-full text-body-sm font-medium"
           style={{
             backgroundColor: 'var(--act)',
             color: 'var(--bg)',

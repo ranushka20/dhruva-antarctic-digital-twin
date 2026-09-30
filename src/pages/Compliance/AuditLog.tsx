@@ -1,287 +1,728 @@
 // OWNER: Dev B
-// Audit log — the chain viewer, the verifier and the visual chain strip.
+// Record history — answers "Are the records untouched?".
 //
-// The mechanism is a TAMPER-EVIDENT HASH CHAIN (SHA-256). It proves records
-// have not been altered since they were written. It carries no signature and
-// does not prove who wrote them beyond the recorded actor — it is
-// tamper-evident, not non-repudiable, and the export says so in as many
-// words. Superseded entries are greyed, never hidden: the log's whole value
-// is that nothing disappears.
+// Each record is sealed together with the one before it (the tamper-evident
+// SHA-256 hash chain in lib/hashChain), so the check names the exact record
+// that was changed. Nothing is ever hidden: replaced records stay, greyed.
+// Fingerprints appear only inside a row's "Technical details"; the download
+// and the demo control live in the collapsed "For auditors" section.
 
-import { useMemo, useState } from 'react';
-import { Download, ShieldCheck, ShieldAlert, Unlink } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, ChevronRight, Download, Search, WifiOff } from 'lucide-react';
 import type { ChainEntry, ChainStatus } from '@/lib/hashChain';
-import { shortHash } from '@/lib/hashChain';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { formatShortIST, formatDuration } from '@/lib/time';
+import { StatusDot } from '@/components/shared/StatusDot';
+import { AsyncButton } from '@/components/shared/AsyncButton';
+import { ROLE_LABEL } from '@/state/auth';
+import { getActions, getInspections, getObligations, getResources } from '@/state/data';
+import { STATION_LABEL } from '@/state/stationScope';
+import { formatDateIST, formatShortIST } from '@/lib/time';
 
 interface Props {
   chain: ChainEntry[];
   status: ChainStatus | null;
   verifying: boolean;
-  onVerify: () => void;
+  onVerify: () => Promise<void> | void;
   onExport: () => void;
   onTamper: (seq: number) => void;
   canTamper: boolean;
   focusSeq?: number | null;
 }
 
+type Show = 'all' | 'actions' | 'reports' | 'waste' | 'inspections' | 'other';
+
+const SHOW_OPTIONS: { id: Show; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'actions', label: 'Actions' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'waste', label: 'Waste' },
+  { id: 'inspections', label: 'Inspections' },
+  { id: 'other', label: 'Other' },
+];
+
+const TYPE_LABEL: Record<string, string> = {
+  action: 'Action',
+  obligation: 'Report',
+  compliance_record: 'Report',
+  report: 'Report',
+  waste: 'Waste',
+  waste_event: 'Waste',
+  inspection: 'Inspection',
+  resource: 'Stock',
+  parameter: 'Setting',
+  manifest: 'Cargo manifest',
+  handover: 'Handover',
+  sync_record: 'Station record',
+};
+
+const CATEGORY: Record<string, Show> = {
+  action: 'actions',
+  obligation: 'reports',
+  compliance_record: 'reports',
+  report: 'reports',
+  waste: 'waste',
+  waste_event: 'waste',
+  inspection: 'inspections',
+};
+
+/** What happened, in words. Transitions "A -> B" read as their end state. */
+const VERB: Record<string, string> = {
+  RAISED: 'Raised',
+  ACKNOWLEDGED: 'Acknowledged',
+  ASSIGNED: 'Assigned',
+  IN_PROGRESS: 'Work started',
+  RESOLVED: 'Resolved',
+  DEFERRED: 'Deferred',
+  SUBMITTED: 'Submitted',
+  COMPLETED: 'Completed',
+  RECORDED: 'Recorded',
+  RECORDED_LOCALLY: 'Recorded at the station',
+  CHANGED: 'Changed',
+  GENERATED: 'Created',
+  EVIDENCE_ATTACHED: 'Evidence added',
+  PROMOTED: 'Priority raised',
+  RECONCILED: 'Conflicting versions resolved',
+};
+
+const PAGE = 50;
+
+const ACT_LINE = 'color-mix(in srgb, var(--act) 45%, transparent)';
+const ACT_TINT = 'color-mix(in srgb, var(--act) 8%, transparent)';
+const WATCH_TINT = 'color-mix(in srgb, var(--watch) 10%, transparent)';
+
+const PANEL = {
+  backgroundColor: 'var(--panel)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--r-card)',
+} as const;
+
+interface Row {
+  entry: ChainEntry;
+  verb: string;
+  /** What the record is about — the action title, report name, etc. */
+  subject: string;
+  /** Extra words from the record itself, when they add something ("assigned to V. Chandran"). */
+  note: string | null;
+  station: string | null;
+  typeLabel: string;
+  category: Show;
+  who: string;
+  role: string;
+  haystack: string;
+}
+
+/** The thing a record points at, looked up by id so every row can name it. */
+type Lookup = (entry: ChainEntry) => { title?: string; stationId?: string };
+
 export function AuditLog({
   chain, status, verifying, onVerify, onExport, onTamper, canTamper, focusSeq,
 }: Props) {
-  const [objectType, setObjectType] = useState<string>('all');
-  const [actor, setActor] = useState<string>('all');
+  const [query, setQuery] = useState('');
+  const [show, setShow] = useState<Show>('all');
   const [offlineOnly, setOfflineOnly] = useState(false);
-  const [expanded, setExpanded] = useState<number | null>(focusSeq ?? null);
+  const [limit, setLimit] = useState(PAGE);
+  const [techOpen, setTechOpen] = useState<Set<number>>(() => new Set());
+  const [auditorsOpen, setAuditorsOpen] = useState(false);
+  const [highlight, setHighlight] = useState<number | null>(focusSeq ?? null);
+  const [scrollTarget, setScrollTarget] = useState<{ seq: number; nonce: number } | null>(null);
 
-  const objectTypes = useMemo(
-    () => ['all', ...Array.from(new Set(chain.map((e) => e.objectType))).sort()],
-    [chain]
-  );
-  const actors = useMemo(
-    () => ['all', ...Array.from(new Set(chain.map((e) => e.actor))).sort()],
-    [chain]
-  );
+  const statusRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
+  /** Newest first. Derived once per chain change, not per keystroke. */
+  const rows = useMemo(() => {
+    const lookup = buildLookup();
+    return chain.map((e) => toRow(e, lookup)).reverse();
+  }, [chain]);
+
+  const q = query.trim().toLowerCase();
+  const filtersActive = q !== '' || show !== 'all' || offlineOnly;
   const filtered = useMemo(
     () =>
-      chain.filter((e) => {
-        if (objectType !== 'all' && e.objectType !== objectType) return false;
-        if (actor !== 'all' && e.actor !== actor) return false;
-        if (offlineOnly && !e.writtenOffline) return false;
+      rows.filter((r) => {
+        if (show !== 'all' && r.category !== show) return false;
+        if (offlineOnly && !r.entry.writtenOffline) return false;
+        if (q && !r.haystack.includes(q)) return false;
         return true;
       }),
-    [chain, objectType, actor, offlineOnly]
+    [rows, q, show, offlineOnly]
   );
+  const visible = filtered.slice(0, limit);
 
-  const select = {
-    backgroundColor: 'var(--panel)',
-    border: '1px solid var(--line)',
-    borderRadius: 'var(--r-pill)',
-    color: 'var(--text-2)',
-  } as const;
+  // verifyFullChain reports an index; seq and index coincide, but read it off
+  // the entry so the label always matches the row it points at.
+  const isBroken = status?.ok === false;
+  const brokenSeq =
+    isBroken && status.brokenAt !== undefined
+      ? chain[status.brokenAt]?.seq ?? status.brokenAt
+      : null;
+
+  const resetFilters = () => {
+    setQuery('');
+    setShow('all');
+    setOfflineOnly(false);
+  };
+
+  /** Brings one record into the list (clearing filters if they hide it), highlights it and scrolls to it. */
+  const goTo = (seq: number) => {
+    const inAll = rows.findIndex((r) => r.entry.seq === seq);
+    if (inAll === -1) return;
+    let index = filtered.findIndex((r) => r.entry.seq === seq);
+    if (index === -1) {
+      resetFilters();
+      index = inAll;
+    }
+    setLimit((l) => Math.max(l, Math.ceil((index + 1) / PAGE) * PAGE));
+    setHighlight(seq);
+    setScrollTarget({ seq, nonce: Date.now() });
+  };
+
+  const goToRef = useRef(goTo);
+  useEffect(() => { goToRef.current = goTo; });
+
+  useEffect(() => {
+    if (focusSeq !== null && focusSeq !== undefined && Number.isFinite(focusSeq)) goToRef.current(focusSeq);
+  }, [focusSeq]);
+
+  useEffect(() => {
+    if (!scrollTarget) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-seq="${scrollTarget.seq}"]`);
+    if (!el) return; // not rendered yet — filters are still clearing; retry on the next render
+    el.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
+    el.focus({ preventScroll: true });
+    setScrollTarget(null);
+  }, [scrollTarget, filtered, limit]);
+
+  const toggleTech = (seq: number) =>
+    setTechOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(seq)) next.delete(seq);
+      else next.add(seq);
+      return next;
+    });
+
+  // Demo target: the latest inspection or report, a record someone would
+  // plausibly want to alter; otherwise the middle of the history.
+  const demoTarget = useMemo(() => {
+    const candidates = chain.filter(
+      (e) => !e.superseded && (e.objectType === 'inspection' || CATEGORY[e.objectType] === 'reports')
+    );
+    return candidates[candidates.length - 1] ?? chain[Math.floor(chain.length / 2)] ?? null;
+  }, [chain]);
+
+  const runDemo = (seq: number) => {
+    onTamper(seq);
+    statusRef.current?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+  };
 
   return (
-    <div className="space-y-3.5">
-      {/* ---- Verifier ---- */}
+    <div className="@container flex flex-col gap-5">
+      {/* ---- Are the records untouched? (FR-5.3) ---- */}
       <section
-        className="p-4"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
+        ref={statusRef}
+        className="@container px-5 py-4 scroll-mt-4"
+        style={{ ...PANEL, border: `1px solid ${isBroken ? ACT_LINE : 'var(--line)'}` }}
       >
-        <div className="flex items-center gap-2.5 mb-3 flex-wrap">
-          <h3 className="text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>
-            Tamper-evident hash chain (SHA-256)
-          </h3>
-          {status && (
-            <span
-              className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
+        <div className="flex flex-col gap-3 @min-[40rem]:flex-row @min-[40rem]:items-center @min-[40rem]:gap-5">
+          <div className="flex-1 min-w-0">
+            <p className="flex items-start gap-3 text-title font-semibold" aria-live="polite">
+              <span className="flex items-center h-6 shrink-0">
+                <StatusDot status={isBroken ? 'warning' : status?.ok ? 'ok' : 'unknown'} size={9} />
+              </span>
+              {isBroken ? (
+                <span style={{ color: 'var(--act-soft)' }}>
+                  {brokenSeq !== null ? (
+                    <>Record <span className="font-mono tabular-nums">#{brokenSeq}</span> was changed after it was written</>
+                  ) : (
+                    'A record was changed after it was written'
+                  )}
+                </span>
+              ) : status?.ok ? (
+                <span style={{ color: 'var(--text)' }}>
+                  Yes — all <span className="font-mono tabular-nums">{status.verified}</span> records are exactly as
+                  they were written.
+                </span>
+              ) : (
+                <span style={{ color: 'var(--text)' }}>Not checked yet</span>
+              )}
+            </p>
+            {status && (
+              <p className="text-body-sm mt-1 pl-[calc(9px+0.75rem)]" style={{ color: 'var(--text-3)' }}>
+                Last checked <span className="font-mono tabular-nums">{formatShortIST(status.checkedAt)}</span>
+                {status.ok && chain.length > status.verified && (
+                  <>
+                    {' · '}
+                    <span className="font-mono tabular-nums">{chain.length - status.verified}</span> newer
+                    record{chain.length - status.verified === 1 ? '' : 's'} not yet included
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+            {brokenSeq !== null && (
+              <button
+                type="button"
+                onClick={() => goTo(brokenSeq)}
+                className="px-4 min-h-10 rounded-full text-body-sm font-medium"
+                style={{ border: '1px solid var(--act)', color: 'var(--act-soft)', fontFamily: 'var(--font-body)' }}
+              >
+                Show this record
+              </button>
+            )}
+            <AsyncButton
+              onClick={onVerify}
+              pendingLabel="Checking…"
+              doneLabel={isBroken ? null : 'Checked'}
+              disabled={verifying}
+              className="inline-flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-semibold hover:bg-[var(--panel-alt)]"
               style={{
-                border: `1px solid ${status.ok ? 'var(--ok)' : 'var(--act)'}`,
-                color: status.ok ? 'var(--ok-soft)' : 'var(--act-soft)',
+                backgroundColor: 'var(--panel-raised)',
+                border: '1px solid var(--line-strong)',
+                color: 'var(--text)',
                 fontFamily: 'var(--font-body)',
+                opacity: verifying ? 0.6 : 1,
               }}
             >
-              {status.ok ? <ShieldCheck size={11} /> : <ShieldAlert size={11} />}
-              {status.ok ? `Chain verified · ${status.verified}` : `Chain broken at entry ${status.brokenAt}`}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onVerify}
-            disabled={verifying}
-            className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
-            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)', opacity: verifying ? 0.5 : 1 }}
-          >
-            {verifying ? 'Verifying…' : 'Verify chain'}
-          </button>
-          <button
-            type="button"
-            onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[36px]"
-            style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
-          >
-            <Download size={11} /> Export JSON
-          </button>
-          {status && (
-            <span className="font-mono text-[9.5px] ml-auto" style={{ color: 'var(--text-4)' }}>
-              {status.verified} entries in {status.durationMs} ms · checked {formatShortIST(status.checkedAt)}
-            </span>
-          )}
+              {verifying ? 'Checking…' : 'Check again'}
+            </AsyncButton>
+          </div>
         </div>
 
-        {/* ---- Chain strip (FR-5.4) ---- */}
-        <div className="flex items-center gap-[2px] flex-wrap" role="img"
-          aria-label={status?.ok ? 'Chain intact' : `Chain broken at entry ${status?.brokenAt}`}>
-          {chain.map((entry) => {
-            const broken = status && !status.ok && entry.seq === status.brokenAt;
-            return (
-              <button
-                key={entry.seq}
-                type="button"
-                onClick={() => setExpanded(entry.seq)}
-                title={`#${entry.seq} ${entry.transition} — ${entry.payloadSummary}`}
-                style={{
-                  width: 9,
-                  height: 16,
-                  borderRadius: 2,
-                  backgroundColor: broken
-                    ? 'var(--act)'
-                    : entry.superseded
-                      ? 'var(--unknown)'
-                      : entry.writtenOffline
-                        ? 'var(--watch)'
-                        : 'var(--ok)',
-                  opacity: entry.superseded ? 0.4 : 0.85,
-                }}
-              />
-            );
-          })}
-        </div>
-        {status && !status.ok && (
-          <p className="flex items-center gap-1.5 font-mono text-[10px] mt-2" style={{ color: 'var(--act-soft)' }}>
-            <Unlink size={11} /> Severed link at position {status.brokenAt}. Everything after it is
-            no longer provably unaltered.
-          </p>
-        )}
-        <p className="font-mono text-[9px] mt-2" style={{ color: 'var(--text-4)' }}>
-          Tamper-evident, not non-repudiable: this chain proves records have not been altered since
-          they were written. It carries no digital signature.
+        <p className="text-body-sm mt-3 max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+          Each record is sealed together with the one before it, so changing any old record breaks the seal from
+          that point on.
         </p>
       </section>
 
-      {/* ---- Filters (FR-5.2) ---- */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <select value={objectType} onChange={(e) => setObjectType(e.target.value)}
-          className="px-2.5 py-1.5 font-mono text-[10.5px] outline-none" style={select} aria-label="Filter by object type">
-          {objectTypes.map((t) => <option key={t} value={t}>{t === 'all' ? 'All object types' : t}</option>)}
-        </select>
-        <select value={actor} onChange={(e) => setActor(e.target.value)}
-          className="px-2.5 py-1.5 font-mono text-[10.5px] outline-none" style={select} aria-label="Filter by actor">
-          {actors.map((a) => <option key={a} value={a}>{a === 'all' ? 'All actors' : a}</option>)}
-        </select>
+      {/* ---- Every record, newest first (FR-5.1 / 5.2 / 5.5 / 5.6) ---- */}
+      <section className="@container p-5" style={PANEL} aria-label="Record history">
+        <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Every record, newest first</h3>
+
+        <div className="flex items-center gap-3 flex-wrap mt-3">
+          <label
+            className="flex items-center gap-2.5 px-4 min-h-10 rounded-full flex-1 min-w-[14rem] max-w-md"
+            style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line-strong)' }}
+          >
+            <Search size={16} style={{ color: 'var(--text-3)' }} aria-hidden />
+            <span className="sr-only">Search record history</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by what happened or who"
+              className="flex-1 bg-transparent outline-none text-body min-w-0"
+              style={{ color: 'var(--text)' }}
+            />
+          </label>
+
+          <label className="flex items-center gap-2.5 text-body-sm" style={{ color: 'var(--text-3)' }}>
+            Show
+            <select
+              value={show}
+              onChange={(e) => setShow(e.target.value as Show)}
+              className="h-10 px-4 text-body-sm outline-none"
+              style={{
+                backgroundColor: 'var(--panel)',
+                border: '1px solid var(--line-strong)',
+                borderRadius: 'var(--r-pill)',
+                color: 'var(--text-2)',
+              }}
+            >
+              {SHOW_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setOfflineOnly((v) => !v)}
+            aria-pressed={offlineOnly}
+            className="px-4 min-h-10 rounded-full text-body-sm font-medium"
+            style={{
+              border: `1px ${offlineOnly ? 'solid' : 'dashed'} ${offlineOnly ? 'var(--watch)' : 'var(--line-strong)'}`,
+              color: offlineOnly ? 'var(--watch-soft)' : 'var(--text-3)',
+              backgroundColor: offlineOnly ? WATCH_TINT : 'transparent',
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Only written offline
+          </button>
+
+          {filtersActive && (
+            <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+              <span className="font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{filtered.length}</span>{' '}
+              matching
+            </span>
+          )}
+        </div>
+
+        {chain.length === 0 ? (
+          <EmptyState className="mt-4" reason="No records have been written yet." />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            className="mt-4"
+            reason="No records match this search."
+            action={
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="px-4 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+                style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
+              >
+                Show all records
+              </button>
+            }
+          />
+        ) : (
+          <div ref={listRef} className="flex flex-col gap-5 mt-5">
+            {groupByDay(visible).map((group) => (
+              <section key={group.key} aria-label={group.label}>
+                <h3
+                  className="text-body-sm font-semibold pb-2 mb-1"
+                  style={{ color: 'var(--text-2)', borderBottom: '1px solid var(--line-strong)' }}
+                >
+                  {group.label}
+                </h3>
+                <ul className="flex flex-col">
+                  {group.rows.map((row) => (
+                    <HistoryRow
+                      key={row.entry.seq}
+                      row={row}
+                      broken={row.entry.seq === brokenSeq}
+                      highlighted={row.entry.seq === highlight}
+                      techOpen={techOpen.has(row.entry.seq)}
+                      onToggleTech={() => toggleTech(row.entry.seq)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
+
+        {filtered.length > limit && (
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setLimit((l) => l + PAGE)}
+              className="px-5 min-h-10 rounded-full text-body-sm font-medium hover:bg-[var(--panel-alt)]"
+              style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
+            >
+              Show more{' '}
+              <span style={{ color: 'var(--text-3)' }}>
+                (<span className="font-mono tabular-nums">{filtered.length - limit}</span> left)
+              </span>
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* ---- For auditors (FR-5.7 + the demo affordance) ---- */}
+      <section style={PANEL}>
         <button
           type="button"
-          onClick={() => setOfflineOnly((v) => !v)}
-          aria-pressed={offlineOnly}
-          className="px-3 py-1.5 rounded-full text-[11.5px] font-medium min-h-[34px]"
-          style={{
-            border: `1px solid ${offlineOnly ? 'var(--watch)' : 'var(--line)'}`,
-            color: offlineOnly ? 'var(--watch-soft)' : 'var(--text-3)',
-            fontFamily: 'var(--font-body)',
-          }}
+          onClick={() => setAuditorsOpen((v) => !v)}
+          aria-expanded={auditorsOpen}
+          className="w-full flex items-center gap-3 px-5 min-h-12 text-left rounded-[var(--r-card)] hover:bg-[var(--panel-raised)]"
         >
-          Written offline
+          <ChevronRight
+            size={18}
+            aria-hidden
+            className="shrink-0 transition-transform"
+            style={{ color: 'var(--text-3)', transform: auditorsOpen ? 'rotate(90deg)' : 'none' }}
+          />
+          <span className="text-body font-semibold" style={{ color: 'var(--text)' }}>For auditors</span>
         </button>
-        <span className="font-mono text-[10px] ml-auto" style={{ color: 'var(--text-4)' }}>
-          {filtered.length} of {chain.length} entries
-        </span>
-      </div>
 
-      {/* ---- Entries (FR-5.1) ---- */}
-      <section
-        className="p-4"
-        style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
-      >
-        {filtered.length === 0 ? (
-          <EmptyState reason="No chain entries match these filters." />
-        ) : (
-          <ul className="space-y-1 max-h-[520px] overflow-y-auto">
-            {filtered.slice().reverse().map((entry) => {
-              const isBroken = status && !status.ok && entry.seq === status.brokenAt;
-              const open = expanded === entry.seq;
-              return (
-                <li
-                  key={entry.seq}
-                  className="px-2.5 py-2"
-                  style={{
-                    backgroundColor: open ? 'var(--panel-raised)' : 'transparent',
-                    borderRadius: 'var(--r-inner)',
-                    border: isBroken ? '1px solid var(--act)' : '1px solid transparent',
-                    opacity: entry.superseded ? 0.55 : 1,
-                  }}
-                >
+        {auditorsOpen && (
+          <div className="px-5 pb-5 flex flex-col gap-4">
+            <p className="text-body-sm max-w-[70ch]" style={{ color: 'var(--text-3)' }}>
+              This record history is tamper-evident, not signed: any later change to a record would show, but records
+              carry no digital signature proving who wrote them.
+            </p>
+            <div>
+              <button
+                type="button"
+                onClick={onExport}
+                className="inline-flex items-center gap-2 px-4 min-h-10 rounded-full text-body-sm font-medium text-left hover:bg-[var(--panel-alt)]"
+                style={{ border: '1px solid var(--line-strong)', color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}
+              >
+                <Download size={16} aria-hidden className="shrink-0" />
+                Download full record history (JSON with fingerprints)
+              </button>
+            </div>
+
+            {canTamper && demoTarget && (
+              <div className="pt-4 flex flex-col gap-2" style={{ borderTop: '1px solid var(--line)' }}>
+                <div>
                   <button
                     type="button"
-                    onClick={() => setExpanded(open ? null : entry.seq)}
-                    className="w-full flex items-center gap-2 text-left flex-wrap"
+                    onClick={() => runDemo(demoTarget.seq)}
+                    disabled={isBroken}
+                    className="px-4 min-h-10 rounded-full text-body-sm font-medium text-left hover:bg-[var(--panel-alt)]"
+                    style={{
+                      border: '1px dashed var(--line-strong)',
+                      color: 'var(--text-2)',
+                      fontFamily: 'var(--font-body)',
+                      opacity: isBroken ? 0.5 : 1,
+                    }}
                   >
-                    <span className="font-mono text-[9.5px] w-10 shrink-0" style={{ color: 'var(--text-4)' }}>
-                      #{entry.seq}
-                    </span>
-                    <span className="font-mono text-[9.5px] w-24 shrink-0" style={{ color: 'var(--text-3)' }}>
-                      {formatShortIST(entry.at)}
-                    </span>
-                    <span className="font-mono text-[9px] w-24 shrink-0" style={{ color: 'var(--text-4)' }}>
-                      {entry.objectType}
-                    </span>
-                    <span className="text-[11.5px] flex-1 min-w-0 truncate" style={{ color: 'var(--text-2)' }}>
-                      {entry.payloadSummary}
-                    </span>
-                    <span className="text-[10.5px] shrink-0" style={{ color: 'var(--text-3)' }}>{entry.actor}</span>
-                    {entry.writtenOffline && (
-                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
-                        style={{ border: '1px dashed var(--watch)', color: 'var(--watch-soft)' }}>
-                        Offline
-                      </span>
-                    )}
-                    {entry.superseded && (
-                      <span className="font-mono text-[8px] uppercase px-1 rounded shrink-0"
-                        style={{ border: '1px solid var(--line-strong)', color: 'var(--text-4)' }}>
-                        Superseded
-                      </span>
-                    )}
-                    <span className="font-mono text-[9px] shrink-0" style={{ color: 'var(--text-4)' }}>
-                      {shortHash(entry.hash)}
-                    </span>
+                    Demo: change a record to show the check catching it
                   </button>
-
-                  {open && (
-                    <div className="mt-2 pl-10 space-y-1">
-                      <Kv k="transition" v={entry.transition} />
-                      <Kv k="object" v={entry.objectId} />
-                      <Kv k="actor" v={`${entry.actor} (${entry.actorRole})`} />
-                      {entry.atStation && (
-                        <Kv
-                          k="station time"
-                          v={`${formatShortIST(entry.atStation)} · HQ receipt ${formatShortIST(entry.at)} · skew ${formatDuration(Math.abs((Date.parse(entry.at) - Date.parse(entry.atStation)) / 1000))}`}
-                        />
-                      )}
-                      <Kv k="hash" v={entry.hash} mono />
-                      <Kv k="prev" v={entry.prevHash} mono />
-                      <Kv k="payload" v={JSON.stringify(entry.payload)} mono />
-                      {canTamper && (
-                        <button
-                          type="button"
-                          onClick={() => onTamper(entry.seq)}
-                          className="mt-1.5 text-[11px] font-medium px-2.5 py-1 rounded min-h-[30px]"
-                          style={{ border: '1px dashed var(--sim)', color: 'var(--sim-soft)', fontFamily: 'var(--font-body)' }}
-                          title="Demo affordance: edits the payload without updating the hash, so Verify chain catches it"
-                        >
-                          Tamper with this entry (demo)
-                        </button>
-                      )}
-                    </div>
+                </div>
+                <p className="text-body-sm" style={{ color: 'var(--text-3)' }}>
+                  {isBroken ? (
+                    'A changed record is already showing above.'
+                  ) : (
+                    <>
+                      Alters record <span className="font-mono tabular-nums">#{demoTarget.seq}</span> without
+                      re-sealing it, then checks again.
+                    </>
                   )}
-                </li>
-              );
-            })}
-          </ul>
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </section>
     </div>
   );
 }
 
-function Kv({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
+function HistoryRow({
+  row, broken, highlighted, techOpen, onToggleTech,
+}: {
+  row: Row;
+  broken: boolean;
+  highlighted: boolean;
+  techOpen: boolean;
+  onToggleTech: () => void;
+}) {
+  const { entry } = row;
+  const techId = `record-tech-${entry.seq}`;
+  // Only worth showing both times when the record really arrived later.
+  const delayed = entry.writtenOffline && entry.atStation && formatShortIST(entry.atStation) !== formatShortIST(entry.at);
+
   return (
-    <p className="flex gap-2">
-      <span className="font-mono text-[9px] w-24 shrink-0" style={{ color: 'var(--text-4)' }}>{k}</span>
-      <span
-        className={mono ? 'font-mono text-[9px] break-all' : 'text-[11px]'}
-        style={{ color: 'var(--text-3)' }}
+    <li
+      data-seq={entry.seq}
+      tabIndex={-1}
+      className="@container outline-none scroll-mt-4"
+      style={{
+        borderBottom: '1px solid var(--line)',
+        borderLeft: broken ? '3px solid var(--act)' : '3px solid transparent',
+        backgroundColor: broken ? ACT_TINT : highlighted ? 'var(--panel-raised)' : 'transparent',
+        opacity: entry.superseded ? 0.6 : 1,
+      }}
+    >
+      {/* The whole row opens its technical details — one big target, no extra button row. */}
+      <button
+        type="button"
+        onClick={onToggleTech}
+        aria-expanded={techOpen}
+        aria-controls={techId}
+        className="group w-full flex items-start gap-x-4 px-3 py-3 text-left hover:bg-[var(--panel-raised)]"
+        title={techOpen ? 'Hide technical details' : 'Show technical details'}
       >
-        {v}
-      </span>
-    </p>
+        <time
+          dateTime={entry.at}
+          className="shrink-0 w-12 font-mono tabular-nums text-body-sm pt-0.5"
+          style={{ color: 'var(--text-3)' }}
+        >
+          {timeIST(entry.at)}
+        </time>
+
+        <span className="flex-1 min-w-0">
+          <span className="flex items-baseline gap-x-3 gap-y-0.5 flex-wrap">
+            <span className="text-body font-medium break-words min-w-0" style={{ color: 'var(--text)' }}>
+              {row.subject}
+            </span>
+            <span className="text-body-sm ml-auto shrink-0" style={{ color: 'var(--text-3)' }}>{row.typeLabel}</span>
+          </span>
+
+          <span className="block text-body-sm mt-0.5" style={{ color: 'var(--text-3)' }}>
+            <span style={{ color: 'var(--text-2)' }}>{row.verb}</span> by{' '}
+            <span style={{ color: 'var(--text-2)' }}>{row.who}</span>
+            {row.role && <> ({row.role.toLowerCase()})</>}
+            {row.station && <> · {row.station}</>}
+            {row.note && <> · {row.note}</>}
+          </span>
+
+          {(entry.writtenOffline || broken || entry.superseded) && (
+            <span className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-1 text-body-sm">
+              {broken && (
+                <span className="inline-flex items-center gap-1.5 font-medium" style={{ color: 'var(--act-soft)' }}>
+                  <AlertTriangle size={14} aria-hidden className="shrink-0" />
+                  Changed after it was written
+                </span>
+              )}
+              {entry.writtenOffline && (
+                <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--watch-soft)' }}>
+                  <WifiOff size={14} aria-hidden className="shrink-0" />
+                  Written at the station while offline
+                  {delayed && (
+                    <span style={{ color: 'var(--text-3)' }}>
+                      {' '}· reached HQ{' '}
+                      <span className="font-mono tabular-nums">{formatShortIST(entry.at)}</span>
+                    </span>
+                  )}
+                </span>
+              )}
+              {entry.superseded && (
+                <span style={{ color: 'var(--text-3)' }}>Replaced by a later record — kept, never deleted</span>
+              )}
+            </span>
+          )}
+        </span>
+
+        <ChevronRight
+          size={16}
+          aria-hidden
+          className="shrink-0 mt-1 transition-transform"
+          style={{ color: 'var(--text-3)', transform: techOpen ? 'rotate(90deg)' : 'none' }}
+        />
+      </button>
+
+      {techOpen && (
+        <dl
+          id={techId}
+          className="flex flex-col gap-2 mx-3 mb-3 ml-[4.75rem] px-4 py-3"
+          style={{ backgroundColor: 'var(--panel-raised)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
+        >
+          <Kv k="Record number" v={`#${entry.seq}`} />
+          <Kv k="Record ID" v={entry.objectId} />
+          <Kv k="Change as stored" v={entry.transition} />
+          <Kv k="Fingerprint" v={entry.hash} />
+          <Kv k="Previous fingerprint" v={entry.prevHash} />
+          {entry.atStation && <Kv k="Written at station (UTC)" v={entry.atStation} />}
+          <Kv k="Received at HQ (UTC)" v={entry.at} />
+        </dl>
+      )}
+    </li>
   );
+}
+
+function Kv({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 @min-[34rem]:flex-row @min-[34rem]:gap-4">
+      <dt className="text-body-sm @min-[34rem]:w-48 shrink-0" style={{ color: 'var(--text-3)' }}>{k}</dt>
+      <dd className="font-mono tabular-nums text-body-sm break-all min-w-0 flex-1" style={{ color: 'var(--text-2)' }}>
+        {v}
+      </dd>
+    </div>
+  );
+}
+
+// ---- Plain-words derivation -------------------------------------------------
+
+function toRow(entry: ChainEntry, lookup: Lookup): Row {
+  const verb = verbOf(entry.transition);
+  const detail = detailOf(entry, verb);
+  const found = lookup(entry);
+  const subject = found.title ?? detail ?? entry.objectId;
+  // The record's own words, unless they only repeat the subject or the verb line.
+  const note =
+    detail &&
+    detail.toLowerCase() !== subject.toLowerCase() &&
+    !detail.toLowerCase().startsWith(verb.toLowerCase() + ' by')
+      ? detail
+      : null;
+  const station = found.stationId ? STATION_LABEL[found.stationId as keyof typeof STATION_LABEL] ?? null : null;
+  const typeLabel = TYPE_LABEL[entry.objectType] ?? sentence(entry.objectType);
+  const who = sentence(entry.actor);
+  const role = roleOf(entry.actorRole);
+  return {
+    entry,
+    verb,
+    subject,
+    note,
+    station,
+    typeLabel,
+    category: CATEGORY[entry.objectType] ?? 'other',
+    who,
+    role,
+    haystack: [subject, verb, note, station, typeLabel, who, role, entry.objectId]
+      .filter(Boolean).join(' ').toLowerCase(),
+  };
+}
+
+/** One pass over the stores, so naming 500 records costs four reads, not 500. */
+function buildLookup(): Lookup {
+  const actions = new Map(getActions('all').map((a) => [a.id, a]));
+  const reports = new Map(getObligations('all').map((o) => [o.id, o]));
+  const inspections = new Map(getInspections('all').map((i) => [i.id, i]));
+  const resources = new Map(getResources('all').map((r) => [r.id, r]));
+  return (entry) => {
+    const id = entry.objectId;
+    const a = actions.get(id);
+    if (a) return { title: a.title, stationId: a.stationId };
+    const o = reports.get(id);
+    if (o) return { title: o.name, stationId: o.stationId };
+    const i = inspections.get(id);
+    if (i) return { title: sentence(i.type) + ' inspection', stationId: i.stationId };
+    const r = resources.get(id);
+    if (r) return { title: r.name, stationId: r.stationId };
+    return {};
+  };
+}
+
+/** Rows are newest first; consecutive rows of one IST day share a heading. */
+function groupByDay(rows: Row[]): { key: string; label: string; rows: Row[] }[] {
+  const today = formatDateIST(new Date());
+  const yesterday = formatDateIST(new Date(Date.now() - 86_400_000));
+  const groups: { key: string; label: string; rows: Row[] }[] = [];
+  for (const row of rows) {
+    const key = formatDateIST(row.entry.at);
+    let group = groups[groups.length - 1];
+    if (!group || group.key !== key) {
+      const label = key === today ? `Today · ${key}` : key === yesterday ? `Yesterday · ${key}` : key;
+      group = { key, label, rows: [] };
+      groups.push(group);
+    }
+    group.rows.push(row);
+  }
+  return groups;
+}
+
+/** "14:22" — the day is already in the group heading. */
+function timeIST(iso: string): string {
+  return formatShortIST(iso).split(' · ')[1] ?? formatShortIST(iso);
+}
+
+/** "RAISED -> ACKNOWLEDGED" → "Acknowledged"; "DEFERRED -> RAISED" → "Reopened". */
+function verbOf(transition: string): string {
+  const parts = transition.split('->').map((p) => p.trim().toUpperCase());
+  const to = parts[parts.length - 1] ?? '';
+  if (parts.length > 1 && to === 'RAISED') return 'Reopened';
+  return VERB[to] ?? sentence(to.toLowerCase());
+}
+
+/** The summary line, unless it only repeats the transition. */
+function detailOf(entry: ChainEntry, verb: string): string | null {
+  const summary = entry.payloadSummary?.trim();
+  if (!summary) return null;
+  const norm = (s: string) => s.replace(/[_\s]+/g, ' ').replace(/\s*->\s*/g, ' -> ').trim().toUpperCase();
+  const s = norm(summary);
+  const transition = norm(entry.transition);
+  const to = transition.split(' -> ').pop() ?? transition;
+  if (s === transition || s === to || s === norm(verb)) return null;
+  return summary;
+}
+
+function roleOf(role: string): string {
+  if (!role) return '';
+  if (role === 'system') return 'Automatic';
+  return (ROLE_LABEL as Record<string, string>)[role] ?? sentence(role);
+}
+
+function sentence(s: string): string {
+  const t = s.replace(/_/g, ' ').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : '—';
+}
+
+function scrollBehavior(): ScrollBehavior {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ? 'auto'
+    : 'smooth';
 }

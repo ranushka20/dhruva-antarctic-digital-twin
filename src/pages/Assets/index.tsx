@@ -208,7 +208,7 @@ export default function AssetsPage() {
                   </h3>
                   <div className="flex flex-col gap-3">
                     {actions.map((action: any) => (
-                      <ActionCard key={action.id} action={action} compact />
+                      <ActionCard key={action.id} action={action} variant="compact" />
                     ))}
                   </div>
                 </div>

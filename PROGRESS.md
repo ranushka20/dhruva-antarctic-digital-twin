@@ -315,6 +315,14 @@
 - Touchpoint completed? none.
 - Notes for the other developer: none.
 
+### [2026-10-03 12:00] Shared tooling — Type-check runs as part of lint
+- Status: done
+- Files changed: `package.json`, `src/components/viz/IsoStationModel.tsx`, `src/pages/Assets/index.tsx`
+- Summary: Nothing ran `tsc`, so type errors could reach `main` unnoticed (Vite transpiles, it never type-checks); `main` had two. `bun run lint` now runs `eslint . && tsc --noEmit`, and `bun run typecheck` runs `tsc` alone. Fixed both errors: IsoStationModel compared `zone.status` to `'critical'`, which `ZoneStatus` does not contain, so that half of the condition could never be true; the Assets page passed `compact` to `ActionCard`, which takes `variant="compact"` (already the default, so no visual change).
+- Touches shared contract? no
+- Touchpoint completed? none
+- Notes for the other developer: run `bun run lint` before pushing. `build` is unchanged, so a type error will not block a Vercel deploy.
+
 ---
 
 ## Integration & Review

@@ -60,7 +60,7 @@ export function IsoStationModel({
         topFace = 'var(--face-top-ok)'; // watch uses nominal faces
         leftFace = 'var(--face-left-ok)';
         rightFace = 'var(--face-right-ok)';
-      } else if (zone.status === 'warning' || zone.status === 'critical') {
+      } else if (zone.status === 'warning') {
         edge = 'var(--edge-warn)';
         topFace = 'var(--face-top-warn)';
         leftFace = 'var(--face-left-warn)';

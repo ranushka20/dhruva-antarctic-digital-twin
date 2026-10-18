@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // data — the read layer every page uses.
 //
 // Design rule: the stores hold RAW FACTS (stock, burn rate, voyage windows,
 // action state). Everything derived — autonomy, the ± band, margin, LSOD,
 // risk, SLA clocks — is recomputed here on read, by the shared engine, using
 // the current /settings values. That is what makes "edit a voyage window and
-// every LSOD marker moves" real rather than staged (FR-5.2), and what stops
+// every LSOD marker moves" real rather than staged, and what stops
 // two pages computing the same number two ways.
 
 import {
@@ -114,7 +113,7 @@ export function putResource(resource: Resource): void {
 }
 
 /**
- * FRONTEND.md §9 writes margin as `shipWindow.earliestDay − (autonomyDays +
+ * The resupply spec writes margin as `shipWindow.earliestDay − (autonomyDays +
  * band)` and then classifies `critical` when that is negative. Those two lines
  * disagree with each other: with that subtraction order a resource that
  * comfortably outlasts the voyage comes out negative, so every healthy
@@ -123,7 +122,7 @@ export function putResource(resource: Resource): void {
  * We keep computeMarginDays() as the ONLY implementation — no second formula
  * anywhere in the app — and flip the sign once, here, so "margin to ship"
  * means what the column header says: days of cover beyond the ship's arrival.
- * Flagged for Dev A in PROGRESS.md; the correction belongs in the engine.
+ * The proper correction belongs in the engine.
  */
 function marginToShip(
   autonomyDays: number,
@@ -223,7 +222,7 @@ export function deriveResource(raw: Resource, voyage: Voyage | null): DerivedRes
   if (!window) {
     reason = 'no-voyage';
   } else if (!canDeriveDeadline(sync.state)) {
-    // A stale input must never produce a confident deadline (FR-2.7).
+    // A stale input must never produce a confident deadline.
     reason = 'stale';
   } else {
     lsodDays = computeLSOD(autonomyDays, window, config);
@@ -300,7 +299,7 @@ export function putAction(action: Action, namespace: 'hq' | 'station' = 'hq'): v
 }
 
 /**
- * SLA clocks pause while the station is DARK (FR-7.3) — a station cannot
+ * SLA clocks pause while the station is DARK — a station cannot
  * breach an acknowledgement SLA it could not be told about. The pause is
  * computed from the link history, not stored, so it stays honest if the
  * thresholds on /settings change.
@@ -546,7 +545,7 @@ export function getRecordLinks(): Record<string, string> {
 }
 
 /**
- * FR-2.6: an obligation whose evidence is sitting in a station outbox reads
+ * An obligation whose evidence is sitting in a station outbox reads
  * QUEUED OFFLINE, not OVERDUE. The station did its part; the link did not —
  * and once the outbox drains, the same obligation reads SUBMITTED, because
  * the record has now actually arrived. Those are three different facts and
@@ -598,7 +597,7 @@ export function getWasteInventory(): Record<string, number> {
 }
 
 /**
- * FR-3.4 — the page's most useful integrity feature. `generated − shipped =
+ * The page's most useful integrity feature. `generated − shipped =
  * stored`, where all THREE figures are reported independently: generation
  * and removal come from the event ledger, stored mass from the station's own
  * compound inventory. Deriving stored from the other two would make the
@@ -637,7 +636,7 @@ export function wasteBalance(filter: StationFilter = 'all'): WasteBalanceRow[] {
   return rows.sort((a, b) => a.stream.localeCompare(b.stream) || a.stationId.localeCompare(b.stationId));
 }
 
-/** Monthly generation by stream, for the stacked bar chart (FR-3.3). */
+/** Monthly generation by stream, for the stacked bar chart. */
 export function wasteMonthlySeries(filter: StationFilter = 'all'): {
   month: string;
   byStream: Record<string, number>;
@@ -671,11 +670,11 @@ export function wasteMonthlySeries(filter: StationFilter = 'all'): {
 // ---------------------------------------------------------------------------
 
 /**
- * Touchpoint #10: the Action Centre drawer, the Twin page, Environment and
+ * The Action Centre drawer, the Twin page, Environment and
  * the Sandbox must all produce identical CausalTrace numbers for the same
  * asset and conditions. They do that by building the engine's input HERE,
- * once, rather than each assembling their own. Dev A's pages should call
- * this too rather than hand-rolling an input object.
+ * once, rather than each assembling their own. Every page should call
+ * this rather than hand-rolling an input object.
  */
 export function causalTraceInput(
   stationId: StationId,
@@ -704,7 +703,7 @@ export function causalTraceInput(
     areaM2: getParamValue<number>('thermal.areaM2', stationId),
     // The engine's burn rate is a kW-equivalent, so the stock it divides must
     // be too. Converting here is what makes the trace's autonomy identical to
-    // the ledger's for the same resource (touchpoint #10).
+    // the ledger's for the same resource
     stockUnits: stockInEngineUnits(stationId, num(fuel?.stock)),
     shipWindow: window,
     config,
@@ -720,7 +719,7 @@ export interface ZoneImpact {
 }
 
 /**
- * FR-9.1 — the operational cost of leaving a zone in its current state,
+ * The operational cost of leaving a zone in its current state,
  * expressed the only way that matters here: days of autonomy. Both figures
  * come from runCausalTrace, so they cannot drift from the twin's numbers.
  */

@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // bootstrap — seeds the two local stores on first run and rebuilds the audit
 // chain so the history the UI shows is a REAL chain: every seeded transition
 // is hashed in chronological order, so /compliance can verify it and the
@@ -22,7 +21,7 @@ import { setConnectivity } from '@/shared/contracts';
  * Bump this whenever the seed's SHAPE or content changes. A browser that
  * already holds an older seed re-seeds on next load instead of rendering a
  * half-populated store — the missing bucket would otherwise show up as a
- * silently empty panel, which is exactly what NFR-G2 forbids.
+ * silently empty panel, which is exactly what must never happen.
  */
 const SEED_VERSION = 'devb-4';
 

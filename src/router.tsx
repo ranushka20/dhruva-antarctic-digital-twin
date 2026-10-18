@@ -1,5 +1,4 @@
 // Antarasetu — React Router configuration
-// All routes per FRONTEND.md §6.3.
 
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { lazy, Suspense, type ComponentType } from 'react';
@@ -49,7 +48,7 @@ const routes: RouteObject[] = [
   {
     // The station console runs a REDUCED shell — station name, local time,
     // link banner, outbox counter, and nothing else. It is the station edge,
-    // not a view of HQ, so it never carries the HQ nav tabs (Page 6 FR-5.1).
+    // not a view of HQ, so it never carries the HQ nav tabs.
     path: '/station',
     element: withSuspense(StationConsolePage, 'station'),
   },

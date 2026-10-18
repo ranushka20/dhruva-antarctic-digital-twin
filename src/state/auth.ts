@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// auth — JWT-shaped client-side auth (NFR-G9, FR-C1..C7).
+// auth — JWT-shaped client-side auth.
 //
 // FRONTEND-ONLY BUILD: the token is issued and verified in the browser and
 // role-gating is UI-level only. That is a deliberate, stated limitation, not
@@ -71,7 +70,7 @@ function issueToken(account: Account, issuedAt: number, expiresAt: number): stri
 
 export class AuthError extends Error {}
 
-/** FR-C4: one generic message. Never reveal whether the username exists. */
+/** One generic message. Never reveal whether the username exists. */
 const GENERIC_FAILURE = 'Sign-in failed. Check your username and password.';
 
 export function login(username: string, password: string): Session {
@@ -97,7 +96,7 @@ export function login(username: string, password: string): Session {
 }
 
 /**
- * FR-C6: expiry never discards queued local records. Logging out clears the
+ * Expiry never discards queued local records. Logging out clears the
  * session bucket only — the station outbox and local chain are untouched.
  */
 export function logout(): void {

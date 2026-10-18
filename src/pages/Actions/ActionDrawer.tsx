@@ -1,12 +1,11 @@
-// OWNER: Dev B
 // Action detail drawer — Observe → Understand → Decide → Act → Record, in
 // one panel. An action is never just a status: it carries what changed, why
 // it matters, who owns it, and what happens if nobody acts.
 //
-// "Why this matters" is Dev A's panel driven by the shared engine, built from
+// "Why this matters" is the shared CausalTrace panel driven by the engine, built from
 // the same causalTraceInput(stationId) and zoneSubject() as the Twin's zone
 // inspector, so an action on a zone shows exactly the Twin's numbers for that
-// zone (touchpoint #10). There is no local approximation anywhere in this file.
+// zone. There is no local approximation anywhere in this file.
 
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Paperclip, X } from 'lucide-react';
@@ -93,7 +92,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
         role="dialog"
         aria-label={'Action detail: ' + action.title}
       >
-        {/* ---- Header (FR-5.2) ---- */}
+        {/* ---- Header ---- */}
         <header className="px-6 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
           <div className="flex items-center gap-2.5 flex-wrap mb-3">
             <span className="inline-flex items-center gap-1.5" title={`${action.tier} — ${TIER_META[action.tier].label}`}>
@@ -168,7 +167,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             <StepTrack action={action} />
           </Section>
 
-          {/* ---- Trigger block (FR-5.3) ---- */}
+          {/* ---- Trigger block ---- */}
           <Section title="What raised this">
             <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
               <span className="text-body" style={{ color: 'var(--text-2)' }}>
@@ -200,7 +199,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             )}
           </Section>
 
-          {/* ---- Causal trace (FR-5.4) — Dev A's component, shared engine ---- */}
+          {/* ---- Causal trace — shared component and engine ---- */}
           <Section title="Why this matters">
             {zone?.trace ? (
               <ZoneTrace input={traceInput} subject={zone} hideHeading />
@@ -217,7 +216,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             )}
           </Section>
 
-          {/* ---- Timeline (FR-5.5) ---- */}
+          {/* ---- Timeline ---- */}
           <Section title="History">
             {action.timeline.length === 0 ? (
               <EmptyState reason="No recorded transitions yet." />
@@ -228,7 +227,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             )}
           </Section>
 
-          {/* ---- Evidence (FR-5.6) ---- */}
+          {/* ---- Evidence ---- */}
           <Section
             title="Evidence"
             aside={
@@ -279,7 +278,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
             )}
           </Section>
 
-          {/* ---- Similar past faults (FR-5.7) ---- */}
+          {/* ---- Similar past faults ---- */}
           <Section title="Similar past faults">
             {similar.length === 0 ? (
               <p
@@ -342,7 +341,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
           )}
         </div>
 
-        {/* ---- Footer bar (FR-5.8) ---- */}
+        {/* ---- Footer bar ---- */}
         <footer className="shrink-0 px-6 py-4" style={{ borderTop: '1px solid var(--line)' }}>
           {error && (
             <p
@@ -365,7 +364,7 @@ export function ActionDrawer({ action, onClose, state = 'open' }: Props) {
                 Defer
               </button>
             )}
-            {/* Skipping straight to an owner is legal from RAISED (FR-6.1). */}
+            {/* Skipping straight to an owner is legal from RAISED. */}
             {next === 'ack' && (
               <button
                 type="button"

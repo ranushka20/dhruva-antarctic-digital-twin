@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // Manifest builder route — /logistics/manifest/:id
 //
 // The dedicated, full-width view of the builder that lives compactly on
 // /logistics. Versions are append-only: regenerating creates a new version
-// and the previous ones stay listed with their audit hashes (NFR-4.4).
+// and the previous ones stay listed with their audit hashes.
 
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -33,7 +32,7 @@ export default function ManifestPage() {
 
   // Only the operator's departures from the algorithm are state. The ranked
   // list itself is derived, so a parameter or voyage change flows straight
-  // through without an effect that could fight the store (NFR-4.2).
+  // through without an effect that could fight the store.
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
   const seed = useStoreValue(() => buildCandidates('all', voyage?.season));

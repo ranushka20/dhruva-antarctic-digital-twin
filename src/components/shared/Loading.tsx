@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Loading primitives — one vocabulary for "waiting" across the app.
 //   PixelLoader   3×3 pixel grid with a chevron wavefront + shimmering label
 //                 + elapsed timer in mono. For work the operator is waiting on.

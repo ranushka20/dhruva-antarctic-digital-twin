@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Chart primitives — a typed port of the ~/Temp-ui-comps chart kit
 // (components/ui/chart.tsx + CHART_DEFAULTS), restyled on DHRUVA tokens.
 //

@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // sync — the offline outbox and the drain simulation.
 //
 // This module is the Antarctic-specific part of the product: the station
 // keeps working with no link, records queue locally, and on reconnect they
 // transfer in strict tier order. Both stores are client-side in this build,
 // but the tier check is enforced here AND in the station-side UI as two
-// independent checks (NFR-6.6), so the logic mirrors a real client/server
+// independent checks, so the logic mirrors a real client/server
 // split rather than collapsing into one.
 
 import {
@@ -41,9 +40,9 @@ export interface EnqueueInput {
 }
 
 /**
- * FR-6.5: write to the local store, append to the local chain, enqueue at the
- * record's tier — in that order — then confirm. Durable before confirmed
- * (NFR-6.2), never the reverse.
+ * Write to the local store, append to the local chain, enqueue at the
+ * record's tier — in that order — then confirm. Durable before confirmed,
+ * never the reverse.
  */
 export async function enqueueLocalRecord(input: EnqueueInput): Promise<{ record: SyncRecord; queuePosition: number }> {
   const outbox = getOutbox();
@@ -77,7 +76,7 @@ export function queuePositionOf(recordId: string): number {
   return index === -1 ? ordered.length : index + 1;
 }
 
-/** FR-2.3 — the next N records in exact transfer order. */
+/** The next N records in exact transfer order. */
 export function drainOrder(): SyncRecord[] {
   return getOutbox()
     .filter((r) => r.state === 'QUEUED' || r.state === 'FAILED' || r.state === 'TRANSFERRING')
@@ -88,7 +87,7 @@ export function drainOrder(): SyncRecord[] {
     });
 }
 
-/** FR-8.3: promotion carries a reason and is recorded. Demotion is refused. */
+/** Promotion carries a reason and is recorded. Demotion is refused. */
 export async function promoteRecord(recordId: string, toTier: Tier, reason: string): Promise<SyncRecord> {
   const outbox = getOutbox();
   const record = outbox.find((r) => r.id === recordId);
@@ -117,7 +116,7 @@ export async function promoteRecord(recordId: string, toTier: Tier, reason: stri
   return record;
 }
 
-/** FR-8.1 — untransferred records may be removed by the operator. */
+/** Untransferred records may be removed by the operator. */
 export function removeQueuedRecord(recordId: string): void {
   const outbox = getOutbox();
   const record = outbox.find((r) => r.id === recordId);
@@ -178,7 +177,7 @@ export function resetDrainState(): void {
  * One transfer step. Picks the lowest tier that still has anything queued,
  * takes a batch, and moves it across — deduplicating by the record's
  * client-generated UUID so an interrupted drain can be resumed without
- * duplicating anything (NFR-6.3, FR-8.4).
+ * duplicating anything.
  */
 export async function drainStep(stationId: StationId): Promise<{ sent: SyncRecord[]; done: boolean }> {
   if (getConnectivity(stationId) === 'DARK') {
@@ -197,7 +196,7 @@ export async function drainStep(stationId: StationId): Promise<{ sent: SyncRecor
   }
 
   // Strict tier ordering: no T2 transfers while any T1 remains. A late
-  // higher-tier record pre-empts at the next batch boundary (FR-2.6).
+  // higher-tier record pre-empts at the next batch boundary.
   const tier = pending[0].tier;
   const batch = pending.filter((r) => r.tier === tier).slice(0, batchSize);
 
@@ -223,7 +222,7 @@ export async function drainStep(stationId: StationId): Promise<{ sent: SyncRecor
     if (!live) continue;
 
     // Simulated transfer failure: a record that has already failed enough
-    // times escalates rather than looping forever (FR-2.7).
+    // times escalates rather than looping forever.
     if (live.attempts >= maxAttempts) {
       live.state = 'FAILED';
       live.lastError = 'max attempts exceeded';
@@ -250,7 +249,7 @@ export async function drainStep(stationId: StationId): Promise<{ sent: SyncRecor
   putReceivedRecords(received);
   putOutbox(outbox.filter((r) => r.state !== 'SENT'));
 
-  // Station-written chain entries fold into the HQ chain (NFR-6.4).
+  // Station-written chain entries fold into the HQ chain.
   const stationChain = getChain('station');
   const alreadyMerged = new Set(
     getChain('hq').filter((e) => e.writtenOffline).map((e) => e.objectId + '|' + e.transition + '|' + (e.atStation ?? ''))
@@ -352,7 +351,7 @@ export interface MissedWindow {
 }
 
 /**
- * FR-3.1–3.4. Rebuilds the station's event log for each dark window from the
+ * Rebuilds the station's event log for each dark window from the
  * records that have since drained, in STATION-timestamp order. A window with
  * no records says so explicitly — "the station reported nothing in this
  * window" is a different claim from "we have no data", and the difference
@@ -420,9 +419,9 @@ export function putConflicts(conflicts: Conflict[]): void {
 }
 
 /**
- * FR-4.3: default rule — the higher-tier actor wins; ties resolve to the
+ * Default rule — the higher-tier actor wins; ties resolve to the
  * station, as the side closer to ground truth. The rule is stated on screen,
- * not just implemented here. FR-4.4: the losing version is preserved as
+ * not just implemented here. The losing version is preserved as
  * superseded, never deleted.
  */
 export async function resolveConflict(

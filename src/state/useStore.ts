@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // useStore — the one React binding for the localStorage-backed stores.
 // Any component reading from localStore/contracts calls useStoreValue() so a
 // write anywhere in the app re-renders it, without a global state library.

@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // provenance — constructors for the Measurement atom.
 //
-// NFR-G3: every displayed value carries a provenance class. A missing class
+// Every displayed value carries a provenance class. A missing class
 // is a build failure, never a silent default to LIVE — so there is no
 // "make a Measurement" helper here that lets you skip the class.
 //
-// Derivation rule (§7.1): a value computed from mixed-class inputs is MODELED
+// Derivation rule: a value computed from mixed-class inputs is MODELED
 // and must list every parent with that parent's own class. `derived()` is the
 // only sanctioned way to build one, and it requires the parents.
 
@@ -90,7 +89,7 @@ export function sim(
 }
 
 /**
- * NFR-G6: malformed or missing data renders an em dash with an UNKNOWN badge.
+ * Malformed or missing data renders an em dash with an UNKNOWN badge.
  * Never 0, never blank. UNKNOWN is carried as a SYNTH measurement with a null
  * value — the badge component renders that pair as UNKNOWN.
  */

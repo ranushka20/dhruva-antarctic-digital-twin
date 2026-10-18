@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // handover — assembles the crew handover capsule from the platform's own
 // records. Nothing is typed twice; §9 (outgoing crew notes) is the only
 // free-text section.
@@ -85,10 +84,10 @@ export interface SectionPreview {
 }
 
 /**
- * FR-A2 — assembles every section from live platform data. A capsule
+ * Assembles every section from live platform data. A capsule
  * generated while the station is DARK still generates: sections built from
- * stale inputs are MARKED stale rather than omitted or silently trusted
- * (NFR-A2), and §8 states the gap.
+ * stale inputs are MARKED stale rather than omitted or silently trusted,
+ * and §8 states the gap.
  */
 export function buildCapsule(stationId: StationId, rotation: Rotation): SectionPreview[] {
   const summary = getStationSummary(stationId);
@@ -122,7 +121,7 @@ export function buildCapsule(stationId: StationId, rotation: Rotation): SectionP
     ],
   });
 
-  // §2 Open actions — deferrals carry reason AND review date (FR-A4)
+  // §2 Open actions — deferrals carry reason AND review date
   const open = actions.filter((a) => a.state !== 'RESOLVED');
   sections.push({
     key: 'actions',
@@ -133,7 +132,7 @@ export function buildCapsule(stationId: StationId, rotation: Rotation): SectionP
     emptyNote: 'No unresolved actions at generation time.',
   });
 
-  // §3 Recurring faults — grouped, with occurrence counts (FR-A5)
+  // §3 Recurring faults — grouped, with occurrence counts
   const corpus = actions.map((a) => ({
     id: a.id,
     text: `${a.title} ${a.reason} ${a.trigger.metricName} ${a.assetId ?? ''} ${a.zoneCode ?? ''}`,
@@ -174,7 +173,7 @@ export function buildCapsule(stationId: StationId, rotation: Rotation): SectionP
   });
 
   // §5 Resource & autonomy — flag what crosses a threshold in the INCOMING
-  // rotation, which is the thing the next crew actually needs (FR-A7)
+  // rotation, which is the thing the next crew actually needs
   sections.push({
     key: 'resources',
     title: SECTION_TITLES.resources,
@@ -215,7 +214,7 @@ export function buildCapsule(stationId: StationId, rotation: Rotation): SectionP
     emptyNote: 'Nothing outstanding and nothing queued offline.',
   });
 
-  // §8 Comms & sync state — states the gap explicitly (NFR-A2)
+  // §8 Comms & sync state — states the gap explicitly
   sections.push({
     key: 'comms',
     title: SECTION_TITLES.comms,
@@ -266,7 +265,7 @@ function describeResource(r: DerivedResource, rotationEndsInDays: number, incomi
 }
 
 // ---------------------------------------------------------------------------
-// Persistence — capsules are immutable, versioned and append-only (FR-A13)
+// Persistence — capsules are immutable, versioned and append-only
 // ---------------------------------------------------------------------------
 
 export function getCapsules(stationId?: StationId): HandoverSnapshot[] {
@@ -329,7 +328,7 @@ export async function generateCapsule(
   return capsule;
 }
 
-/** FR-A15 — the incoming lead marks the capsule received; that joins the chain. */
+/** The incoming lead marks the capsule received; that joins the chain. */
 export async function acknowledgeCapsule(capsuleId: string, incomingLead: string): Promise<void> {
   const all = readStore<HandoverSnapshot[]>('hq', 'capsules', []);
   const capsule = all.find((c) => c.id === capsuleId);
@@ -351,7 +350,7 @@ export async function acknowledgeCapsule(capsuleId: string, incomingLead: string
 }
 
 // ---------------------------------------------------------------------------
-// Exports — every value keeps its provenance class (NFR-A3)
+// Exports — every value keeps its provenance class
 // ---------------------------------------------------------------------------
 
 const PROVENANCE_PREAMBLE =

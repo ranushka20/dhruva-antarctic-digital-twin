@@ -1,10 +1,9 @@
-// OWNER: Dev B
 // Outbox / queue panel — tier bars, the exact drain order, the record in
 // flight, and throughput.
 //
 // Two honesty points live here. T0 is mint when clear but ORANGE the moment
 // anything is queued, because a life-safety record waiting on a link is an
-// alarm (FR-2.2). And throughput and time-to-clear are SYNTH and labelled —
+// alarm. And throughput and time-to-clear are SYNTH and labelled —
 // we do not know NCPOR's real link budget and will not imply that we do.
 
 import type { SyncRecord, Tier } from '@/shared/contracts';
@@ -35,7 +34,7 @@ function formatBytes(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 }
 
-/** Plain-language tier names, per FRONTEND.md tier definitions. */
+/** Plain-language tier names. */
 const TIER_NAME: Record<Tier, string> = {
   T0: 'Life safety & medical',
   T1: 'Critical operations',
@@ -86,7 +85,7 @@ export function OutboxPanel({
         </AsyncButton>
       </div>
 
-      {/* ---- Tier rows (FR-2.1) ---- */}
+      {/* ---- Tier rows ---- */}
       <div className="flex flex-col gap-3.5 mb-5">
         {tiers.map((t) => (
           <div key={t.tier}>
@@ -113,7 +112,7 @@ export function OutboxPanel({
         ))}
       </div>
 
-      {/* ---- Currently transferring (FR-2.4) ---- */}
+      {/* ---- Currently transferring ---- */}
       {drain.running && (
         <div
           className="flex items-center gap-4 px-4 py-3 mb-4"
@@ -131,7 +130,7 @@ export function OutboxPanel({
         </div>
       )}
 
-      {/* ---- Drain order (FR-2.3) ---- */}
+      {/* ---- Drain order ---- */}
       <h3 className="text-body font-semibold mb-0.5" style={{ color: 'var(--text)' }}>
         Sending order
       </h3>
@@ -184,7 +183,7 @@ export function OutboxPanel({
         )}
       </div>
 
-      {/* ---- Throughput (FR-2.5) — SYNTH and labelled ---- */}
+      {/* ---- Throughput — SYNTH and labelled ---- */}
       <div
         className="grid grid-cols-2 gap-x-6 gap-y-3 mt-4 pt-4"
         style={{ borderTop: '1px solid var(--line)' }}

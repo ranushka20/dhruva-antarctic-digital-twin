@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // AsyncButton — a plain <button> for work that returns a promise.
 // idle → pending (spinner, disabled, aria-busy) → done (drawn check, small
 // bump) → idle; a rejection shakes the button and returns to idle.

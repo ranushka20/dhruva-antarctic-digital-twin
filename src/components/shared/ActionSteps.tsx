@@ -1,12 +1,11 @@
-// OWNER: Dev B
 // ActionSteps — the action lifecycle as three plain steps. The Overview flag
 // (/), the Action Centre table and the detail drawer all read from here, so
 // "where this stands" and "what happens next" can never disagree between them.
 //
-// The state machine (FR-6.1) has six states; people think in three steps:
-//   1 Acknowledge — HQ confirms it has seen this. Stops the response clock (FR-7.1).
-//   2 Assign      — a named person from the roster owns it (FR-6.3).
-//   3 Resolve     — closed with a note, plus evidence for T0/T1 (FR-6.5).
+// The state machine has six states; people think in three steps:
+//   1 Acknowledge — HQ confirms it has seen this. Stops the response clock.
+//   2 Assign      — a named person from the roster owns it.
+//   3 Resolve     — closed with a note, plus evidence for T0/T1.
 // IN_PROGRESS is step 3 underway; DEFERRED is a pause, resumed by assigning.
 
 import { Check } from 'lucide-react';
@@ -100,7 +99,7 @@ export function explainStep(action: Action, key: StepKey): string {
 }
 
 /**
- * The cost-of-inaction line (FR-3.2), never just an echo of the title: a
+ * The cost-of-inaction line, never just an echo of the title: a
  * safety label the title already says ("below occupied minimum") becomes the
  * reading against its limit instead. Null when the engine produced none.
  */

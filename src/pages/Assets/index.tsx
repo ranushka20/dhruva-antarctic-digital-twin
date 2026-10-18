@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // Route: /assets and /assets/:assetId
 
 import { useState, useEffect, useMemo } from 'react';
@@ -128,7 +127,7 @@ export default function AssetsPage() {
                       View in 3D twin
                     </button>
                     <button 
-                      onClick={() => alert('Log Service action dispatched (Dev B handles real decrement)')}
+                      onClick={() => alert('Log Service action dispatched')}
                       className="px-4 min-h-10 bg-[var(--act)] text-[var(--bg)] text-body-sm font-semibold rounded-full hover:opacity-90 transition-opacity"
                     >
                       Log service

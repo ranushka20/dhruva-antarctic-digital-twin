@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // Route: /environment
 
 import { useState, useEffect, useMemo } from 'react';

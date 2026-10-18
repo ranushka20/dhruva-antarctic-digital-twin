@@ -1,6 +1,4 @@
-// OWNER: Dev B
 // EmptyState — never a blank panel. Always shows a reason for empty content.
-// See FRONTEND.md §7.
 
 import { type ReactNode } from 'react';
 

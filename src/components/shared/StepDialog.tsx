@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // StepDialog — the one way an action changes state. Acknowledge, assign,
 // start, defer and resolve all open this dialog from every surface (drawer,
 // table row, "Acknowledge all", the `a` key, a board drop, the Twin zone

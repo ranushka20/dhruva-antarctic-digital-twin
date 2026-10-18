@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Modal — centred overlay dialog on --panel-alt. Scales up from 0.97 about
 // its centre (a modal has no trigger to grow from) and plays a faster exit.
 

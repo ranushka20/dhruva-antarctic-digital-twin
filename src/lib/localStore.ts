@@ -1,8 +1,7 @@
-// OWNER: Dev B
 // localStore — the thin localStorage wrapper that simulates two independent
 // stores: "station" (the station edge, standing in for local SQLite) and
 // "hq" (persistent HQ state). This is NOT a placeholder waiting on a backend;
-// for this frontend-only build it IS the persistence layer (CLAUDE.md §7.3).
+// for this frontend-only build it IS the persistence layer.
 //
 // Key format matches src/shared/contracts.ts exactly so both modules read and
 // write the same buckets: `antarasetu:<namespace>:<bucket>`.
@@ -59,7 +58,7 @@ export function readStore<T>(namespace: StoreNamespace, bucket: string, fallback
 }
 
 /**
- * Durable BEFORE the UI confirms (NFR-6.2). Callers must await/observe the
+ * Durable BEFORE the UI confirms. Callers must await/observe the
  * return value rather than optimistically rendering and writing afterwards.
  */
 export function writeStore<T>(namespace: StoreNamespace, bucket: string, value: T): boolean {
@@ -95,7 +94,7 @@ export function clearNamespace(namespace: StoreNamespace): void {
   emitStoreChange();
 }
 
-/** Client-generated UUID — the dedupe key for every synced record (NFR-6.3). */
+/** Client-generated UUID — the dedupe key for every synced record. */
 export function uuid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

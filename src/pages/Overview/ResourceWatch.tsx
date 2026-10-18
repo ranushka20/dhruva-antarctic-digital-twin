@@ -1,8 +1,7 @@
-// OWNER: Dev B
 // Resource watch — both stations in one table, ranked by Last Safe Order
-// Date. A Maitri row must be able to outrank a Bharati one (FR-6.3), and a
+// Date. A Maitri row must be able to outrank a Bharati one, and a
 // LAGGING/DARK station's LSOD cell reads "stale" rather than inventing a
-// confident deadline (FR-6.6).
+// confident deadline.
 
 import { Link, useNavigate } from 'react-router-dom';
 import type { DerivedResource } from '@/state/data';

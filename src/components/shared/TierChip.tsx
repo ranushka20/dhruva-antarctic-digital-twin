@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // TierChip — T0–T3 priority chip. Colour encodes operational tier.
 
 import { type Tier } from '@/shared/contracts';

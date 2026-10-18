@@ -1,8 +1,7 @@
-// OWNER: Dev A
 // CausalTrace — "Why this matters" cause→effect panel.
 // MUST call runCausalTrace() from src/shared/contracts.ts — never compute trace numbers locally.
 // The same engine call must produce identical numbers on Twin, Environment, Sandbox,
-// and Dev B's Action Centre drawer. See FRONTEND.md §7 + CLAUDE.md §4.
+// and the Action Centre drawer.
 //
 // The panel reads as a plain explanation, answer first: what our model
 // concludes (days of fuel, order deadline), then the chain it followed to get

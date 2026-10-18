@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // ZoneTrace — "Why this matters" for one zone or room of the twin.
 //
 // CausalTrace answers a station question (how long does the fuel last?), so

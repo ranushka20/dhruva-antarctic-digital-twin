@@ -1,59 +1,40 @@
 /**
- * Antarasetu — FROZEN SHARED CONTRACT
- * ====================================
+ * Antarasetu — shared contract
+ * ============================
  *
- * This file is the single source of truth for everything that crosses the
- * Dev A (Twin, Physics & Assets) / Dev B (Operations, Records & Resilience)
- * boundary. Both developers import FROM this file. Neither developer edits
- * the signatures in this file without telling the other — the whole point
- * of freezing it is that each side can build against it independently.
+ * The single source of truth for the types, engines and stores shared by
+ * every page (Twin, Assets, Environment, Sandbox, and the operations,
+ * records and resilience pages). Pages import FROM this file; its type and
+ * function signatures are kept stable so call sites never need to change.
  *
- * THIS IS A FRONTEND-ONLY BUILD. There is no real backend anywhere in this
- * project. See "FRONTEND-ONLY BUILD SCOPE" in FRONTEND.md (Part I) for the
- * full translation table. The short version: everywhere the original build
- * docs assumed a server, this file (or its owner's real implementation)
- * simulates that behaviour client-side instead — via localStorage, an
- * in-memory store, and a scripted connectivity toggle. That is not a
+ * This is a frontend-only build. Everywhere a server would normally sit,
+ * this file simulates that behaviour client-side instead — via localStorage,
+ * an in-memory store, and a scripted connectivity toggle. That is not a
  * placeholder awaiting a backend — for this build, it IS the backend.
  *
- * Canonical folder mapping (per FRONTEND.md §12): this single file is a
- * convenience for the handoff between two developers/agents. Once both of
- * you are comfortable with the shapes below, feel free to split it along
- * these lines to match FRONTEND.md's folder structure exactly — re-export
- * from each new location so import paths stay stable:
+ * Folder mapping, should this file ever be split (re-export from each new
+ * location so import paths stay stable):
  *   - Section 1 (types)              → src/types/*.ts
  *   - Section 2 (coupling engine)    → src/engine/coupling.ts, autonomy.ts, lsod.ts
  *   - Section 3 (hash chain)         → src/lib/hashChain.ts
  *   - Section 4 (stateful stores)    → state/connectivity.ts, lib/localStore.ts,
  *                                       adapters/*.adapter.ts
- * Splitting is optional; keeping one file is fine for a hackathon timeline.
  *
  * Three kinds of exports live here, and they are NOT equivalent:
  *
- *   1. TYPES — frozen. Never change a shape without agreement from both devs.
+ *   1. TYPES — stable shapes used across every page.
  *   2. REAL IMPLEMENTATIONS — the coupling engine and the audit hash chain
- *      are fully specified by FRONTEND.md, so they are implemented for real,
- *      right here, on day one, and need no backend to work. Neither dev
- *      "owns" finishing these — they already work. Dev A may extend the
- *      engine (new formulas); if so, update this file and log it in
- *      PROGRESS.md's "Contract changes" section the same day.
+ *      are fully specified, so they are implemented for real, right here,
+ *      and need no backend to work.
  *   3. LOCAL-STORE-BACKED SIMULATIONS — `useActionTransitions` and the
  *      sync/outbox helpers stand in for what a real backend would do.
  *      They are implemented here as working, deterministic mocks backed by
  *      `localStorage` (not just in-memory) so state survives a page refresh
- *      during a demo. Dev B owns this section and extends it as needed —
- *      the exported function signatures should stay stable so Dev A's
- *      pages never need to change their call sites.
- *
- * Route ownership (for reference, enforced nowhere but here — matches
- * FRONTEND.md exactly, note the Twin route is nested under :id/twin):
- *   Dev A: /stations/:id/twin  /assets  /assets/:assetId  /environment  /sandbox
- *   Dev B: /  /actions  /actions/:actionId  /logistics  /logistics/manifest/:id
- *          /comms  /station  /compliance  /handover  /settings  /login
+ *      during a demo.
  */
 
 // ============================================================================
-// 1. CORE TYPES — used on every page, by both developers
+// 1. CORE TYPES — used on every page
 // ============================================================================
 
 export type Provenance = 'LIVE' | 'MODELED' | 'SYNTH' | 'SIM';
@@ -100,7 +81,7 @@ export interface StationSummary {
   outbox: { tier: Tier; queued: number; sent: number }[];
 }
 
-// ---- Dev A domain: Twin / Assets / Environment / Sandbox -------------------
+// ---- Twin / Assets / Environment / Sandbox ---------------------------------
 
 export interface Zone {
   code: string; name: string;
@@ -171,7 +152,7 @@ export interface MaintenanceEvent {
   at: string; atStation?: string;
   performedBy: string;
   notes: string;
-  partsUsed: { resourceId: string; quantity: number }[];   // decrements /logistics — see integration §4
+  partsUsed: { resourceId: string; quantity: number }[];   // decrements /logistics stock
   downtimeMinutes?: number;
   evidence: { id: string; kind: string; label: string }[];
   auditHash: string; prevHash: string;
@@ -257,7 +238,7 @@ export interface SandboxResult {
   zoneImpact: { zoneCode: string; before: Risk; after: Risk }[];
 }
 
-// ---- Dev B domain: HQ / Actions / Logistics / Comms / Compliance / Handover
+// ---- HQ / Actions / Logistics / Comms / Compliance / Handover
 
 export interface Resource {
   id: string; name: string; stationId: 'bharati' | 'maitri';
@@ -458,11 +439,10 @@ export interface Parameter {
 }
 
 // ============================================================================
-// 2. COUPLING ENGINE — REAL, WORKING IMPLEMENTATION (owned by Dev A,
-//    consumed read-only by Dev B). Pure, synchronous, no side effects.
-//    Every constant below must also exist as an editable Parameter on
-//    Dev B's /settings page (10-crew-handover-and-settings.md, PART B) —
-//    do not let this list drift from that page's parameter groups.
+// 2. COUPLING ENGINE — REAL, WORKING IMPLEMENTATION. Pure, synchronous,
+//    no side effects. Every constant below must also exist as an editable
+//    Parameter on the /settings page — do not let this list drift from that
+//    page's parameter groups.
 // ============================================================================
 
 export interface EngineConfig {
@@ -538,7 +518,7 @@ export function computeAutonomy(
 /**
  * Last Safe Order Date, in days-from-today. Returns null when any input is
  * stale — a stale input must never produce a confident deadline (see
- * 04-logistics-and-resupply.md FR-2.7 / 04's algorithm section).
+ * the resupply algorithm).
  */
 export function computeLSOD(
   depletionDayFromToday: number | null,
@@ -576,7 +556,7 @@ export function computeRisk(marginDaysMin: number, lsodDays: number | null): Ris
 }
 
 /**
- * Manifest prioritisation (04-logistics-and-resupply.md §4). Ranks candidate
+ * Manifest prioritisation. Ranks candidate
  * items by urgency × criticality and fills capacity greedily.
  */
 const CRITICALITY_WEIGHTS: Record<NonNullable<Resource['category']>, number> = {
@@ -654,9 +634,8 @@ export function runCausalTrace(input: CausalTraceInput): {
 }
 
 // ============================================================================
-// 3. AUDIT HASH CHAIN — REAL, WORKING IMPLEMENTATION (owned by Dev B,
-//    consumed by Dev A wherever an action/maintenance transition is written).
-//    Algorithm per 07-compliance-and-audit.md. Uses Web Crypto (available in
+// 3. AUDIT HASH CHAIN — REAL, WORKING IMPLEMENTATION. Written wherever an
+//    action/maintenance transition happens. Uses Web Crypto (available in
 //    browsers and Node ≥ 18) — no external crypto dependency needed.
 // ============================================================================
 
@@ -702,7 +681,7 @@ export async function verifyChain(chain: AuditEntry[]): Promise<ChainVerifyResul
     const expectedPrev = i === 0 ? GENESIS_HASH : chain[i - 1].hash;
     if (chain[i].prevHash !== expectedPrev) return { ok: false, verified: i, brokenAt: i };
     // NOTE: full recompute requires the original payload, not just payloadSummary.
-    // Store full payload alongside AuditEntry in the local store (see §4 below);
+    // Store full payload alongside AuditEntry in the local store (see section 4 below);
     // payloadSummary here is a display-only field and is NOT sufficient to
     // recompute the hash.
   }
@@ -710,13 +689,12 @@ export async function verifyChain(chain: AuditEntry[]): Promise<ChainVerifyResul
 }
 
 // ============================================================================
-// 4. SIMULATED BACKEND — this build has no server (see the header note and
-//    FRONTEND.md's "FRONTEND-ONLY BUILD SCOPE"). Everything below is the
-//    FINAL implementation for this build, not a placeholder — it persists to
-//    localStorage so state survives a page refresh mid-demo, namespaced
-//    separately for "station" vs "hq" to simulate two independent stores
-//    connected by a sync step. Dev B owns this section and extends it; Dev A
-//    calls into it and never reimplements any of it.
+// 4. SIMULATED BACKEND — this build has no server (see the header note).
+//    Everything below is the FINAL implementation for this build, not a
+//    placeholder — it persists to localStorage so state survives a page
+//    refresh mid-demo, namespaced separately for "station" vs "hq" to
+//    simulate two independent stores connected by a sync step. Pages call
+//    into it and never reimplement any of it.
 // ============================================================================
 
 export type ConnectivityState = 'LIVE' | 'LAGGING' | 'DARK';
@@ -778,8 +756,8 @@ function writeActions(namespace: 'station' | 'hq', actions: Record<string, Actio
  * Chain append, inlined here on purpose. src/lib/hashChain.ts is the richer
  * reader/verifier over the SAME `auditChain` bucket; duplicating the twelve
  * lines below is what keeps this file dependency-free and free of an import
- * cycle, while still guaranteeing NFR-G4: EVERY transition written through
- * this state machine lands in the chain, including Dev A's call sites.
+ * cycle, while still guaranteeing that EVERY transition written through
+ * this state machine lands in the chain, from every call site.
  */
 interface StoredChainEntry extends AuditEntry {
   payload: Record<string, unknown>;
@@ -825,7 +803,7 @@ async function appendChainEntry(
 }
 
 /**
- * The state machine itself (FR-6.1): RAISED → ACKNOWLEDGED → ASSIGNED →
+ * The state machine itself: RAISED → ACKNOWLEDGED → ASSIGNED →
  * IN_PROGRESS → RESOLVED, with DEFERRED reachable from any pre-resolved
  * state and RESOLVED terminal. Board-view drags and keyboard shortcuts all
  * funnel through `canTransition`, so an illegal move is rejected with a
@@ -854,11 +832,11 @@ export function canTransition(
 
 /**
  * useActionTransitions — the real implementation for this build, backed by
- * localStorage. Dev A's pages (Twin zone inspector, Asset detail) call this
+ * localStorage. The Twin pages (zone inspector, Asset detail) call this
  * and never reimplement the state machine. `namespace` defaults to 'hq';
  * pass 'station' from the station console (/station) so offline-authored
  * transitions land in the station-side store until the sync simulation
- * drains them (see §4.4).
+ * drains them.
  */
 export interface TransitionActor { name: string; role: string }
 
@@ -912,7 +890,7 @@ export function useActionTransitions(
       note,
       hash: entry.hash,
       prevHash: entry.prevHash,
-      // Offline transitions are optimistic until the outbox drains (FR-6.7).
+      // Offline transitions are optimistic until the outbox drains.
       pendingSync: namespace === 'station',
     });
 
@@ -934,7 +912,7 @@ export function useActionTransitions(
     start: (actionId: string, note: string) =>
       apply(actionId, 'IN_PROGRESS', note, () => {}, {}),
 
-    /** FR-6.4: rejected without BOTH a reason and a review date. */
+    /** Rejected without BOTH a reason and a review date. */
     defer: (actionId: string, reason: string, reviewDate: string) => {
       if (!reason?.trim() || !reviewDate) {
         return Promise.reject(new Error('Defer requires a reason AND a review date.'));
@@ -943,7 +921,7 @@ export function useActionTransitions(
         { reason, reviewDate });
     },
 
-    /** FR-6.5: a resolution note always; evidence too for T0/T1. */
+    /** A resolution note always; evidence too for T0/T1. */
     resolve: (actionId: string, note: string, evidenceIds: string[] = []) => {
       const existing = readActions(namespace)[actionId];
       if (!note?.trim()) return Promise.reject(new Error('Resolving requires a resolution note.'));
@@ -1002,7 +980,7 @@ export function useActionTransitions(
       return id;
     },
 
-    /** FR-5.6 — evidence attaches without blocking its parent record. */
+    /** Evidence attaches without blocking its parent record. */
     attachEvidence: async (
       actionId: string,
       evidence: { kind: 'photo' | 'reading' | 'note' | 'file'; label: string }
@@ -1043,7 +1021,7 @@ function writeResources(namespace: 'station' | 'hq', resources: Record<string, R
 }
 
 /**
- * decrementResource — called by Dev A's "Log service" flow when parts are
+ * decrementResource — called by the "Log service" flow when parts are
  * consumed. This function is the single write path for stock changes, so the
  * "decrement stock" and "record the service" steps can never land only one
  * without the other on the caller's side — call this, THEN write the
@@ -1107,8 +1085,8 @@ export async function enqueueSyncRecord(
 
 /**
  * drainOutbox — the sync simulation. Call this from /comms on "reconnect".
- * Strictly enforces tier order (T0 before any T1, etc. — see FR-G? / the
- * "priority sync drain" algorithm in FRONTEND.md §9) even though both stores
+ * Strictly enforces tier order (T0 before any T1, etc. — the
+ * "priority sync drain" algorithm) even though both stores
  * are client-side in this build, so the demo behaves exactly like the real
  * client/server split would.
  */

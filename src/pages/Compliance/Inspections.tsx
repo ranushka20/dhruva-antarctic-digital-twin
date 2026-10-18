@@ -1,10 +1,9 @@
-// OWNER: Dev B
 // Inspections — answers "Were inspections passed?".
 //
 // One card per inspection, newest first: what was inspected, where, by whom,
 // and the result. Failed items sit on the card with their action, or an offer
-// to raise one (FR-4.3); a failed item with no action is the orange case.
-// The card itself opens the full checklist in the record drawer (FR-4.2).
+// to raise one; a failed item with no action is the orange case.
+// The card itself opens the full checklist in the record drawer.
 
 import { useMemo, type MouseEvent } from 'react';
 import { ChevronRight } from 'lucide-react';

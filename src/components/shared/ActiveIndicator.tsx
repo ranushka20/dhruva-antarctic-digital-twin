@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // ActiveIndicator — the pill that slides behind the active segment of a tab
 // bar or segmented control. Drop it inside a `relative isolate` container
 // whose direct children carry aria-selected / aria-pressed / aria-current;

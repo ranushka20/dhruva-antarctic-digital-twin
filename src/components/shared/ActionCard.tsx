@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // ActionCard — action row used on /, /actions, /station.
 // Renders tier chip, station + age, status dot, title, sub-status, ACK button.
 

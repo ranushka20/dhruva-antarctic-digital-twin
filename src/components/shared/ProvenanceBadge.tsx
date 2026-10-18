@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// ProvenanceBadge — the trust primitive (FRONTEND.md §7.1).
+// ProvenanceBadge — the trust primitive.
 //
 // Four classes, one per value, no exceptions. The badge sits adjacent to its
 // value, never in a corner legend, and the hover card explains where the

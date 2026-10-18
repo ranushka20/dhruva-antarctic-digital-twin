@@ -1,6 +1,5 @@
 /* ==========================================================================
    ANTARASETU — DESIGN TOKENS
-   Source of truth: FRONTEND.md §2–5.
    No component may contain a hard-coded hex value — including inside SVG.
    Google Fonts import is in index.css (must be first @import per CSS spec).
    ========================================================================== */
@@ -52,7 +51,7 @@
   --r-card: 18px;
   --r-inner: 12px;
   --r-pill: 999px;
-  /* Top corner radius of the light-cone container (§5). Anything laid out
+  /* Top corner radius of the light-cone container. Anything laid out
      inside the cone has to clear this arc — see .glow-lightcone. */
   --r-cone: 130px;
   --pad-page: 20px 24px;
@@ -105,7 +104,7 @@
 }
 
 /* ==========================================================================
-   AMBIENT GLOW RECIPES — FRONTEND.md §5
+   AMBIENT GLOW RECIPES
    These are reusable utility classes for the signature glow treatments.
    ========================================================================== */
 

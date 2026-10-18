@@ -1,4 +1,4 @@
-// OWNER: Dev A (page), built on Dev B's parameter registry and state layer.
+// Built on the shared parameter registry and state layer.
 //
 // The Sandbox scenario model. This file exists because the sliders used to be
 // decorative: `crewSize` was held in React state and never reached the engine,
@@ -8,7 +8,7 @@
 // Every parameter below now has exactly ONE documented path into the engine,
 // declared in PARAMETERS. Nothing here computes a result itself — each lever
 // either overrides a registry parameter (via withSandboxParams, which writes
-// nothing anywhere, satisfying NFR-8.4) or adjusts a CausalTraceInput field.
+// nothing anywhere) or adjusts a CausalTraceInput field.
 // The numbers all come out of runCausalTrace, the same call the Twin and the
 // Action Centre drawer use.
 //
@@ -37,7 +37,7 @@ export interface SandboxParameter {
   min: number;
   max: number;
   step: number;
-  /** Where the bound comes from — inspectable in the UI per NFR-8.7. */
+  /** Where the bound comes from — inspectable in the UI. */
   boundSource: string;
   /** How this lever reaches the engine, in one line, shown under the slider. */
   mechanism: string;
@@ -235,7 +235,7 @@ function baselineLoadFor(
 }
 
 // ---------------------------------------------------------------------------
-// Zone impact (FR-8.1) — engine-derived, not a threshold on the slider value
+// Zone impact — engine-derived, not a threshold on the slider value
 // ---------------------------------------------------------------------------
 
 export interface ZoneImpact {
@@ -289,7 +289,7 @@ function zoneScenarioRisk(
 }
 
 // ---------------------------------------------------------------------------
-// Saved scenarios (FR-2.5 / FR-7.3) — PARAMETERS ONLY, never results
+// Saved scenarios — PARAMETERS ONLY, never results
 // ---------------------------------------------------------------------------
 
 export interface SavedScenario {
@@ -305,7 +305,7 @@ const SCENARIO_KEY = 'sandboxScenarios';
 /**
  * Scenarios live in their own bucket and hold parameters only. A saved
  * RESULT would be a simulated number sitting in storage where something
- * could later read it as fact — FR-2.5 forbids exactly that.
+ * could later read it as fact — and that must never happen.
  */
 export function getSavedScenarios(): SavedScenario[] {
   return readStore<SavedScenario[]>('hq', SCENARIO_KEY, []);

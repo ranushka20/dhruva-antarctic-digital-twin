@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // ResourceRow — resource row with autonomy ± band and LSOD.
 // Autonomy ALWAYS renders with uncertainty band. A point estimate is a spec violation.
 

@@ -1,7 +1,6 @@
-// OWNER: Dev B
 // Station comparator — the most important structural decision on Page 1:
 // both stations in ONE card, symmetrically. Bharati and Maitri are equals,
-// so the comparison station is dimmed, never hidden (FR-3.5).
+// so the comparison station is dimmed, never hidden.
 
 import { ArrowLeftRight, FileText } from 'lucide-react';
 import type { StationSummary } from '@/shared/contracts';

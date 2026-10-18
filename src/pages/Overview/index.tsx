@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 1 — HQ Overview (route /).
 //
 // Answers, in this priority order: what needs attention, can each station
@@ -35,7 +34,7 @@ export default function OverviewPage() {
   const compareId = useStationScope((s) => s.compare);
   const setPrimary = useStationScope((s) => s.setPrimary);
 
-  // NFR-G10 / FR-13.5 — a 60 s poll that must not shift layout or lose
+  // A 60 s poll that must not shift layout or lose
   // selection. Selection lives in React state, so it survives by construction.
   useTick(60_000);
 
@@ -85,7 +84,7 @@ export default function OverviewPage() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* ---- Title row (FR-2): title, the attention flag, clock, one CTA ---- */}
+      {/* ---- Title row: title, the attention flag, clock, one CTA ---- */}
       <div className="px-6 py-3.5 shrink-0" style={{ borderBottom: '1px solid var(--line)' }}>
         <div className="flex items-center flex-wrap gap-x-4 gap-y-3">
           <h1 className="text-display font-medium" style={{ fontFamily: 'var(--font-display)', color: 'var(--text)' }}>
@@ -147,7 +146,7 @@ export default function OverviewPage() {
               </p>
             </section>
 
-            {/* Map footer strip (FR-5.6) — the HQ view of both outboxes */}
+            {/* Map footer strip — the HQ view of both outboxes */}
             <OutboxStrip outbox={outbox} status={drain.status} />
           </div>
 
@@ -164,9 +163,9 @@ export default function OverviewPage() {
 }
 
 /**
- * FR-5.6 / FR-12: the priority bar is proportional to queue depth, T0 first.
+ * The priority bar is proportional to queue depth, T0 first.
  * T0 is mint when clear but ORANGE when anything is queued — a life-safety
- * record waiting for a link is an alarm, not a statistic (Page 6 FR-2.2).
+ * record waiting for a link is an alarm, not a statistic.
  */
 function OutboxStrip({
   outbox, status,

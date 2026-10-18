@@ -1,6 +1,4 @@
-// OWNER: Dev B
 // SyncPill — shows connectivity state (LIVE / LAGGING / DARK) with age.
-// See FRONTEND.md §7.
 
 import { type SyncState } from '@/shared/contracts';
 

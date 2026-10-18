@@ -1,6 +1,5 @@
-// OWNER: Dev B
-// seed — the primary data source for this build (FRONTEND.md §12: mock/ is
-// primary, not a fallback).
+// seed — the primary data source for this build (mock/ is primary, not a
+// fallback).
 //
 // Honesty rules baked into the data itself:
 //  - Station telemetry (fuel, generator load, inventory, maintenance, waste
@@ -246,7 +245,7 @@ export function seedResources(): Resource[] {
 }
 
 // ---------------------------------------------------------------------------
-// Roster — who an action can be assigned to (FR-6.3)
+// Roster — who an action can be assigned to
 // ---------------------------------------------------------------------------
 
 export interface RosterMember { id: string; name: string; role: string; stationId: StationId }
@@ -683,8 +682,8 @@ export function seedWasteEvents(): WasteEvent[] {
     });
   });
 
-  // A deliberate mismatch so the balance check has something real to catch
-  // (FR-3.4). Hazardous stream at Maitri: mass removed exceeds what the
+  // A deliberate mismatch so the balance check has something real to catch.
+  // Hazardous stream at Maitri: mass removed exceeds what the
   // ledger says was generated and stored.
   events.push({
     id: 'wst-maitri-hazardous-adj',

@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Reports — "Are reports filed on time?"
 //
 // One list, grouped by status, most urgent first: Overdue → Waiting for the
@@ -6,10 +5,10 @@
 // heading carries its own count; the page's summary lives in the question
 // card above, so nothing else here counts.
 //
-// FR-2.6: a report filed at the station but still waiting for the satellite
+// A report filed at the station but still waiting for the satellite
 // link is NOT overdue — the station did its part, the link did not. Those
 // rows are amber with a dashed border and must never read as late.
-// FR-2.4: an overdue report always has an action; a missing one is flagged.
+// An overdue report always has an action; a missing one is flagged.
 
 import { useId, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react';

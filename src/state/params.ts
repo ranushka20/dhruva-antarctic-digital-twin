@@ -1,7 +1,6 @@
-// OWNER: Dev B
 // params — the parameter registry behind /settings.
 //
-// NFR-B1: no constant used anywhere in the coupling engine may be absent from
+// No constant used anywhere in the coupling engine may be absent from
 // this registry. Every value here is an ASSUMPTION until NCPOR confirms it,
 // which is exactly why it is editable and provenance-badged rather than
 // buried in code. getEngineConfig() is the only way a page should build an
@@ -49,7 +48,7 @@ function def(
 // ---- The registry -----------------------------------------------------------
 
 export const PARAM_DEFS: Def[] = [
-  // ---- Logistics (FR-B3) ----
+  // ---- Logistics ----
   def('logistics.procurementLeadDays', 'logistics', 'Procurement lead time', DEFAULT_ENGINE_CONFIG.procurementLeadDays, {
     unit: 'days', min: 0, max: 180, usedBy: ['computeLSOD'],
   }),
@@ -88,7 +87,7 @@ export const PARAM_DEFS: Def[] = [
   def('logistics.crit.provisions', 'logistics', 'Criticality — provisions', 0.5, { min: 0, max: 1, usedBy: ['scoreManifestCandidate'] }),
   def('logistics.crit.science', 'logistics', 'Criticality — science', 0.3, { min: 0, max: 1, usedBy: ['scoreManifestCandidate'] }),
 
-  // ---- Energy (FR-B4) ----
+  // ---- Energy ----
   def('energy.baselineLoadKw', 'energy', 'Baseline station load', DEFAULT_ENGINE_CONFIG.baselineLoadKw, {
     unit: 'kW', min: 0, max: 1000, usedBy: ['computeEnergyDemand'],
   }),
@@ -121,7 +120,7 @@ export const PARAM_DEFS: Def[] = [
     provenance: 'MODELED',
   }),
 
-  // ---- Thermal (FR-B5) ----
+  // ---- Thermal ----
   def('thermal.degreeDayBaseC', 'thermal', 'Degree-day base temperature', DEFAULT_ENGINE_CONFIG.degreeDayBaseC, {
     unit: '°C', min: -20, max: 30, usedBy: ['computeHDD'],
   }),
@@ -142,7 +141,7 @@ export const PARAM_DEFS: Def[] = [
     confirmedBy: 'NWS / Environment Canada', confirmedAt: '2001-11-01T00:00:00.000Z',
   }),
 
-  // ---- Sync (FR-B6) ----
+  // ---- Sync ----
   def('sync.laggingAfterMinutes', 'sync', 'LIVE to LAGGING threshold', 30, {
     unit: 'min', min: 1, max: 1440, usedBy: ['freshnessState'],
   }),
@@ -162,27 +161,27 @@ export const PARAM_DEFS: Def[] = [
     unit: 'kbps', min: 1, max: 100000, usedBy: ['timeToClear'],
   }),
 
-  // ---- SLA (FR-B7) ----
+  // ---- SLA ----
   def('sla.T0Seconds', 'sla', 'T0 acknowledgement target', 15 * 60, { unit: 's', min: 60, max: 86400, usedBy: ['slaState'] }),
   def('sla.T1Seconds', 'sla', 'T1 acknowledgement target', 2 * 3600, { unit: 's', min: 60, max: 604800, usedBy: ['slaState'] }),
   def('sla.T2Seconds', 'sla', 'T2 acknowledgement target', 24 * 3600, { unit: 's', min: 60, max: 2592000, usedBy: ['slaState'] }),
   def('sla.T3Seconds', 'sla', 'T3 acknowledgement target', 7 * 86400, { unit: 's', min: 60, max: 7776000, usedBy: ['slaState'] }),
   def('sla.pauseWhileDark', 'sla', 'Pause SLA clocks while DARK', true, { usedBy: ['slaState'] }),
 
-  // ---- Thresholds (FR-B8) ----
+  // ---- Thresholds ----
   def('thresholds.fuelReorderPct', 'thresholds', 'Fuel reorder point', 30, { unit: '% of stock', min: 0, max: 100, usedBy: ['reorderCheck'] }),
   def('thresholds.provisionsReorderPct', 'thresholds', 'Provisions reorder point', 25, { unit: '% of stock', min: 0, max: 100, usedBy: ['reorderCheck'] }),
   def('thresholds.wasteBalanceToleranceKg', 'thresholds', 'Waste balance tolerance', 25, { unit: 'kg', min: 0, max: 5000, usedBy: ['wasteBalanceCheck'] }),
   def('thresholds.generatorLoadWarnPct', 'thresholds', 'Generator load warning', 85, { unit: '%', min: 10, max: 100, usedBy: ['assetAlarm'] }),
   def('thresholds.zoneMinTempC', 'thresholds', 'Occupied-zone minimum temperature', 16, { unit: '°C', min: -20, max: 30, usedBy: ['zoneAlarm'] }),
 
-  // ---- Stations (FR-B9) ----
+  // ---- Stations ----
   def('stations.bharati.crewCapacity', 'stations', 'Bharati crew capacity', 24, { unit: 'people', min: 1, max: 200, source: 'NCPOR station profile (public)', provenance: 'MODELED' }),
   def('stations.maitri.crewCapacity', 'stations', 'Maitri crew capacity', 25, { unit: 'people', min: 1, max: 200, source: 'NCPOR station profile (public)', provenance: 'MODELED' }),
   def('stations.bharati.changeover', 'stations', 'Bharati crew changeover', '2027-02-18', { source: ASSUMPTION }),
   def('stations.maitri.changeover', 'stations', 'Maitri crew changeover', '2027-03-04', { source: ASSUMPTION }),
 
-  // ---- Data sources (FR-B11) — read-only mirror of /environment ----
+  // ---- Data sources — read-only mirror of /environment ----
   def('sources.environment.enabled', 'sources', 'Environment adapter (NCPOR / READER / AMRC)', true, {
     source: 'data.ncpor.res.in · antarctica.ac.uk/met/READER', provenance: 'LIVE',
   }),
@@ -263,7 +262,7 @@ export class ParamRangeError extends Error {
   param: Parameter;
   attempted: ParamValue;
   constructor(param: Parameter, attempted: ParamValue) {
-    // NFR-B5: reject with the valid range and its source. Never silently clamp.
+    // Reject with the valid range and its source. Never silently clamp.
     super(
       [
         param.label,
@@ -320,7 +319,7 @@ export function resetParam(key: string, scope: ParamScope): void {
 
 /**
  * The single builder for an EngineConfig. Pages never construct one by hand,
- * so a /settings edit reaches every derived number in the app (NFR-B2).
+ * so a /settings edit reaches every derived number in the app.
  */
 export function getEngineConfig(scope: ParamScope = 'global'): EngineConfig {
   return {
@@ -356,7 +355,7 @@ export function unconfirmedParameters(scope: ParamScope = 'global'): Parameter[]
   return getParameters(scope).filter((p) => p.provenance === 'SYNTH');
 }
 
-/** FR-B15 — the artefact you hand a chief engineer to validate. */
+/** The artefact you hand a chief engineer to validate. */
 export function exportParametersJSON(): string {
   return JSON.stringify(
     {

@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 7 — Compliance (/compliance).
 //
 // The stations' official paperwork under the Antarctic Treaty's environmental
@@ -243,7 +242,7 @@ export default function CompliancePage() {
     try { await refreshChainStatus('hq'); } finally { setVerifying(false); }
   };
 
-  /** FR-3.4 — a balance failure earns a T2 action, not just a red number. */
+  /** A balance failure earns a T2 action, not just a red number. */
   const raiseBalanceAction = async (row: WasteBalanceRow) => {
     const id = await transitions.raise({
       stationId: row.stationId,
@@ -472,7 +471,7 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      {/* ---- Record detail drawer (FR-6), URL-addressable via ?record= ---- */}
+      {/* ---- Record detail drawer, URL-addressable via ?record= ---- */}
       <Drawer
         open={record !== null}
         onClose={closeRecord}

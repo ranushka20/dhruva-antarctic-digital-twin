@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // Route: /stations/:id/twin
 
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy, type RefObject } from 'react';
@@ -141,7 +140,7 @@ export default function TwinPage() {
   const actions = useStoreValue(() => getActions(stationId));
   const resources = useStoreValue(() => getResources(stationId));
   const canAck = useCan('action.transition');
-  // Acknowledging asks for a note like everywhere else (touchpoint #1).
+  // Acknowledging asks for a note like everywhere else.
   const [ackId, setAckId] = useState<string | null>(null);
 
   // --- Link state from /comms: the 3D fades and bannered when HQ is behind ---
@@ -174,7 +173,7 @@ export default function TwinPage() {
   const activeZone = zones.find((z) => z.code === selectedZone) ?? null;
   const clickedRoom = selectedRoomId ? getRoom(selectedRoomId) : undefined;
 
-  // Same rule as the Action Centre drawer (touchpoint #10): one helper decides
+  // Same rule as the Action Centre drawer: one helper decides
   // which story a zone tells, so the two pages can't drift apart.
   const zoneProfile = (zone: ZoneModel) => zoneSubject(stationId, zone.code)?.trace;
 
@@ -188,7 +187,7 @@ export default function TwinPage() {
   const zoneActions = activeZone ? openActionsFor(activeZone.code) : [];
   const shortestSupply = [...resources].sort((a, b) => a.autonomyDays - b.autonomyDays)[0];
 
-  // The one shared builder (touchpoint #10), so the station figures here match
+  // The one shared builder, so the station figures here match
   // the Action Centre drawer, Environment and the Sandbox baseline.
   const traceInput = useStoreValue(() => causalTraceInput(stationId));
 
@@ -202,7 +201,7 @@ export default function TwinPage() {
         })
       : [];
 
-  // --- Selection: one shared state for the list and the 3D (FR-3.4) ---
+  // --- Selection: one shared state for the list and the 3D ---
   const chooseZone = (code: string) => {
     setSelectedZone(code);
     setSelectedRoomId(undefined);

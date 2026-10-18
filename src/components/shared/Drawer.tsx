@@ -1,6 +1,5 @@
-// OWNER: Dev B
 // Drawer — slide-over overlay panel on --panel-alt.
-// See FRONTEND.md §7. Slides + fades in, and plays a faster exit before
+// Slides + fades in, and plays a faster exit before
 // unmounting (usePresence) with its last content still showing.
 
 import { type ReactNode, useEffect } from 'react';

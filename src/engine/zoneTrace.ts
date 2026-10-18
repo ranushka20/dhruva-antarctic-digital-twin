@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // zoneTrace — the "Why this matters" story for one zone.
 //
 // runCausalTrace() answers a station question: how long does the fuel last?
@@ -11,12 +10,12 @@
 //      computeFuelBurn, as a share of the station's burn.
 //   2. What is its current fault costing? runCausalTrace() on the station as
 //      it is now, and again with the fault fixed. The difference is days of
-//      fuel (FR-10.3's "autonomy before → after, LSOD delta").
+//      fuel ("autonomy before → after, LSOD delta").
 //
 // The station trace is never altered by picking a zone: "now" is the input
 // as given, which already includes every current fault. Only the "if fixed"
 // run changes anything, so the station's own numbers stay identical on every
-// zone and on every page (touchpoint #10).
+// zone and on every page.
 //
 // The split of load and envelope between zones is an assumption. Neither
 // station has per-zone power metering, so the profiles in mock/*.json are

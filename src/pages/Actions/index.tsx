@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 3 — Action Centre (/actions, drawer at /actions/:actionId).
 //
 // This is the page that makes Antarasetu a MANAGEMENT platform rather than a
@@ -116,7 +115,7 @@ export default function ActionsPage() {
   const drawerId = useLastWhileOpen(!!open, open?.id);
   const drawerAction = drawerId ? allActions.find((a) => a.id === drawerId) : undefined;
 
-  // ---- Keyboard (NFR-3.6): j/k move, a acknowledge, Enter open, Esc close ---
+  // ---- Keyboard: j/k move, a acknowledge, Enter open, Esc close ---
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (step) return; // the step dialog has the keyboard while it is open
@@ -161,7 +160,7 @@ export default function ActionsPage() {
     return next;
   };
 
-  // FR-3.6: bulk acknowledge only — never bulk resolve, which needs per-action evidence.
+  // Bulk acknowledge only — never bulk resolve, which needs per-action evidence.
   // One note covers the batch; each action still gets its own log entry.
   const bulkAck = () => {
     const ids = filtered.filter((a) => a.state === 'RAISED').map((a) => a.id);

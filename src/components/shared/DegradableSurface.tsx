@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// DegradableSurface — the freshness primitive (FRONTEND.md §7.2).
+// DegradableSurface — the freshness primitive.
 //
 // A stale panel must LOOK stale without becoming unreadable. Three things
 // carry that message here, and only the first is opacity:
@@ -11,7 +10,7 @@
 //      the honest signal, and unlike opacity it costs no legibility;
 //   3. a dashed ring and a diagonal hatch over the surface.
 //
-// DEPARTURE FROM SPEC, DELIBERATE. §7.2 tabulates 62% / 40% opacity. Applied
+// DEPARTURE FROM SPEC, DELIBERATE. The spec tabulates 62% / 40% opacity. Applied
 // to a whole panel those numbers drop --text-3 body copy to roughly 1.6:1
 // against the page — below any readable threshold, and the reason Maitri's
 // zone grid was unreadable while Bharati's was fine. The corrected values

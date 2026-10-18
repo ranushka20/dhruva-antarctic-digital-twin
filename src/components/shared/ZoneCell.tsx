@@ -1,6 +1,5 @@
-// OWNER: Dev A
 // ZoneCell — zone grid cell for the Overview zone panel and Twin page zone list.
-// Cell styling by status: nominal, watch, warning per FRONTEND.md §FR-7.3.
+// Cell styling by status: nominal, watch, warning.
 
 import { type Zone } from '@/shared/contracts';
 import { StatusDot } from './StatusDot';

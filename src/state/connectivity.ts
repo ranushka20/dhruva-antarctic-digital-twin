@@ -1,12 +1,10 @@
-// OWNER: Dev B
 // connectivity — the link-state module. This is the app's simulated network
-// condition: /comms owns the toggle, every other page (including Dev A's)
+// condition: /comms owns the toggle, every other page
 // READS from here and never writes.
 //
 // Frontend-only build: there is no WAN to observe, so the state is explicit
 // and operator-driven rather than measured. The demo outage writes to a
-// separate scenario bucket so it can never be confused with a real record
-// (NFR-6.7).
+// separate scenario bucket so it can never be confused with a real record.
 
 import {
   type SyncState,
@@ -116,7 +114,7 @@ export interface LinkSegment {
   open: boolean;
 }
 
-/** Segments clipped to a window, ready for the timeline strip (FR-1.2). */
+/** Segments clipped to a window, ready for the timeline strip. */
 export function getLinkSegments(stationId: StationId, windowHours: number, now = Date.now()): LinkSegment[] {
   const windowStart = now - windowHours * 3600_000;
   const history = getLinkHistory(stationId);
@@ -149,7 +147,7 @@ export interface LinkStats {
   segments: LinkSegment[];
 }
 
-/** FR-1.3 — uptime over the range and the longest single gap. */
+/** Uptime over the range and the longest single gap. */
 export function getLinkStats(stationId: StationId, windowHours: number, now = Date.now()): LinkStats {
   const segments = getLinkSegments(stationId, windowHours, now);
   const total = segments.reduce((sum, s) => sum + s.durationSeconds, 0);
@@ -171,7 +169,7 @@ export function getLinkStats(stationId: StationId, windowHours: number, now = Da
 }
 
 // ---- Demo outage scenario ---------------------------------------------------
-// FR-1.5 / NFR-6.7: writes ONLY here, never to the real record, and every
+// Writes ONLY here, never to the real record, and every
 // surface that reads it labels the state as simulated.
 
 export interface OutageScenario {

@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// ChainBanner — NFR-7.2: a broken chain surfaces a persistent,
+// ChainBanner — a broken chain surfaces a persistent,
 // non-dismissable banner across the WHOLE app, not only on /compliance.
 // There is deliberately no close button.
 

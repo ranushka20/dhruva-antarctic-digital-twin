@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local planning notes and assistant config (not part of the project)
+CLAUDE.md
+PROGRESS.md
+FRONTEND.md
+Antarasetu_Dev*_Spec.md
+/contracts.ts
+.claude/

@@ -1,8 +1,7 @@
-// OWNER: Dev B
 // "What we missed" — the station's event log for a dark period, rebuilt from
 // the records that have since drained, in STATION-timestamp order.
 //
-// The distinction this panel exists to make (FR-3.3): "the station reported
+// The distinction this panel exists to make: "the station reported
 // nothing in this window" is a different claim from "we have no data". One
 // means the station was quiet; the other means we are blind. Conflating them
 // is how an operator ends up trusting a gap.

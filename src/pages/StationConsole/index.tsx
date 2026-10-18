@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // PAGE 6b — Station Console (/station), the station edge.
 //
 // A local-first console that keeps the station operating with NO LINK AT
 // ALL. Nothing here blocks on the network: every form writes to the local
 // store, appends to the local hash chain, and enqueues in the outbox, then
-// confirms. A spinner waiting on a server would be a spec violation
-// (FR-5.3), and there is none.
+// confirms. A spinner waiting on a server would be a spec violation,
+// and there is none.
 //
 // Frontend-only build: the "local edge service" is a localStorage namespace
 // separate from HQ's, standing in for FastAPI + SQLite at the station. Say
@@ -59,7 +58,7 @@ export default function StationConsolePage() {
 
   // This route lives outside AppShell (reduced shell, no HQ nav), so it seeds
   // the local stores itself — an operator may open /station directly, and
-  // NFR-6.1 says it must come up from the local service alone.
+  // it must come up from the local service alone.
   useEffect(() => {
     if (ready) return;
     let cancelled = false;
@@ -96,7 +95,7 @@ export default function StationConsolePage() {
       className="flex flex-col h-screen w-full overflow-hidden glow-page"
       style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}
     >
-      {/* ---- Reduced shell (FR-5.1) ---- */}
+      {/* ---- Reduced shell ---- */}
       <header
         className="flex items-center gap-x-4 gap-y-2 min-h-[4.25rem] py-2.5 px-6 shrink-0 flex-wrap glow-nav"
         style={{ borderBottom: '1px solid var(--line)' }}
@@ -133,7 +132,7 @@ export default function StationConsolePage() {
 
       <ChainBanner linkToAudit={false} />
 
-      {/* ---- Permanent link banner (FR-5.2) ---- */}
+      {/* ---- Permanent link banner ---- */}
       <div
         className="flex items-center gap-x-4 gap-y-2 px-6 py-3 shrink-0 flex-wrap"
         role="status"
@@ -195,7 +194,7 @@ export default function StationConsolePage() {
           </p>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-[19rem_minmax(0,1fr)] 2xl:grid-cols-[20rem_minmax(0,1fr)_26rem] gap-5 items-start" hidden={!ready}>
-          {/* ---- Quick actions (FR-6.1): >= 56px targets ---- */}
+          {/* ---- Quick actions: >= 56px targets ---- */}
           <div className="w-full min-w-0 flex flex-col gap-5">
             <section
               className="p-5"
@@ -211,7 +210,7 @@ export default function StationConsolePage() {
               </div>
             </section>
 
-            {/* ---- Local autonomy (FR-7.1/7.2): same engine as HQ ---- */}
+            {/* ---- Local autonomy: same engine as HQ ---- */}
             <section
               className="p-5"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -297,7 +296,7 @@ export default function StationConsolePage() {
             </section>
           </div>
 
-          {/* ---- Local outbox (FR-8) ---- */}
+          {/* ---- Local outbox ---- */}
           <div className="w-full min-w-0 lg:col-span-2 2xl:col-span-1">
             <LocalOutbox
               queue={queue}
@@ -507,7 +506,7 @@ function StationForms({
 
   const closeAll = () => { reset(); onClose(); };
 
-  /** Write locally → chain → outbox → confirm. Never the reverse (NFR-6.2). */
+  /** Write locally → chain → outbox → confirm. Never the reverse. */
   const submit = async (
     tier: Tier,
     type: SyncRecord['type'],
@@ -554,7 +553,7 @@ function StationForms({
 
   return (
     <>
-      {/* ---- Log fault (FR-6.3) ---- */}
+      {/* ---- Log fault ---- */}
       <Modal open={form === 'fault'} onClose={closeAll} title="Log fault">
         <Label>Zone</Label>
         <select value={zoneCode} onChange={(e) => setZoneCode(e.target.value)}
@@ -662,7 +661,7 @@ function StationForms({
         />
       </Modal>
 
-      {/* ---- Inventory change (FR-6.4) ---- */}
+      {/* ---- Inventory change ---- */}
       <Modal open={form === 'inventory'} onClose={closeAll} title="Inventory change">
         <Label>Resource</Label>
         <select
@@ -751,7 +750,7 @@ function StationForms({
         />
       </Modal>
 
-      {/* ---- Attach evidence (FR-6.6) ---- */}
+      {/* ---- Attach evidence ---- */}
       <Modal open={form === 'evidence'} onClose={closeAll} title="Attach evidence">
         <Label>Describe the attachment</Label>
         <input value={description} onChange={(e) => setDescription(e.target.value)}

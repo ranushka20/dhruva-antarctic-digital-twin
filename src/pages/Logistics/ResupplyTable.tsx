@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Resupply table — ONE row per resource, and that row IS the timeline.
 //
 // This replaces what used to be two stacked panels: a full-width Gantt and a

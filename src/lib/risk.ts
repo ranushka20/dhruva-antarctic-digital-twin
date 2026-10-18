@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // risk — the colour a deadline wears.
 //
 // One implementation, shared by every surface that shows an LSOD, and the
 // thresholds come from /settings rather than being hard-coded at each call
-// site (NFR-B1). Two pages disagreeing about what counts as urgent would be
+// site. Two pages disagreeing about what counts as urgent would be
 // the same class of bug as two pages computing autonomy two ways.
 
 import { getParamValue } from '@/state/params';

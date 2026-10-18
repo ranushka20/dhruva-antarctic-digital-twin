@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Raise action — how HQ staff log a problem they heard about by phone, radio
 // or email, for ONE station. Rules and the station console raise actions
 // automatically; this is the human path from HQ. Priority is chosen by the

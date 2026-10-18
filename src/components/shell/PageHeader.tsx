@@ -1,5 +1,4 @@
 // PageHeader — standard second row: optional back pill, page title, controls, clock.
-// Per FRONTEND.md §6.2.
 
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

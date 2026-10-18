@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 4 — Logistics & Resupply (/logistics).
 //
 // "Can each station sustain itself until the next feasible resupply, and if
@@ -86,7 +85,7 @@ export default function LogisticsPage() {
   };
 
   /**
-   * Touchpoint #6 — pre-fills the resource, the consequence and the LSOD,
+   * Pre-fills the resource, the consequence and the LSOD,
    * then routes to the new action. Nothing is retyped, and the consequence
    * comes from the same engine the bar above it is drawn from.
    */

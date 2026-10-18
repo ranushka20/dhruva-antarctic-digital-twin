@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// Time helpers. Every displayed time is IST (NFR-G7). Ages are computed from
+// Time helpers. Every displayed time is IST. Ages are computed from
 // station-stamped timestamps, and clock skew is surfaced rather than hidden.
 
 const IST_OFFSET_MINUTES = 330; // UTC+05:30
@@ -10,7 +9,7 @@ function toIST(d: Date): Date {
   return new Date(d.getTime() + (IST_OFFSET_MINUTES + d.getTimezoneOffset()) * 60_000);
 }
 
-/** "19 SEP 2026 · 14:22 IST" — the HQ clock format (FR-2.3). */
+/** "19 SEP 2026 · 14:22 IST" — the HQ clock format. */
 export function formatClockIST(date: Date = new Date()): string {
   const d = toIST(date);
   const hh = String(d.getHours()).padStart(2, '0');
@@ -77,8 +76,8 @@ export function signedDays(days: number): string {
 }
 
 /**
- * Clock skew between the station-stamped time and this client's clock
- * (NFR-6.5). Surfaced on /comms and /station rather than silently corrected.
+ * Clock skew between the station-stamped time and this client's clock.
+ * Surfaced on /comms and /station rather than silently corrected.
  */
 export function clockSkewSeconds(stationStampedIso: string, hqReceiptIso: string): number {
   return Math.round((new Date(hqReceiptIso).getTime() - new Date(stationStampedIso).getTime()) / 1000);

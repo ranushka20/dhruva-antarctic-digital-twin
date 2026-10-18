@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // Sparkline — inline SVG series with optional threshold line.
 // Compact variant of TimeSeriesChart for use in tables and cards.
 

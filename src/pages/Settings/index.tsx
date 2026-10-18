@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 10b — Settings & Parameters (/settings).
 //
 // THIS PAGE IS A CREDIBILITY FEATURE, NOT CONFIG.
@@ -79,7 +78,7 @@ export default function SettingsPage() {
     try {
       const next = typeof param.default === 'boolean' ? Boolean(raw) : raw;
       const { previous, next: applied } = setParamValue(param.key, scope, next as never, actor.name);
-      // FR-B13: a parameter change is an operational decision, so it is traceable.
+      // A parameter change is an operational decision, so it is traceable.
       await appendAudit({
         actor: actor.name,
         actorRole: actor.role,
@@ -95,7 +94,7 @@ export default function SettingsPage() {
       setToast(`${param.label} saved and appended to the audit chain.`);
       setTimeout(() => setToast(null), 4000);
     } catch (e) {
-      // NFR-B5: rejected with the valid range and its source. Never clamped.
+      // Rejected with the valid range and its source. Never clamped.
       setErrors((cur) => ({
         ...cur,
         [param.key]: e instanceof ParamRangeError || e instanceof Error ? e.message : 'Invalid value',
@@ -259,7 +258,7 @@ export default function SettingsPage() {
         </section>
       </div>
 
-      {/* ---- Live impact preview (FR-B12) ---- */}
+      {/* ---- Live impact preview ---- */}
       <ImpactPreview
         preview={preview}
         onCancel={() => setPreview(null)}
@@ -463,7 +462,7 @@ interface ImpactChange {
 }
 
 /**
- * FR-B12 / NFR-B3 — computed by the SAME pure engine the rest of the app
+ * Computed by the SAME pure engine the rest of the app
  * uses, on the raw resource facts, not an approximation. `withSandboxParams`
  * swaps the candidate value in memory only, so the preview can be trusted
  * before saving and leaves nothing behind for other views to see.
@@ -563,7 +562,7 @@ function ImpactPreview({
   );
 }
 
-/** FR-B10 — users and roles. Accounts are provisioned; no self-service. */
+/** Users and roles. Accounts are provisioned; no self-service. */
 function UsersGroup() {
   return (
     <div>

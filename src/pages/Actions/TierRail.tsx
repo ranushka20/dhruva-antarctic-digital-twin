@@ -1,7 +1,6 @@
-// OWNER: Dev B
 // Tier filter — live open counts per tier, as one row of toggle chips.
-// T0 is distinguished from T1 by a FILLED SQUARE marker, not only by colour
-// (FR-2.3): the screen has to survive a bad projector and a colour-blind
+// T0 is distinguished from T1 by a FILLED SQUARE marker, not only by colour:
+// the screen has to survive a bad projector and a colour-blind
 // viewer, so tier is never carried by hue alone.
 
 import type { Action, Tier } from '@/shared/contracts';

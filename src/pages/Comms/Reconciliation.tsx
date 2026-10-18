@@ -1,10 +1,9 @@
-// OWNER: Dev B
 // Reconciliation — where HQ and a station both changed the same object while
 // disconnected.
 //
-// The rule is stated on screen, not just implemented (FR-4.3): higher-tier
+// The rule is stated on screen, not just implemented: higher-tier
 // actor wins, ties resolve to the station as the side closer to ground truth.
-// The losing version is preserved as superseded, never deleted (FR-4.4) —
+// The losing version is preserved as superseded, never deleted —
 // an operator overriding the rule records a reason, and that too joins the
 // chain.
 

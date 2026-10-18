@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // manifest — candidate scoring and manifest generation for /logistics.
 //
 // Scoring is rule-based and inspectable: urgency x criticality, both from the
@@ -136,7 +135,7 @@ export function getManifest(id: string): Manifest | undefined {
 }
 
 /**
- * NFR-4.4 — generation is versioned and idempotent in the sense that
+ * Generation is versioned and idempotent in the sense that
  * regenerating never edits a prior version: it creates a new one. The audit
  * entry for the new version is what an auditor follows.
  */
@@ -199,7 +198,7 @@ export async function generateManifest(
   return manifest;
 }
 
-/** FR-4.6 — CSV export. Provenance travels with the numbers, always. */
+/** CSV export. Provenance travels with the numbers, always. */
 export function manifestCsv(manifest: Manifest, candidates: Candidate[]): string {
   const byId = new Map(candidates.map((c) => [c.resourceId + c.stationId, c]));
   const header = [

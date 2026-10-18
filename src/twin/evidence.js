@@ -5,7 +5,7 @@
    stated differentiator is knowing the difference between what NCPOR
    publishes, what is documented but not streamed, and what we made up.
 
-   The scheme is the dossier's own (SIH-26060-evidence-dossier.md §1):
+   The scheme is the evidence dossier's own:
 ========================================================= */
 
 export const EVIDENCE = {
@@ -69,7 +69,7 @@ export function boundary(label, source, note) {
 
    The dossier's A/A-ext/B/C/D/S scheme above is the research vocabulary —
    precise, but it asks a viewer to learn six letters before they can read a
-   number. The Antarasetu solution doc (§4.2) defines the three words an HQ
+   number. The Antarasetu solution doc defines the three words an HQ
    operator or a judge actually needs:
 
        LIVE       real external feed, arriving now

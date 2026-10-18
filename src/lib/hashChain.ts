@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // hashChain — the tamper-evident audit chain (SHA-256).
 //
 // This is a REAL implementation, not a simulation: it needs no server. Every
 // state transition in the app appends {prevHash, payload, actor, timestamp,
-// hash} here, and verify() recomputes every hash client-side (NFR-G4).
+// hash} here, and verify() recomputes every hash client-side.
 //
-// Vocabulary rule (FR-5.8 / acceptance criteria): this is a "tamper-evident
+// Vocabulary rule: this is a "tamper-evident
 // hash chain (SHA-256)". The other word must not appear in the UI, the code
 // or any export — it is tamper-evident, not non-repudiable, and we say so.
 
@@ -122,7 +121,7 @@ export interface FullVerifyResult {
 
 /**
  * Recomputes every hash. Chunked so a long chain never blocks the UI thread
- * (NFR-7.1) — control returns to the browser between chunks rather than after
+ * — control returns to the browser between chunks rather than after
  * the whole pass.
  */
 export async function verifyFullChain(
@@ -191,7 +190,7 @@ export async function refreshChainStatus(namespace: StoreNamespace = 'hq'): Prom
 // ---- Reconciliation ---------------------------------------------------------
 
 /**
- * Marks an entry superseded rather than deleting it (FR-4.4 / FR-5.6). The
+ * Marks an entry superseded rather than deleting it. The
  * log's whole value is that nothing disappears, so superseding is a flag —
  * the hash and its position are untouched.
  */
@@ -204,7 +203,7 @@ export function markSuperseded(seq: number, namespace: StoreNamespace = 'hq'): v
 }
 
 /**
- * Folds station-written entries into the HQ chain after a drain (NFR-6.4).
+ * Folds station-written entries into the HQ chain after a drain.
  * Each entry is re-hashed against its new predecessor — the station-stamped
  * time is preserved as `atStation`, which is what ordering uses.
  */
@@ -232,7 +231,7 @@ export async function mergeIntoHqChain(stationEntries: ChainEntry[]): Promise<nu
 
 // ---- Export & demo affordance ----------------------------------------------
 
-/** FR-5.7 — the log as JSON with hashes, for independent verification. */
+/** The log as JSON with hashes, for independent verification. */
 export function exportChainJSON(namespace: StoreNamespace = 'hq'): string {
   return JSON.stringify(
     {
@@ -252,7 +251,7 @@ export function exportChainJSON(namespace: StoreNamespace = 'hq'): string {
 }
 
 /**
- * Demo affordance for FR-5.3 / the acceptance criterion "verify on a tampered
+ * Demo affordance for the requirement "verify on a tampered
  * entry reports the exact index". Edits a payload in place WITHOUT updating
  * the hash, which is precisely what the verifier is built to catch.
  */

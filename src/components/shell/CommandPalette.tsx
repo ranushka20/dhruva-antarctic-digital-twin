@@ -1,6 +1,5 @@
-// OWNER: Dev B
 // CommandPalette — global search across actions, resources, obligations,
-// records and routes, on Cmd/Ctrl + Space (FR-2.2, FR-13.1).
+// records and routes, on Cmd/Ctrl + Space.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

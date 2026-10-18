@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // StatTile — big-number tile for hero stats.
 // Value renders in display font; always carries a provenance badge.
 

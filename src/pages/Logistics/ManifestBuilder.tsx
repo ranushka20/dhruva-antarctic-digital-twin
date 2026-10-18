@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Manifest builder — capacity meter, ranked candidates, and the CARRIED /
 // DEFERRED divider that shows exactly where capacity ran out.
 //
@@ -56,7 +55,7 @@ export function ManifestBuilder({
         <EmptyState reason="No voyage configured for this season. Autonomy still computes; a Last Safe Order Date cannot, because there is nothing to be late for." />
       ) : (
         <>
-          {/* ---- Capacity meter (FR-4.1) ---- */}
+          {/* ---- Capacity meter ---- */}
           <div
             className="mb-5 p-4"
             style={{ backgroundColor: 'var(--panel-raised)', borderRadius: 'var(--r-inner)', border: '1px solid var(--line)' }}
@@ -124,7 +123,7 @@ export function ManifestBuilder({
             </div>
           </div>
 
-          {/* ---- Ranked candidates (FR-4.2, FR-4.3) ---- */}
+          {/* ---- Ranked candidates ---- */}
           <div className="flex items-center gap-3 mb-3 px-1">
             <h3 className="text-body font-semibold" style={{ color: 'var(--text)' }}>Items by priority</h3>
             <span className="text-body-sm" style={{ color: 'var(--text-3)' }}>
@@ -162,7 +161,7 @@ export function ManifestBuilder({
             )}
           </div>
 
-          {/* ---- Footer (FR-4.5, FR-4.7) ---- */}
+          {/* ---- Footer ---- */}
           <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               {(['bharati', 'maitri'] as const).map((id) => (

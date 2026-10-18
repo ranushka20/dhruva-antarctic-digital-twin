@@ -1,11 +1,10 @@
 
-// OWNER: Dev B
 // PAGE 6a — Sync & Comms (/comms), the HQ side.
 //
 // What is each station's link state, what did we miss, what is queued, and
 // in what order will it arrive? This page also owns the connectivity toggle
-// that every <DegradableSurface> in the app reacts to — including Dev A's
-// pages, which read it and never write to it (touchpoint #9).
+// that every <DegradableSurface> in the app reacts to — every other page
+// reads it and never writes to it.
 
 import { useCallback, useState } from 'react';
 import { Radio, Play, Square } from 'lucide-react';
@@ -136,7 +135,7 @@ export default function CommsPage() {
         </span>
       </div>
 
-      {/* ---- Demo scenario banner (NFR-6.7) ---- */}
+      {/* ---- Demo scenario banner ---- */}
       {scenario && (
         <div
           className="flex items-center gap-x-4 gap-y-2.5 flex-wrap px-6 py-3 shrink-0"

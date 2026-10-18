@@ -171,7 +171,7 @@
   cursor: not-allowed;
 }
 
-/* NFR-G5 — visible 2px mint focus ring for keyboard users. Components built
+/* Visible 2px mint focus ring for keyboard users. Components built
    on the coss/shadcn primitives (data-slot) draw their own ring. */
 :where(button, a, [role="button"], [role="tab"], input, select, textarea):where(:not([data-slot])):focus-visible {
   outline: 2px solid var(--ok-soft);

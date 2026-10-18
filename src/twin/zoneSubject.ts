@@ -1,8 +1,7 @@
-// OWNER: Dev A
 // zoneSubject — which "Why this matters" story a zone tells.
 //
 // The twin's zone inspector and the Action Centre drawer both show a zone's
-// story, and touchpoint #10 says they must show the same numbers for it. They
+// story, and they must show the same numbers for it. They
 // can only do that if they ask the same question, so this is the one place
 // that decides a zone's engine profile and status. Both pages then render
 // <ZoneTrace input={causalTraceInput(stationId)} subject={zoneSubject(...)} />.

@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // DiffPanel — Before/After comparison cards for the Sandbox.
 import { type Risk, type Provenance } from '@/shared/contracts';
 import { ProvenanceBadge } from '../shared/ProvenanceBadge';

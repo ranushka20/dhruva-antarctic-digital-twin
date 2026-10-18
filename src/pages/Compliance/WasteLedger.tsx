@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // Waste — answers "Is all waste accounted for?". For each station and type of
-// waste, produced − shipped out should equal what is stored now (FR-3.4).
+// waste, produced − shipped out should equal what is stored now.
 // Rows that don't add up sort first and can raise an action. The monthly
 // chart and the full list of waste movements are folded away underneath.
-// Every weight is SYNTH until the station's feed exists (FR-3.7).
+// Every weight is SYNTH until the station's feed exists.
 
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
@@ -69,7 +68,7 @@ export function WasteLedger({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ---- Does each type of waste add up? (FR-3.1, FR-3.4) ---- */}
+      {/* ---- Does each type of waste add up? ---- */}
       <section className="@container p-5" style={PANEL} aria-label="Waste balance">
         <p className="text-body max-w-[70ch]" style={{ color: 'var(--text-2)' }}>
           Everything produced should either still be stored at the station or have been shipped out — each
@@ -169,14 +168,14 @@ export function WasteLedger({
         )}
       </section>
 
-      {/* ---- Monthly chart (FR-3.3), folded away ---- */}
+      {/* ---- Monthly chart, folded away ---- */}
       {series.length > 0 && (
         <Disclosure show="Show monthly chart" hide="Hide monthly chart">
           <MonthlyChart series={series} />
         </Disclosure>
       )}
 
-      {/* ---- Every waste movement (FR-3.5, FR-3.6), folded away ---- */}
+      {/* ---- Every waste movement, folded away ---- */}
       {events.length > 0 && (
         <Disclosure
           show={<>Show all waste movements (<span className="font-mono tabular-nums">{events.length}</span>)</>}

@@ -1,6 +1,5 @@
-// OWNER: Dev B
 // StatusDot — 6–9px semantic status dot. Always accompanied by a text label.
-// Status is never colour alone per FRONTEND.md §3.
+// Status is never colour alone.
 
 import { type ZoneStatus } from '@/shared/contracts';
 

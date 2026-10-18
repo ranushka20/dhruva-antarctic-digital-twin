@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// AntarcticaMap — inline SVG only (FR-5.1). No tile server, no Leaflet, no
+// AntarcticaMap — inline SVG only. No tile server, no Leaflet, no
 // Mapbox: this is a stylised south-polar index to two stations, not a
 // geographic product, and pretending otherwise would cost 300 KB for nothing.
 //
@@ -92,7 +91,7 @@ export interface MapStation {
   syncState: SyncState;
   ageSeconds: number;
   warnings: number;
-  /** Worst active state — drives marker colour (FR-5.3). */
+  /** Worst active state — drives marker colour. */
   tone: 'ok' | 'watch' | 'act';
 }
 
@@ -212,7 +211,7 @@ export function AntarcticaMap({
 
         return (
           <g key={s.id}>
-            {/* Link path to HQ (FR-5.4) */}
+            {/* Link path to HQ */}
             <path
               d={`M ${sx} ${sy} Q ${(sx + hq.x) / 2} ${Math.min(sy, hq.y) - 70}, ${hq.x} ${hq.y}`}
               fill="none"
@@ -233,7 +232,7 @@ export function AntarcticaMap({
               />
             )}
 
-            {/* Floating chip (FR-5.5) — dashed border when LAGGING or DARK */}
+            {/* Floating chip — dashed border when LAGGING or DARK */}
             <foreignObject x={chipLeft} y={chipTop} width={chipW} height={chipH}>
               <div
                 style={{ width: CHIP_W_PX * textScale, transform: `scale(${u})`, transformOrigin: '0 0' }}

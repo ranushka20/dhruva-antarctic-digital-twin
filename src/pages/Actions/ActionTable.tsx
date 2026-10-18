@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// Action table — the CONSEQUENCE column is mandatory (FR-3.2) and is what
+// Action table — the CONSEQUENCE column is mandatory and is what
 // separates this from a ticket list. It carries the operational cost of
 // inaction, straight from the coupling engine.
 //
@@ -56,7 +55,7 @@ interface Props {
   onResolve: (id: string) => void;
 }
 
-/** NFR-3.1 — above this many rows the table windows rather than mounting all. */
+/** Above this many rows the table windows rather than mounting all. */
 const WINDOW_THRESHOLD = 200;
 const WINDOW_SIZE = 120;
 

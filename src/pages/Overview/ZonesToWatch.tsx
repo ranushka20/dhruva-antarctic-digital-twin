@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // Zones to watch — both stations, side by side, the same way the rest of the
 // Overview treats them. Only zones that are NOT normal are listed, in words,
 // with their current reading; everything normal folds into one line. Each
 // zone opens that station's 3D twin on the zone, which is where a zone is
-// actually inspected. The outside conditions (FR-8) ride along in each
+// actually inspected. The outside conditions ride along in each
 // station's header rather than as separate tiles.
 
 import { ChevronRight } from 'lucide-react';

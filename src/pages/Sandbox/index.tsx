@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // PAGE 8 — Research Sandbox (route /sandbox).
 //
 // Every other page is about OPERATING the station. This one is about
@@ -16,7 +15,7 @@
 //    icons, mono everywhere). It now uses the same title row, cards, tokens,
 //    lucide icons and casing contract as the rest of the app.
 //
-// Writes: none, ever (NFR-8.4). Scenario parameters go through
+// Writes: none, ever. Scenario parameters go through
 // withSandboxParams, which mutates a module-local override map for the
 // duration of one synchronous call and persists nothing. Saving a SCENARIO
 // is permitted and stores parameters only; saving a RESULT is not.
@@ -62,7 +61,7 @@ export default function SandboxPage() {
   const stationId = useStationScope((s) => s.primary);
   const setPrimary = useStationScope((s) => s.setPrimary);
 
-  // FR-1.3 / NFR-8.5: the fork is pinned when the station changes. Leaving
+  // The fork is pinned when the station changes. Leaving
   // and returning remounts the page, which re-forks from then-current state.
   const [forkedAt, setForkedAt] = useState(() => new Date().toISOString());
 
@@ -74,14 +73,14 @@ export default function SandboxPage() {
   const [saved, setSaved] = useState(getSavedScenarios);
   const [toast, setToast] = useState<string | null>(null);
 
-  // FR-3.6 / NFR-8.1: recompute live, no Run button. The engine is pure and
+  // Recompute live, no Run button. The engine is pure and
   // synchronous so there is nothing to await; useDeferredValue just keeps the
   // slider thumb responsive while the results catch up on a busy frame.
   const applied = useDeferredValue(values);
 
   const reFork = useCallback((next: typeof stationId) => {
     setPrimary(next);
-    setValues(baselineValues(next));   // FR-2.2 — re-fork resets parameters
+    setValues(baselineValues(next));   // Re-fork resets parameters
     setForkedAt(new Date().toISOString());
   }, [setPrimary]);
 
@@ -125,7 +124,7 @@ export default function SandboxPage() {
     setTimeout(() => setToast(null), 5000);
   };
 
-  // FR-7.5: every simulated value carries SIM in the export. Losing the class
+  // Every simulated value carries SIM in the export. Losing the class
   // is exactly how a simulated number escapes into a real report.
   const onExport = () => {
     const payload = {
@@ -161,7 +160,7 @@ export default function SandboxPage() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* ---- FR-1.1/1.2: sticky, undismissible, above the scroll container ---- */}
+      {/* ---- Sticky, undismissible, above the scroll container ---- */}
       {/* Same shape as ChainBanner and the session notice — 14% tint of the
           status colour, 1px border, icon in the full colour, body-font 12.5px
           in the -soft colour. Only the safety label itself stays mono and
@@ -331,7 +330,7 @@ export default function SandboxPage() {
               })}
             </section>
 
-            {/* ---- Presets (FR-7.1/7.2) ---- */}
+            {/* ---- Presets ---- */}
             <section
               className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -403,7 +402,7 @@ export default function SandboxPage() {
 
           {/* ---- RIGHT: results ---- */}
           <div className="flex flex-col gap-5 flex-1 min-w-0">
-            {/* Diff cards (FR-4) */}
+            {/* Diff cards */}
             <section
               className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -424,7 +423,7 @@ export default function SandboxPage() {
               </div>
             </section>
 
-            {/* Cause → effect (FR-6) — the panel that proves this is physics */}
+            {/* Cause → effect — the panel that proves this is physics */}
             <section
               className="p-5 w-full min-w-0"
               style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -445,7 +444,7 @@ export default function SandboxPage() {
             </section>
 
             <div className="flex flex-col 2xl:flex-row gap-5">
-              {/* Projection (FR-5) */}
+              {/* Projection */}
               <section
                 className="p-5 flex-1 min-w-0"
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -472,7 +471,7 @@ export default function SandboxPage() {
                 </p>
               </section>
 
-              {/* Zone impact (FR-8) */}
+              {/* Zone impact */}
               <section
                 className="p-5 w-full 2xl:w-[22rem] 2xl:shrink-0 min-w-0"
                 style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)' }}
@@ -618,7 +617,7 @@ function ParameterSlider({
           style={{ accentColor: changed ? 'var(--text-2)' : 'var(--text-4)' }}
           aria-label={`${param.label} in ${param.unit}`}
         />
-        {/* FR-3.2 — baseline marked as a tick on the track */}
+        {/* Baseline marked as a tick on the track */}
         <span
           aria-hidden
           className="absolute pointer-events-none"
@@ -763,7 +762,7 @@ function DiffCard({ metric: m }: { metric: Metric }) {
   );
 }
 
-/** FR-6.2 — each engine link with baseline, scenario and delta side by side. */
+/** Each engine link with baseline, scenario and delta side by side. */
 function TraceDiff({
   before, after,
 }: { before: TraceResult['steps']; after: TraceResult['steps'] }) {
@@ -811,8 +810,8 @@ function TraceDiff({
 }
 
 /**
- * FR-5 — one question: does the stock last until the ship arrives? Two lines
- * (now vs what-if, different colour AND dash, FR-5.3) and the ship window as
+ * One question: does the stock last until the ship arrives? Two lines
+ * (now vs what-if, different colour AND dash) and the ship window as
  * a labelled band. The ± ranges and order-by dates are on the cards above; a
  * chart that also drew them was four overlapping ideas in one small box.
  */

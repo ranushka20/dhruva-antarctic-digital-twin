@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Popover — positioned overlay on --panel-alt.
 // Used by ProvenanceBadge hover popover and other in-context info panels.
 

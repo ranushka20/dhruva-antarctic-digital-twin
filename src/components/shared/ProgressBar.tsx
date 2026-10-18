@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // ProgressBar — 4-6px trough bar. Tone is semantic, never decorative: orange
 // only ever means "act on this", so a bar is orange only when the thing it
 // measures needs an operator.

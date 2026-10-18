@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // RollingValue — renders a value so that only the characters that changed
 // re-enter (a short rise + unblur), odometer-style. On first mount the whole
 // value assembles left-to-right. Screen readers get the plain value.

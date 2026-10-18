@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// NavBar — five tabs, search, alerts, user chip (FRONTEND.md §6.1).
+// NavBar — five tabs, search, alerts, user chip.
 // The alert dot is real: it lights only when an unacknowledged T0 or T1
 // exists on EITHER station, which is the one condition worth interrupting
 // an operator for.

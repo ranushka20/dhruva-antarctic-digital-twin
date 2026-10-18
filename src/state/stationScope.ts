@@ -1,6 +1,5 @@
-// OWNER: Dev B
 // stationScope — station scope is global app state, not a route param on
-// every page (FRONTEND.md §6.3).
+// every page.
 //
 // Equality principle: Bharati and Maitri are equals. `primary` and `compare`
 // are interchangeable, and swapping is a single call so no panel can quietly

@@ -1,5 +1,4 @@
-// OWNER: Dev A
-// TimeSeriesChart — one or more measured series over time (FRONTEND.md §7).
+// TimeSeriesChart — one or more measured series over time.
 // Recharts area chart on the shared chart spec (components/shared/Chart.tsx).
 //
 // Gaps are never interpolated: a missing reading is a null, the line breaks

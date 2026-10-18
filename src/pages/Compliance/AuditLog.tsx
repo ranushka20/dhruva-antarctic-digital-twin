@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // Record history — answers "Are the records untouched?".
 //
 // Each record is sealed together with the one before it (the tamper-evident
@@ -217,7 +216,7 @@ export function AuditLog({
 
   return (
     <div className="@container flex flex-col gap-5">
-      {/* ---- Are the records untouched? (FR-5.3) ---- */}
+      {/* ---- Are the records untouched? ---- */}
       <section
         ref={statusRef}
         className="@container px-5 py-4 scroll-mt-4"
@@ -296,7 +295,7 @@ export function AuditLog({
         </p>
       </section>
 
-      {/* ---- Every record, newest first (FR-5.1 / 5.2 / 5.5 / 5.6) ---- */}
+      {/* ---- Every record, newest first ---- */}
       <section className="@container p-5" style={PANEL} aria-label="Record history">
         <h3 className="text-title font-semibold" style={{ color: 'var(--text)' }}>Every record, newest first</h3>
 
@@ -418,7 +417,7 @@ export function AuditLog({
         )}
       </section>
 
-      {/* ---- For auditors (FR-5.7 + the demo affordance) ---- */}
+      {/* ---- For auditors ---- */}
       <section style={PANEL}>
         <button
           type="button"

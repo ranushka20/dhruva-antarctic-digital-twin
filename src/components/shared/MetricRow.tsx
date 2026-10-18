@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // MetricRow — label / value / badge row. Every numeric value renders in the
 // mono typeface; the badge sits adjacent to the value it describes.
 

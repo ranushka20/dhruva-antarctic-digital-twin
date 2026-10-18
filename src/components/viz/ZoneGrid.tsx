@@ -1,4 +1,3 @@
-// OWNER: Dev A
 // ZoneGrid — Compact 3x2 grid of zones used in Overview and Sandbox.
 import { type Zone, type Risk } from '@/shared/contracts';
 import { ZoneCell } from '../shared/ZoneCell';

@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // AppShell — nav bar, the app-wide chain banner, the command palette and the
 // session-expiry notice. Also the one place the local stores are seeded, so
 // every page can assume data exists without each one guarding for it.
@@ -38,7 +37,7 @@ export function AppShell() {
     return () => { cancelled = true; };
   }, []);
 
-  // FR-13.1 / FR-2.2 — Cmd/Ctrl + Space opens global search from anywhere.
+  // Cmd/Ctrl + Space opens global search from anywhere.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.code === 'Space') {
@@ -70,7 +69,7 @@ export function AppShell() {
 }
 
 /**
- * FR-C6 — warn five minutes ahead and offer renewal. Expiry never discards
+ * Warn five minutes ahead and offer renewal. Expiry never discards
  * queued local records, so the message says so rather than implying data loss.
  */
 function SessionNotice() {

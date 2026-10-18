@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 10a — Crew Handover (/handover).
 //
 // Antarctic crews rotate, and the station's operational memory usually walks
@@ -6,9 +5,9 @@
 // platform's own records rather than from memory.
 //
 // A zero-item section still appears, marked "none" — an empty section is
-// information (FR-A12). And an exported capsule that presented SYNTH figures
+// information. And an exported capsule that presented SYNTH figures
 // as fact would be the single most damaging output of this product, so every
-// export carries the provenance notice (NFR-A3).
+// export carries the provenance notice.
 
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';

@@ -1,11 +1,10 @@
-// OWNER: Dev B
 // VoyageEditor — the arrival-window editor behind the "Next resupply" tile.
 //
 // This used to be a full side panel restating the voyage's name, windows,
 // capacity and status next to three other panels saying much the same thing.
 // The tile carries the numbers now; this is just the edit.
 //
-// FR-5.2 is the reason it exists: moving a window recomputes every LSOD on
+// The reason it exists: moving a window recomputes every LSOD on
 // the page immediately. Nothing is cached — the engine is pure and
 // synchronous, so the bars and ticks move with the save.
 

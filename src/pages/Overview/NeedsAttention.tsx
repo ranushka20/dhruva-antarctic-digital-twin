@@ -1,7 +1,6 @@
-// OWNER: Dev B
 // Needs attention — a FLAG in the Overview title row, not a panel on the page.
 // The flag carries the open count (orange while a T0/T1 is unacknowledged);
-// opening it shows the top three open actions across both stations (FR-4.2).
+// opening it shows the top three open actions across both stations.
 // Each item is information only and opens the action in the Action Centre,
 // where acknowledge / assign / resolve actually happen — one place to act.
 

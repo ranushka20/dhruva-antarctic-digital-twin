@@ -1,6 +1,5 @@
-// OWNER: Dev B
 // Link timeline strip — a horizontal 24 h / 7 d band, each interval coloured
-// by link state, so the gaps are obvious at a glance (FR-1.2). State is
+// by link state, so the gaps are obvious at a glance. State is
 // never carried by colour alone: every segment is labelled in its tooltip
 // and the legend spells out the mapping.
 

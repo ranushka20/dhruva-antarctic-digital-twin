@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // freshness — the one place that turns an age in seconds into a sync state,
 // using the thresholds exposed on /settings (never hard-coded here).
 //
 // The rule that matters most: a stale input must never produce a confident
-// derived deadline (FRONTEND.md §7.2). `canDeriveDeadline` is what every LSOD
+// derived deadline. `canDeriveDeadline` is what every LSOD
 // call site checks before it renders a number instead of "stale".
 
 import type { SyncState } from '@/shared/contracts';
@@ -22,7 +21,7 @@ export function canDeriveDeadline(state: SyncState): boolean {
 }
 
 /**
- * How far a stale row or surface is pushed back. §7.2 of FRONTEND.md
+ * How far a stale row or surface is pushed back. The design spec
  * tabulates 0.62 / 0.40; those are DELIBERATELY not the values here.
  *
  * At 0.40 a `--text-3` label lands near 1.6:1 against the page — a DARK

@@ -47,7 +47,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-viewport: var(--viewport);
 
-  /* ---- Antarasetu design tokens (FRONTEND.md §2–5) ---- */
+  /* ---- Antarasetu design tokens ---- */
   --color-as-bg: var(--bg);
   --color-as-panel: var(--panel);
   --color-as-panel-raised: var(--panel-raised);

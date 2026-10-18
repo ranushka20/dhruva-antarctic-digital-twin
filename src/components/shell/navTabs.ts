@@ -1,5 +1,4 @@
-// OWNER: Dev B
-// The five top-level nav tabs (FRONTEND.md §6.1), shared by NavBar (which
+// The five top-level nav tabs, shared by NavBar (which
 // renders them) and AppShell (which uses their order to pick the direction
 // of the route transition).
 
@@ -11,7 +10,7 @@ export const NAV_TABS = [
   { label: 'Sandbox', to: '/sandbox' },
 ] as const;
 
-/** Secondary routes light up the nearest parent tab (FRONTEND.md §6). */
+/** Secondary routes light up the nearest parent tab. */
 export function getActiveTab(pathname: string): string {
   if (pathname === '/') return '/';
   if (pathname.startsWith('/logistics')) return '/logistics';

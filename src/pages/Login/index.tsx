@@ -1,4 +1,3 @@
-// OWNER: Dev B
 // PAGE 10c — Auth (/login).
 //
 // FRONTEND-ONLY BUILD. The JWT-shaped token is issued and verified in the
@@ -6,7 +5,7 @@
 // rather than implied away — a login screen that looks like real security
 // while providing none is the kind of thing an examiner asks about once.
 //
-// FR-C4: a failed sign-in gives one generic message. Never reveal whether
+// A failed sign-in gives one generic message. Never reveal whether
 // the username exists.
 
 import { useState } from 'react';

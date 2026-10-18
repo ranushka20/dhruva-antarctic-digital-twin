@@ -1,9 +1,8 @@
-// OWNER: Dev B
 // Board view — six columns matching the state machine. Dropping a card opens
 // the step dialog for that column (a note, and an owner / review date /
 // evidence where the step needs one); the card moves once that is recorded.
 // An illegal move is rejected inline with the reason rather than silently
-// snapping back (FR-4.3).
+// snapping back.
 
 import { useState } from 'react';
 import type { Action } from '@/shared/contracts';

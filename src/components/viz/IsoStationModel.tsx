@@ -1,6 +1,4 @@
-// OWNER: Dev A
 // IsoStationModel — The primary inline SVG isometric renderer.
-// See FRONTEND.md §9.
 
 import { useMemo } from 'react';
 import { type ZoneModel, type ZoneStatus } from '@/shared/contracts';

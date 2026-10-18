@@ -1,20 +1,15 @@
-// OWNER: Dev A (engine/ is Dev A's folder per FRONTEND.md §12).
+// TF-IDF similarity — the single implementation in the app: one scoring
+// core, with the fault-record API and disclosure string layered on top as a
+// thin adapter. Nothing calls a second implementation.
 //
-// MERGE NOTE — dashboard-a × yash-dashboard, 2026-09-21.
-// Both branches shipped a TF-IDF implementation here. This file is the single
-// surviving one: Dev B's scoring core, with Dev A's fault-record API and
-// disclosure string layered on top as a thin adapter. Nothing calls a second
-// implementation any more, which is what the integration checklist requires
-// ("both sides call the SAME function — no local reimplementation").
-//
-// Dev B's core was kept for one substantive reason: Dev A's IDF was
+// The IDF is smoothed for one substantive reason: the naive form
 // `log(N / (1 + docsWithTerm))`, which goes NEGATIVE for any term appearing
 // in most of the corpus. Over a few dozen local fault records that is most of
 // the vocabulary, and a negative weight flips the sign of a term's
 // contribution to the cosine. The smoothed form below, `log((n+1)/(df+1)) + 1`,
-// is the standard fix and stays positive at every corpus size. Dev A's
-// tokeniser also dropped hyphens, splitting "sub-zero" into two tokens, and
-// carried no stopword list.
+// is the standard fix and stays positive at every corpus size. The tokeniser
+// also keeps hyphens, so "sub-zero" stays one token, and applies a stopword
+// list.
 //
 // Fault similarity: TF-IDF cosine over {symptom + diagnosis + asset category},
 // top 5, minimum score 0.35, over THIS PLATFORM'S OWN RECORDS ONLY.
@@ -139,7 +134,7 @@ export function groupRecurring(
 }
 
 // ---------------------------------------------------------------------------
-// Fault-record API (Dev A's signature, kept verbatim so /assets is unchanged)
+// Fault-record API (signature kept stable so /assets is unchanged)
 // ---------------------------------------------------------------------------
 
 export interface SimilarFaultResult {
